@@ -39,8 +39,10 @@
     .row { display: flex; gap: 22px; justify-content: center; align-items: stretch; flex-wrap: wrap; }
 
     .card {
-      width: clamp(280px, 30vw, 380px);
-      aspect-ratio: 1 / 1;
+      width: clamp(240px, 24vw, 330px);
+      /* Xiaohongshu portrait. The tile is taller than it is wide, so the width
+         clamp is tightened to keep three cards on one row. */
+      aspect-ratio: 3 / 4;
       border-radius: 14px;
       border: 1px solid rgba(255,255,255,0.06);
       box-shadow: 0 30px 60px rgba(0,0,0,0.45);
@@ -152,7 +154,9 @@
 
     @media (max-width: 1180px) {
       .row { flex-direction: column; align-items: center; }
-      .card { width: min(96vw, 480px); }
+      /* Preview / phone width: show the cards stacked at a readable size.
+         Ratio is fixed by aspect-ratio above, so height follows. */
+      .card { width: min(96vw, 540px); }
       .card .lockup h2 { font-size: 56px; }
     }
   </style>
@@ -162,7 +166,7 @@
     <div class="stage-head">
       <div>
         <h1>Three posts<span class="dot">.</span> One <em>beat</em><span class="dot">.</span></h1>
-        <p class="lede">1080×1080 · cinematic video loops · minimal type. Drop into Instagram, LinkedIn, or X — each post stands on its own or runs as a three-part series.</p>
+        <p class="lede">1080×1440 · cinematic video loops · minimal type. Drop into Instagram, LinkedIn, or X — each post stands on its own or runs as a three-part series.</p>
       </div>
       <span class="badge">SERIES · 01 → 03</span>
     </div>

@@ -6,13 +6,17 @@ emoji: "🍡"
 description: "奶油底 + 柔光 blob + 马卡龙圆角卡片 + Playfair 斜体序号"
 category: slides
 scenario: personal
-aspect_hint: "16:9"
+aspect_hint: "1080×1440 (3:4)"
 featured: 33
 tags: ["xhs", "pastel", "lifestyle", "lifestyle"]
 ---
 
 【模板: 马卡龙慢生活 Deck】
-【意图】生活方式 / 个人成长 / 情绪向内容用 deck。
+【意图】生活方式 / 个人成长 / 情绪向内容, 做成小红书竖版图文。
+【尺寸 — 硬性要求】
+- 每张卡固定 `1080×1440` (3:4 竖版), 纵向排列, 卡间距 24px。
+- 不要用 `100vw` / `100vh`, 卡片尺寸必须写死, 否则截图比例会错。
+- 竖版比横版高: 内容纵向铺开, 不要把所有东西挤在垂直居中的一条带子里。
 【布局】
 - 奶油 #fef8f1 底 + 三个柔光 blob
 - Playfair 斜体衬线 display + sans 正文
