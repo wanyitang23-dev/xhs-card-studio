@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useElementSize } from "@/lib/xhs/use-element-size";
 import { useTemplates, type TemplateDef } from "@/lib/templates";
 import { aspectBadge, parsePageCount, parseViewport } from "@/lib/xhs/aspect";
 
@@ -164,26 +165,13 @@ function TemplateTile({
  * whatever is left over.
  */
 function ScaledPreview({ id, name, hint }: { id: string; name: string; hint: string }) {
-  const box = useRef<HTMLDivElement | null>(null);
-  const [scale, setScale] = useState(0);
+  const { ref, size } = useElementSize<HTMLDivElement>();
   const vp = parseViewport(hint);
-
-  useEffect(() => {
-    const el = box.current;
-    if (!el) return;
-    const fit = () => {
-      const { clientWidth: w, clientHeight: h } = el;
-      if (w > 0 && h > 0) setScale(Math.min(w / vp.width, h / vp.height));
-    };
-    fit();
-    // The grid is responsive, so the tile width changes with the window.
-    const ro = new ResizeObserver(fit);
-    ro.observe(el);
-    return () => ro.disconnect();
-  }, [vp.width, vp.height]);
+  // Contain: shrink by whichever axis runs out first, letterboxing the rest.
+  const scale = size ? Math.min(size.width / vp.width, size.height / vp.height) : 0;
 
   return (
-    <div ref={box} className="absolute inset-0 overflow-hidden">
+    <div ref={ref} className="absolute inset-0 overflow-hidden">
       {scale > 0 && (
         <iframe
           title={`${name} 预览`}
@@ -194,11 +182,11 @@ function ScaledPreview({ id, name, hint }: { id: string; name: string; hint: str
           className="absolute left-1/2 top-1/2 border-0"
           style={{
             width: vp.width,
-            height: vp.height,
             // Anchor the unscaled box's centre to the tile's centre, then
             // shrink about that same point. Flex/grid centring is unreliable
             // for an item far larger than its container; this is exact.
             transform: `translate(-50%, -50%) scale(${scale})`,
+            height: vp.height,
             pointerEvents: "none",
           }}
         />

@@ -25,7 +25,7 @@ export const SHARED_DESIGN_DIRECTIVES = `
 【设计准则 — 世界级标准】
 - 排版: 中文优先 \`Noto Sans SC\` / \`Noto Serif SC\`, 英文 \`Inter\` / \`Manrope\` / \`SF Pro\` 风格。
 - 色彩: 使用 1 个主色 + 2 个中性色 + 至多 1 个强调色; 大胆留白; 不使用纯黑纯白 (#000/#fff), 改用 \`#0a0a0a\` / \`#fafafa\`。
-- 网格: 8 px 基线; 段落最大宽度 65 ch; 标题与正文有清晰的层级。
+- 网格: 8 px 基线; 标题与正文有清晰的层级。段落宽度用 px 或 em 限制, **不要用 \`ch\`** (见下方中文排版规则)。
 - 微观细节: 圆角统一 (rounded-xl/2xl), 投影柔和 (shadow-sm/lg), 边框 1px \`#e5e7eb\` / \`#262626\`。
 - 动效: 仅在必要处使用 \`transition-all\` 或入场 fade-in; 不要喧宾夺主。
 - 无障碍: 颜色对比度 ≥ 4.5; 重要交互有 focus 态。

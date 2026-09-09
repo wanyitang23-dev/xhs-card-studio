@@ -4,6 +4,8 @@ import { useEffect } from "react";
 import { useXhs } from "@/lib/xhs/store";
 import { useFlow } from "@/lib/xhs/use-flow";
 import { previewHtml } from "@/lib/extract-html";
+import { useElementSize } from "@/lib/xhs/use-element-size";
+import { DEFAULT_VIEWPORT } from "@/lib/xhs/aspect";
 import type { CoverCandidate } from "@/lib/xhs/types";
 import { COVER_DIRECTION_IDS, coverLabel } from "@/lib/xhs/cover-directions";
 
@@ -111,15 +113,7 @@ function CoverTile({
         }}
       >
         {cover.html ? (
-          <iframe
-            title={`封面预览 · ${cover.label}`}
-            srcDoc={previewHtml(cover.html)}
-            sandbox="allow-scripts allow-same-origin"
-            // The card is authored at 1080px wide; scale it down to the tile
-            // instead of letting the iframe scroll.
-            className="pointer-events-none origin-top-left border-0"
-            style={{ width: "1080px", height: "1440px", transform: "scale(0.28)" }}
-          />
+          <ScaledCover html={cover.html} label={cover.label} />
         ) : (
           <span className="grid h-full place-items-center text-[13px] text-[var(--ink-faint)]">
             {cover.status === "error" ? "生成失败" : "正在生成…"}
@@ -143,5 +137,37 @@ function CoverTile({
         )}
       </figcaption>
     </figure>
+  );
+}
+
+/**
+ * A cover candidate rendered at the authored card size and scaled to the tile.
+ *
+ * The scale used to be hard-coded at 0.28, which only fit one tile width; the
+ * grid is responsive, so it left a gap at most window sizes.
+ */
+function ScaledCover({ html, label }: { html: string; label: string }) {
+  const { ref, size } = useElementSize<HTMLDivElement>();
+  const vp = DEFAULT_VIEWPORT;
+  const scale = size ? Math.min(size.width / vp.width, size.height / vp.height) : 0;
+
+  return (
+    <div ref={ref} className="absolute inset-0 overflow-hidden">
+      {scale > 0 && (
+        <iframe
+          title={`封面预览 · ${label}`}
+          srcDoc={previewHtml(html)}
+          sandbox="allow-scripts allow-same-origin"
+          scrolling="no"
+          className="absolute left-1/2 top-1/2 border-0"
+          style={{
+            width: vp.width,
+            height: vp.height,
+            transform: `translate(-50%, -50%) scale(${scale})`,
+            pointerEvents: "none",
+          }}
+        />
+      )}
+    </div>
   );
 }

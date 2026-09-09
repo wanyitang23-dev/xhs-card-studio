@@ -28,3 +28,7 @@ yarn-debug.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# exported cards land in the project root when downloaded from the browser
+/xhs-card-*.html
+/xhs-card-*.png

@@ -11,6 +11,39 @@ import { SHARED_DESIGN_DIRECTIVES } from "@/lib/templates/shared";
 import type { ContentMode, PageCountSetting, XhsPage } from "./types";
 import { MAX_PAGES, MIN_PAGES, RECOMMENDED_MAX_PAGES } from "./types";
 
+/**
+ * Hard typography rules for Chinese cards, prepended to every prompt that
+ * produces HTML.
+ *
+ * These exist because the inherited design directives are Latin-typography
+ * advice, and a model applying them to CJK produces two specific, repeatable
+ * defects:
+ *
+ *   - `letter-spacing: -.04em` on a 96px heading. Negative tracking is a
+ *     display-type technique for Latin; CJK glyphs already fill their em box,
+ *     so it makes them physically collide.
+ *   - `max-width: 26ch`. The `ch` unit is the width of "0" — a half-width
+ *     glyph — so 26ch is about 13 Chinese characters, and a 24-character
+ *     sentence wraps in the middle.
+ *
+ * Both were observed in real output, so the rules name the exact CSS rather
+ * than giving general advice.
+ */
+const CJK_TYPOGRAPHY_RULES = `【中文排版硬规则 — 优先级高于任何模板里的写法】
+- **字距不得为负。** \`letter-spacing\` 只能是 \`0\` 或正值。中文是全角字, 负字距会让字直接叠在一起。
+  想让标题紧凑就压 \`line-height\`, 不要动字距。
+- **不要用 \`ch\` 单位限制中文宽度。** \`ch\` 是半角数字「0」的宽度, \`26ch\` 只有 13 个汉字宽, 会导致句子中途断行。
+  要限宽就用 \`px\` / \`em\` / 百分比, 或者干脆不限宽让它填满容器。
+- **行高留够。** 中文字面比拉丁字母高: 正文 \`line-height\` ≥ 1.5, 大标题 ≥ 1.15。
+  标题用 1.0 左右会让上下两行的字咬在一起。
+- **让浏览器自己断行。** 除非你要刻意分句 (比如标题分成三行), 否则不要在句子中间插 \`<br>\`。
+  给容器加 \`word-break: normal; line-break: strict;\`, 让标点禁则生效 (行首不出现 。，、？！」)。
+- **字号必须验算。** 写下一个字号前, 先估算「这行有几个字 × 字号」会不会超出卡片宽度 (减去左右内边距)。
+  超了就减字号或换行, 不要靠负字距硬塞。
+- 中英文混排时中英文之间留半角空格。
+
+`;
+
 const MODE_RULES: Record<ContentMode, string> = {
   verbatim: `【表达方式: 保留原文】
 - 尽量沿用用户原文的句子和措辞, 不要改写成你自己的腔调。
@@ -101,6 +134,7 @@ export function buildCoverPrompt(args: {
   skillBody: string;
 }): string {
   return `${SHARED_DESIGN_DIRECTIVES}
+${CJK_TYPOGRAPHY_RULES}
 ${args.skillBody.trim()}
 
 【本次任务: 只做封面这一张卡】
@@ -141,6 +175,7 @@ ${args.coverHtml}
     : "";
 
   return `${SHARED_DESIGN_DIRECTIVES}
+${CJK_TYPOGRAPHY_RULES}
 ${args.skillBody.trim()}
 
 【本次任务: 按已确认的分页出成品】
