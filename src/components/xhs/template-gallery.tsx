@@ -28,14 +28,16 @@ export function TemplateGallery({
 
   if (templates === undefined) {
     return (
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-        {[0, 1, 2].map((i) => (
-          <div
-            key={i}
-            className="animate-pulse rounded-2xl"
-            style={{ aspectRatio: "3 / 4", background: "var(--line-faint)" }}
-          />
-        ))}
+      <div className="@container">
+        <div className="grid gap-3 @[26rem]:grid-cols-2 @[46rem]:grid-cols-3">
+          {[0, 1, 2].map((i) => (
+            <div
+              key={i}
+              className="animate-pulse rounded-2xl"
+              style={{ aspectRatio: "3 / 4", background: "var(--line-faint)" }}
+            />
+          ))}
+        </div>
       </div>
     );
   }
@@ -50,16 +52,20 @@ export function TemplateGallery({
 
   return (
     <>
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-        {templates.map((t) => (
-          <TemplateTile
-            key={t.id}
-            tpl={t}
-            selected={t.id === value}
-            onSelect={() => onChange(t.id)}
-            onZoom={() => setZoomed(t)}
-          />
-        ))}
+      {/* Column count follows this pane's width, not the viewport's — the
+          picker now shares the window with a permanent preview column. */}
+      <div className="@container">
+        <div className="grid gap-3 @[26rem]:grid-cols-2 @[46rem]:grid-cols-3">
+          {templates.map((t) => (
+            <TemplateTile
+              key={t.id}
+              tpl={t}
+              selected={t.id === value}
+              onSelect={() => onChange(t.id)}
+              onZoom={() => setZoomed(t)}
+            />
+          ))}
+        </div>
       </div>
       {zoomed && <ZoomModal tpl={zoomed} onClose={() => setZoomed(null)} />}
     </>

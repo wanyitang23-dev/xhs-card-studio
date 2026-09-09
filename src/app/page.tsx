@@ -10,6 +10,7 @@ import { StepCover } from "@/components/xhs/step-cover";
 import { StepRender } from "@/components/xhs/step-render";
 import { TemplateUpload } from "@/components/xhs/template-upload";
 import { TaskSidebar } from "@/components/xhs/task-sidebar";
+import { TemplatePreviewPane } from "@/components/xhs/template-preview-pane";
 import { useStore, type AgentInfo } from "@/lib/store";
 import { useTask, useXhs } from "@/lib/xhs/store";
 
@@ -20,11 +21,13 @@ export default function Home() {
   const setAgents = useStore((s) => s.setAgents);
   const locale = useStore((s) => s.locale);
   const step = useTask((t) => t.step);
+  const templateId = useTask((t) => t.templateId);
   const resetFlow = useXhs((s) => s.resetFlow);
 
   const [welcomeOpen, setWelcomeOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [uploadOpen, setUploadOpen] = useState(false);
+  const [previewCollapsed, setPreviewCollapsed] = useState(false);
   const [hydrated, setHydrated] = useState(false);
 
   useEffect(() => setHydrated(true), []);
@@ -111,6 +114,15 @@ export default function Home() {
           {step === "cover" && <StepCover />}
           {step === "render" && <StepRender />}
         </div>
+        {/* Steps ③ and ④ show the user's own generated pages, so the template
+            sample would only compete with them for space. */}
+        {(step === "source" || step === "outline") && (
+          <TemplatePreviewPane
+            templateId={templateId}
+            collapsed={previewCollapsed}
+            onToggle={() => setPreviewCollapsed((v) => !v)}
+          />
+        )}
       </div>
 
       {welcomeOpen && <WelcomeModal onClose={() => setWelcomeOpen(false)} />}

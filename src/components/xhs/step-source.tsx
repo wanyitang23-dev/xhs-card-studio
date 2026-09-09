@@ -154,7 +154,7 @@ export function StepSource() {
       <section>
         <h2 className="mb-1 text-[15px] font-semibold text-[var(--ink)]">视觉模板</h2>
         <p className="mb-3 text-[13px] text-[var(--ink-faint)]">
-          缩略图就是这套模板的真实效果。点「看大图」可以完整浏览。
+          缩略图就是这套模板的真实效果。选中后右边会完整展开，也可以点「看大图」看全屏。
         </p>
         <TemplateGallery value={templateId} onChange={setTemplateId} />
       </section>
