@@ -58,15 +58,18 @@ export function ScaledDocument({
           className="origin-top-left border-0"
           style={{
             width: authoredWidth,
-            // `transform` does not move the layout box, so centring is done with
-            // a plain margin: shift the (unscaled) box right by half the space
-            // the scaled render leaves over.
-            marginLeft: Math.max(0, (size.width - authoredWidth * scale) / 2),
             display: "block",
             // Undo the scale so the iframe still fills the container vertically
             // and scrolls its own content rather than being clipped short.
             height: size.height / scale,
-            transform: `scale(${scale})`,
+            // Centre with the transform, never with a margin. The iframe's
+            // layout box stays `authoredWidth` wide however far it is scaled
+            // down, so a margin would add to that width and push the whole page
+            // sideways — at 35% it added ~310px and gave the app a horizontal
+            // scrollbar. Transforms don't participate in layout at all.
+            // Functions compose right-to-left: scale first, then shift by an
+            // unscaled amount.
+            transform: `translateX(${Math.max(0, (size.width - authoredWidth * scale) / 2)}px) scale(${scale})`,
           }}
         />
       )}

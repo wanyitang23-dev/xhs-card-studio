@@ -94,7 +94,7 @@ export function StepRender() {
       </header>
 
       <div className="flex min-h-0 flex-1">
-        <div className="min-h-0 flex-1 px-6 pb-6">
+        <div className="min-h-0 min-w-0 flex-1 px-6 pb-6">
           {html ? (
             <ScaledDocument
               iframeRef={iframeRef}
