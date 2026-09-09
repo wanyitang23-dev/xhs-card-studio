@@ -262,6 +262,10 @@ export const useXhs = create<State>()(
     {
       name: "xhs-anything",
       version: 1,
+      // zustand types `migrate` as returning the whole state; the persisted
+      // slice is intentionally narrower, so the cast lives here rather than
+      // leaking `never` into migrateV0's own return type.
+      migrate: (persisted, version) => migrateV0(persisted, version) as never,
       // Screenshots and rendered HTML are large and regenerable; everything else
       // is small text the user would hate to lose on reload.
       partialize: (s) => ({
@@ -300,6 +304,41 @@ export const useXhs = create<State>()(
     },
   ),
 );
+
+/**
+ * v0 kept a single flow's fields at the top level; v1 moved them into
+ * `tasks[]`. Without this, zustand logs "couldn't be migrated since no
+ * migrate function was provided" and throws the saved work away — which
+ * is exactly what it did to anyone who had used the app before the
+ * multi-task change.
+ */
+export type MigratedState = { tasks: XhsTask[]; activeId: string; previewZoom: number };
+
+export function migrateV0(persisted: unknown, version: number): MigratedState {
+  const p = persisted as Record<string, unknown> | undefined;
+  if (!p) return persisted as MigratedState;
+  if (version >= 1) return p as unknown as MigratedState;
+  const legacy = p as Partial<XhsTask> & { previewZoom?: number };
+  const task: XhsTask = {
+    ...makeTask(deriveName(legacy.sourceText ?? "", "任务 1")),
+    // Carry over every v0 field that still exists in v1; anything the old
+    // shape lacked keeps the fresh task's default.
+    ...(legacy.step ? { step: legacy.step } : {}),
+    ...(legacy.sourceText ? { sourceText: legacy.sourceText } : {}),
+    ...(legacy.format ? { format: legacy.format } : {}),
+    ...(legacy.mode ? { mode: legacy.mode } : {}),
+    ...(legacy.pageCount ? { pageCount: legacy.pageCount } : {}),
+    ...(legacy.templateId ? { templateId: legacy.templateId } : {}),
+    ...(Array.isArray(legacy.pages) ? { pages: legacy.pages } : {}),
+    ...(legacy.selectedCoverId ? { selectedCoverId: legacy.selectedCoverId } : {}),
+    ...(legacy.caption ? { caption: legacy.caption } : {}),
+  };
+  return {
+    tasks: [task],
+    activeId: task.id,
+    previewZoom: typeof legacy.previewZoom === "number" ? legacy.previewZoom : 0.5,
+  };
+}
 
 /** Re-apply the cover / content / ending bookends after any reorder. */
 function reseal(pages: XhsPage[]): XhsPage[] {
