@@ -16,6 +16,8 @@ export type SseHandlers = {
   onHtml?: (text: string) => void;
   /** Parsed outline, emitted once by /api/outline after the agent exits. */
   onOutline?: (pages: unknown) => void;
+  /** Parsed caption, emitted once by /api/caption after the agent exits. */
+  onCaption?: (caption: unknown) => void;
   onMeta?: (key: string, value: unknown) => void;
   onLog?: (kind: string, text: string) => void;
   onError?: (message: string) => void;
@@ -89,6 +91,9 @@ function dispatch(event: string, d: Record<string, unknown>, h: SseHandlers) {
       break;
     case "outline":
       if (d.pages) h.onOutline?.(d.pages);
+      break;
+    case "caption":
+      h.onCaption?.(d);
       break;
     case "meta":
       h.onMeta?.(String(d.key), d.value);

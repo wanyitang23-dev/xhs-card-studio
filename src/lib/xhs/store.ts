@@ -2,7 +2,7 @@
 
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import type { ContentMode, CoverCandidate, PageCountSetting, PageKind, XhsPage } from "./types";
+import type { Caption, ContentMode, CoverCandidate, PageCountSetting, PageKind, XhsPage } from "./types";
 
 /** Which of the four steps the user is on. */
 export type Step = "source" | "outline" | "cover" | "render";
@@ -43,6 +43,11 @@ type State = {
   finalHtml: string;
   renderStatus: FlowStatus;
   renderError?: string;
+  caption: Caption | null;
+  captionStatus: FlowStatus;
+  captionError?: string;
+  /** Preview zoom on step ④, as a fraction of the authored size. */
+  previewZoom: number;
   /** `asset:<id>` → data URL, for screenshots attached to individual pages. */
   assets: Record<string, string>;
   /** Rolling progress log shown under the active step. */
@@ -70,6 +75,10 @@ type State = {
   setFinalHtml: (h: string) => void;
   appendFinalHtml: (chunk: string) => void;
   setRenderStatus: (s: FlowStatus, err?: string) => void;
+  setCaption: (c: Caption | null) => void;
+  patchCaption: (patch: Partial<Caption>) => void;
+  setCaptionStatus: (s: FlowStatus, err?: string) => void;
+  setPreviewZoom: (z: number) => void;
 
   addAsset: (dataUrl: string) => string;
   pushLog: (kind: string, text: string) => void;
@@ -90,6 +99,11 @@ const initial = {
   covers: [] as CoverCandidate[],
   finalHtml: "",
   renderStatus: "idle" as FlowStatus,
+  caption: null as Caption | null,
+  captionStatus: "idle" as FlowStatus,
+  // Half size by default: a full 1080x1440 card then fits most panes, so the
+  // user can flick through cards instead of scrolling one card at a time.
+  previewZoom: 0.5,
   assets: {} as Record<string, string>,
   log: [] as Array<{ ts: number; kind: string; text: string }>,
 };
@@ -143,6 +157,11 @@ export const useXhs = create<State>()(
       setFinalHtml: (finalHtml) => set({ finalHtml }),
       appendFinalHtml: (chunk) => set((s) => ({ finalHtml: s.finalHtml + chunk })),
       setRenderStatus: (renderStatus, renderError) => set({ renderStatus, renderError }),
+      setCaption: (caption) => set({ caption }),
+      patchCaption: (patch) =>
+        set((s) => (s.caption ? { caption: { ...s.caption, ...patch } } : s)),
+      setCaptionStatus: (captionStatus, captionError) => set({ captionStatus, captionError }),
+      setPreviewZoom: (previewZoom) => set({ previewZoom }),
 
       addAsset: (dataUrl) => {
         const id = nid("a");
@@ -153,7 +172,7 @@ export const useXhs = create<State>()(
         set((s) => ({ log: [...s.log.slice(-200), { ts: Date.now(), kind, text }] })),
       clearLog: () => set({ log: [] }),
       resetFlow: () =>
-        set({ ...initial, templateId: get().templateId, mode: get().mode, pageCount: get().pageCount }),
+        set({ ...initial, templateId: get().templateId, mode: get().mode, pageCount: get().pageCount, previewZoom: get().previewZoom }),
     }),
     {
       name: "xhs-anything",
@@ -166,6 +185,7 @@ export const useXhs = create<State>()(
         mode: s.mode,
         pageCount: s.pageCount,
         templateId: s.templateId,
+        previewZoom: s.previewZoom,
         pages: s.pages,
         selectedCoverId: s.selectedCoverId,
       }),

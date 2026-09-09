@@ -17,6 +17,7 @@ import { useElementSize } from "@/lib/xhs/use-element-size";
  */
 export function ScaledDocument({
   authoredWidth,
+  scale: scaleProp,
   src,
   srcDoc,
   title,
@@ -26,6 +27,12 @@ export function ScaledDocument({
 }: {
   /** The width the page lays out at — 1080 for a Xiaohongshu card. */
   authoredWidth: number;
+  /**
+   * Explicit display scale. Omit to fit the container's width.
+   * The iframe still lays out at `authoredWidth` either way, so zooming never
+   * changes the document's layout — only how large it appears.
+   */
+  scale?: number;
   src?: string;
   srcDoc?: string;
   title: string;
@@ -36,7 +43,8 @@ export function ScaledDocument({
   const { ref, size } = useElementSize<HTMLDivElement>();
   // Fit by width — the page is a tall stack of cards the user scrolls through.
   // Never scale up: a page narrower than the pane should sit at 1:1.
-  const scale = size ? Math.min(1, size.width / authoredWidth) : 0;
+  const fitScale = size ? Math.min(1, size.width / authoredWidth) : 0;
+  const scale = scaleProp ?? fitScale;
 
   return (
     <div ref={ref} className={`overflow-hidden ${className ?? ""}`} style={style}>
@@ -50,6 +58,11 @@ export function ScaledDocument({
           className="origin-top-left border-0"
           style={{
             width: authoredWidth,
+            // `transform` does not move the layout box, so centring is done with
+            // a plain margin: shift the (unscaled) box right by half the space
+            // the scaled render leaves over.
+            marginLeft: Math.max(0, (size.width - authoredWidth * scale) / 2),
+            display: "block",
             // Undo the scale so the iframe still fills the container vertically
             // and scrolls its own content rather than being clipped short.
             height: size.height / scale,

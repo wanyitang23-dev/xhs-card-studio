@@ -4,7 +4,7 @@ import { useCallback, useRef } from "react";
 import { useStore } from "@/lib/store";
 import { streamSse } from "./sse-client";
 import { makePage, useXhs } from "./store";
-import type { PageKind } from "./types";
+import type { Caption, PageKind } from "./types";
 import { coverLabel } from "./cover-directions";
 
 /**
@@ -17,10 +17,13 @@ import { coverLabel } from "./cover-directions";
  */
 export function useFlow() {
   const abortRef = useRef<AbortController | null>(null);
+  const captionAbortRef = useRef<AbortController | null>(null);
 
   const cancel = useCallback(() => {
     abortRef.current?.abort();
     abortRef.current = null;
+    captionAbortRef.current?.abort();
+    captionAbortRef.current = null;
   }, []);
 
   /** Agent config from the shared top-bar store, plus a guard for "none picked". */
@@ -195,5 +198,38 @@ export function useFlow() {
     }
   }, [agentArgs, fresh]);
 
-  return { runOutline, runCovers, runRender, cancel };
+  /** ④-b Write the caption that goes beside the images. */
+  const runCaption = useCallback(async () => {
+    const x = useXhs.getState();
+    if (!x.pages.length) return;
+    // Deliberately not sharing the render's AbortController: the caption is a
+    // separate, cheap call and cancelling the render should not kill it.
+    const ctl = new AbortController();
+    captionAbortRef.current?.abort();
+    captionAbortRef.current = ctl;
+    x.setCaptionStatus("running", undefined);
+    try {
+      await streamSse(
+        "/api/caption",
+        { ...agentArgs(), pages: x.pages, mode: x.mode },
+        {
+          onCaption: (c) => useXhs.getState().setCaption(c as Caption),
+          onError: (m) => useXhs.getState().setCaptionStatus("error", m),
+        },
+        ctl.signal,
+      );
+      const cur = useXhs.getState();
+      if (cur.captionStatus !== "error") {
+        cur.setCaptionStatus(cur.caption ? "done" : "error", cur.caption ? undefined : "agent 没有返回配文");
+      }
+    } catch (err) {
+      if ((err as Error)?.name === "AbortError") {
+        useXhs.getState().setCaptionStatus("idle");
+        return;
+      }
+      useXhs.getState().setCaptionStatus("error", (err as Error)?.message ?? String(err));
+    }
+  }, [agentArgs]);
+
+  return { runOutline, runCovers, runRender, runCaption, cancel };
 }

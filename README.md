@@ -23,7 +23,7 @@ npm run dev
 | ① 贴文章 | 粘贴内容、选模板、选「保留原文 / 可视化精简」 | — |
 | ② 定分页 | agent 先拆好，你逐页改文案、加减页、传配图，逐页确认 | `POST /api/outline` |
 | ③ 挑封面 | 同一份文案生成三种构图，并排对比选一个 | `POST /api/cover` ×3 并发 |
-| ④ 出成品 | 按锁定的分页 + 选定封面生成完整 HTML，导出 PNG | `POST /api/render` |
+| ④ 出成品 | 按锁定的分页 + 选定封面生成完整 HTML，导出 PNG；右栏同时产出可一键复制的标题 / 正文 / 标签 | `POST /api/render`、`POST /api/caption` |
 
 第 ② 步是整个工具的关键：它让 agent 输出**结构化清单**而不是网页
 （[`extract-json.ts`](src/lib/extract-json.ts)），所以你能在生成前把每一页的文字定死。
@@ -43,15 +43,18 @@ agent 读完它、写出设计规格（配色 / 字体 / 尺寸 / 版式），�
 ```
 src/lib/xhs/            四步流程的核心
   types.ts              分页 / 封面的数据模型
-  prompts.ts            四段 prompt（拆页 / 封面 / 成品 / 反推模板）
+  prompts.ts            五段 prompt（拆页 / 封面 / 成品 / 发布文案 / 反推模板）
   store.ts              流程状态
   use-flow.ts           驱动三次 agent 调用
   cover-directions.ts   三种封面构图（服务端和界面共用）
   aspect.ts             解析 SKILL.md 里手写的 aspect_hint
+  use-element-size.ts   测量容器尺寸，供按设计宽度排版再缩放用
 src/lib/extract-json.ts 从 agent 的啰嗦回复里捞出 JSON
 src/lib/skills/local-install.ts  用户上传的模板落盘
 src/components/xhs/     四步的界面
   template-gallery.tsx  模板画廊：每个模板一张实时缩略图
+  scaled-document.tsx   按卡片设计宽度排版、再缩放显示（预览与导出共用）
+  caption-pane.tsx      发布文案栏，逐段复制
 src/lib/templates/skills/        内置模板（每个文件夹一个 SKILL.md）
 ```
 

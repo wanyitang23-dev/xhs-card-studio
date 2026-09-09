@@ -77,3 +77,11 @@ export type PageCountSetting = "auto" | number;
 export function clampPageCount(n: number): number {
   return Math.max(MIN_PAGES, Math.min(MAX_PAGES, Math.round(n)));
 }
+
+/** The text that goes in the caption box when the cards are uploaded. */
+export type Caption = {
+  title: string;
+  body: string;
+  /** Stored without the leading `#`; the UI adds it when rendering and copying. */
+  tags: string[];
+};

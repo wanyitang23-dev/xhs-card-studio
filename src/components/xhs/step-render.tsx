@@ -8,6 +8,7 @@ import { previewHtml } from "@/lib/extract-html";
 import { ExportMenu } from "@/components/export-menu";
 import { parseViewport } from "@/lib/xhs/aspect";
 import { useTemplates } from "@/lib/templates";
+import { CaptionPane } from "./caption-pane";
 
 export function StepRender() {
   const html = useXhs((s) => s.finalHtml);
@@ -16,8 +17,12 @@ export function StepRender() {
   const pages = useXhs((s) => s.pages);
   const templateId = useXhs((s) => s.templateId);
   const setStep = useXhs((s) => s.setStep);
+  const zoom = useXhs((s) => s.previewZoom);
+  const setZoom = useXhs((s) => s.setPreviewZoom);
+  const caption = useXhs((s) => s.caption);
+  const captionStatus = useXhs((s) => s.captionStatus);
   const templates = useTemplates();
-  const { runRender, cancel } = useFlow();
+  const { runRender, runCaption, cancel } = useFlow();
   const iframeRef = useRef<HTMLIFrameElement | null>(null);
   const started = useRef(false);
 
@@ -29,6 +34,15 @@ export function StepRender() {
     void runRender();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Write the caption once the cards are done. It is a cheap text-only call and
+  // the post is not finished without it, so it should not need a second click.
+  const captionKicked = useRef(false);
+  useEffect(() => {
+    if (status !== "done" || captionKicked.current || caption || captionStatus === "running") return;
+    captionKicked.current = true;
+    void runCaption();
+  }, [status, caption, captionStatus, runCaption]);
 
   const running = status === "running";
   const display = useMemo(() => previewHtml(html), [html]);
@@ -58,6 +72,7 @@ export function StepRender() {
           </p>
         </div>
         <div className="ml-auto flex items-center gap-2">
+          <ZoomControl value={zoom} onChange={setZoom} />
           <button
             type="button"
             onClick={() => setStep("outline")}
@@ -78,25 +93,62 @@ export function StepRender() {
         </div>
       </header>
 
-      <div className="min-h-0 flex-1 px-6 pb-6">
-        {html ? (
-          <ScaledDocument
-            iframeRef={iframeRef}
-            srcDoc={display}
-            authoredWidth={authoredWidth}
-            title="成品预览"
-            className="h-full w-full rounded-2xl"
-            style={{ background: "#fff", border: "1px solid var(--line-soft)" }}
-          />
-        ) : (
-          <div
-            className="grid h-full place-items-center rounded-2xl text-[13px] text-[var(--ink-faint)]"
-            style={{ background: "var(--surface)", border: "1px solid var(--line-soft)" }}
-          >
-            {running ? "agent 正在写…" : status === "error" ? error : "还没有内容"}
-          </div>
-        )}
+      <div className="flex min-h-0 flex-1">
+        <div className="min-h-0 flex-1 px-6 pb-6">
+          {html ? (
+            <ScaledDocument
+              iframeRef={iframeRef}
+              srcDoc={display}
+              authoredWidth={authoredWidth}
+              scale={zoom}
+              title="成品预览"
+              className="h-full w-full rounded-2xl"
+              style={{ background: "#fff", border: "1px solid var(--line-soft)" }}
+            />
+          ) : (
+            <div
+              className="grid h-full place-items-center rounded-2xl text-[13px] text-[var(--ink-faint)]"
+              style={{ background: "var(--surface)", border: "1px solid var(--line-soft)" }}
+            >
+              {running ? "agent 正在写…" : status === "error" ? error : "还没有内容"}
+            </div>
+          )}
+        </div>
+        <CaptionPane />
       </div>
+    </div>
+  );
+}
+
+/** Preset zoom levels. 50% shows a whole 1080x1440 card in a typical pane. */
+const ZOOMS = [0.35, 0.5, 0.75, 1] as const;
+
+function ZoomControl({ value, onChange }: { value: number; onChange: (z: number) => void }) {
+  return (
+    <div
+      className="flex items-center overflow-hidden rounded-xl"
+      style={{ border: "1px solid var(--line-soft)", background: "var(--surface)" }}
+      role="group"
+      aria-label="预览缩放"
+    >
+      {ZOOMS.map((z) => {
+        const on = Math.abs(value - z) < 0.01;
+        return (
+          <button
+            key={z}
+            type="button"
+            onClick={() => onChange(z)}
+            aria-pressed={on}
+            className="px-2.5 py-2 text-[12px] transition-colors"
+            style={{
+              background: on ? "var(--coral)" : "transparent",
+              color: on ? "#fff" : "var(--ink-mute)",
+            }}
+          >
+            {Math.round(z * 100)}%
+          </button>
+        );
+      })}
     </div>
   );
 }

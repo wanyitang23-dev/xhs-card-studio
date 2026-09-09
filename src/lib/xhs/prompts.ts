@@ -220,3 +220,53 @@ export function buildDerivePrompt(args: { html: string }): string {
 ${args.html}
 `;
 }
+
+/**
+ * Step ④-b — the post copy that goes in the caption box when the images are
+ * uploaded.
+ *
+ * Separate from the render because it is a different artifact: the cards are
+ * the pictures, this is the text beside them. Asked for as JSON so the UI can
+ * offer per-field copy buttons rather than one blob.
+ */
+export function buildCaptionPrompt(args: { pages: XhsPage[]; mode: ContentMode }): string {
+  const outline = args.pages
+    .map((p, i) => `第 ${i + 1} 页 [${p.kind}] ${p.title}${p.body ? ` — ${p.body}` : ""}`)
+    .join("\n");
+
+  return `你要为一组已经做好的小红书图文卡片写**配文**（发布时填在正文框里的那段字）。
+
+【硬性规则】
+1. 只输出一个 JSON 对象。第一个字符是 \`{\`, 最后一个字符是 \`}\`。
+2. 不要 markdown 围栏, 不要任何解释性文字。
+3. **禁止使用 Write / Edit / Bash 等文件工具**, 直接把 JSON 写在回复正文里。
+4. **只能用下面卡片里已有的信息**, 不要编造数据、案例、数字或不存在的结论。
+
+【JSON 结构】
+{
+  "title": "标题",
+  "body": "正文",
+  "tags": ["标签1", "标签2"]
+}
+
+【标题】
+- 20 字以内, 越短越好。这是信息流里唯一会被看到的一行。
+- 要有钩子: 给出具体收益、制造好奇、或点明痛点。不要写成书名式的中性概括。
+- 可以带 1 个 emoji, 不要堆砌。
+
+【正文】
+- 300-500 字。开头两行要能独立成立 —— 信息流里只展开这两行。
+- **段落之间空一行**, 每段 1-3 句。手机上大段文字没人读。
+- 适度用 emoji 做段落标记, 但一段最多一个。
+- 结尾放一句互动引导 (收藏 / 关注 / 评论区聊聊)。
+- 用 \`\\n\` 表示换行。不要用 markdown 语法 (不要 # 井号标题、不要 ** 加粗) —— 小红书不渲染这些。
+
+【标签】
+- 5-8 个, 每个不带 # 号 (前端会自动加)。
+- 混合: 2-3 个大词 (覆盖面广) + 3-5 个精准长尾词。
+- 只用与内容真实相关的词, 不要蹭无关热词。
+
+【这组卡片的分页 — 配文必须与它们一致】
+${outline}
+`;
+}
