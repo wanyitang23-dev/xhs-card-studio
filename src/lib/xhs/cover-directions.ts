@@ -30,3 +30,23 @@ export const COVER_DIRECTION_IDS = Object.keys(COVER_DIRECTIONS) as CoverDirecti
 export function coverLabel(id: string): string {
   return (COVER_DIRECTIONS as Record<string, { label: string }>)[id]?.label ?? id;
 }
+
+/**
+ * Build the cover list for a run that regenerates only `directions`.
+ *
+ * Tiles not being regenerated are carried over untouched — that is the whole
+ * point of per-tile regeneration, and getting it wrong silently throws away
+ * covers the user was happy with. Order always follows
+ * {@link COVER_DIRECTION_IDS} so tiles never shuffle between runs.
+ */
+export function mergeCoverRun<T extends { id: string }>(
+  existing: T[],
+  directions: string[],
+  makePending: (id: string) => T,
+): T[] {
+  const pending = new Set(directions);
+  const byId = new Map(existing.map((c) => [c.id, c]));
+  return COVER_DIRECTION_IDS.filter((id) => pending.has(id) || byId.has(id)).map((id) =>
+    pending.has(id) ? makePending(id) : byId.get(id)!,
+  );
+}

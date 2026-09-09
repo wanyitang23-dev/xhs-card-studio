@@ -5,7 +5,7 @@ import { useStore } from "@/lib/store";
 import { streamSse } from "./sse-client";
 import { makePage, useXhs } from "./store";
 import type { Caption, PageKind } from "./types";
-import { coverLabel } from "./cover-directions";
+import { coverLabel, mergeCoverRun } from "./cover-directions";
 
 /**
  * Drives the three agent-backed steps. Each returns when its stream ends;
@@ -18,12 +18,16 @@ import { coverLabel } from "./cover-directions";
 export function useFlow() {
   const abortRef = useRef<AbortController | null>(null);
   const captionAbortRef = useRef<AbortController | null>(null);
+  /** One controller per cover direction, so tiles cancel independently. */
+  const coverAbortsRef = useRef<Map<string, AbortController>>(new Map());
 
   const cancel = useCallback(() => {
     abortRef.current?.abort();
     abortRef.current = null;
     captionAbortRef.current?.abort();
     captionAbortRef.current = null;
+    for (const c of coverAbortsRef.current.values()) c.abort();
+    coverAbortsRef.current.clear();
   }, []);
 
   /** Agent config from the shared top-bar store, plus a guard for "none picked". */
@@ -98,26 +102,39 @@ export function useFlow() {
   }, [agentArgs, fresh]);
 
   /**
-   * ③ Generate every cover candidate at once.
+   * ③ Generate cover candidates.
    *
-   * Concurrent rather than sequential: three covers back-to-back would take
-   * three times as long for no benefit, and each spawns its own agent process
-   * anyway. One shared AbortController cancels all of them together.
+   * Takes whichever directions the caller wants, so the UI can redo one tile
+   * without discarding the other two — regenerating all three costs three agent
+   * runs and throws away covers the user was happy with.
+   *
+   * Each direction gets its own AbortController: cancelling one must not kill
+   * the siblings, and they run concurrently because three sequential runs would
+   * take three times as long for no benefit.
    */
   const runCovers = useCallback(async (directions: string[]) => {
     const x = useXhs.getState();
     const cover = x.pages[0];
     if (!cover) throw new Error("还没有分页，请先生成大纲");
-    const ctl = fresh();
     const args = agentArgs();
 
+    // Reset only the tiles being regenerated; keep every other tile's html.
     x.setCovers(
-      directions.map((d) => ({ id: d, label: coverLabel(d), html: "", status: "running" as const })),
+      mergeCoverRun(x.covers, directions, (id) => ({
+        id,
+        label: coverLabel(id),
+        html: "",
+        status: "running" as const,
+      })),
     );
-    x.selectCover(undefined);
+    // Only drop the selection if the selected tile is one being replaced.
+    if (x.selectedCoverId && directions.includes(x.selectedCoverId)) x.selectCover(undefined);
 
     await Promise.all(
       directions.map(async (direction) => {
+        const ctl = new AbortController();
+        coverAbortsRef.current.get(direction)?.abort();
+        coverAbortsRef.current.set(direction, ctl);
         try {
           await streamSse(
             "/api/cover",
@@ -151,15 +168,28 @@ export function useFlow() {
             });
           }
         } catch (err) {
-          if ((err as Error)?.name === "AbortError") return;
+          if ((err as Error)?.name === "AbortError") {
+            useXhs.getState().patchCover(direction, { status: "error", error: "已取消" });
+            return;
+          }
           useXhs.getState().patchCover(direction, {
             status: "error",
             error: (err as Error)?.message ?? String(err),
           });
+        } finally {
+          if (coverAbortsRef.current.get(direction) === ctl) {
+            coverAbortsRef.current.delete(direction);
+          }
         }
       }),
     );
-  }, [agentArgs, fresh]);
+  }, [agentArgs]);
+
+  /** Stop one cover mid-flight, leaving the others running. */
+  const cancelCover = useCallback((direction: string) => {
+    coverAbortsRef.current.get(direction)?.abort();
+    coverAbortsRef.current.delete(direction);
+  }, []);
 
   /** ④ Render the confirmed outline into the finished page. */
   const runRender = useCallback(async () => {
@@ -231,5 +261,5 @@ export function useFlow() {
     }
   }, [agentArgs]);
 
-  return { runOutline, runCovers, runRender, runCaption, cancel };
+  return { runOutline, runCovers, runRender, runCaption, cancelCover, cancel };
 }

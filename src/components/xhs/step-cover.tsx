@@ -17,7 +17,7 @@ export function StepCover() {
   const selectCover = useXhs((s) => s.selectCover);
   const setStep = useXhs((s) => s.setStep);
   const cover = useXhs((s) => s.pages[0]);
-  const { runCovers, cancel } = useFlow();
+  const { runCovers, cancelCover, cancel } = useFlow();
 
   const running = covers.some((c) => c.status === "running");
 
@@ -54,7 +54,7 @@ export function StepCover() {
               className="rounded-xl px-4 py-2 text-[13px] font-medium"
               style={{ background: "var(--surface)", border: "1px solid var(--line-soft)" }}
             >
-              重新生成三版
+              全部重新生成
             </button>
           )}
           <button
@@ -76,6 +76,8 @@ export function StepCover() {
             cover={c}
             selected={c.id === selectedCoverId}
             onSelect={() => c.status === "done" && selectCover(c.id)}
+            onRegenerate={() => void runCovers([c.id])}
+            onCancel={() => cancelCover(c.id)}
           />
         ))}
       </div>
@@ -91,12 +93,17 @@ function CoverTile({
   cover,
   selected,
   onSelect,
+  onRegenerate,
+  onCancel,
 }: {
   cover: CoverCandidate;
   selected: boolean;
   onSelect: () => void;
+  onRegenerate: () => void;
+  onCancel: () => void;
 }) {
   const ready = cover.status === "done";
+  const busy = cover.status === "running";
   return (
     <figure className="flex flex-col gap-2">
       <button
@@ -129,12 +136,20 @@ function CoverTile({
         )}
       </button>
       <figcaption className="flex items-center gap-2 text-[13px]">
-        <span className="font-medium text-[var(--ink)]">{cover.label}</span>
+        <span className="shrink-0 font-medium text-[var(--ink)]">{cover.label}</span>
         {cover.status === "error" && (
           <span className="truncate text-[12px]" style={{ color: "var(--red)" }}>
             {cover.error}
           </span>
         )}
+        <button
+          type="button"
+          onClick={busy ? onCancel : onRegenerate}
+          className="ml-auto shrink-0 rounded-lg px-2.5 py-1 text-[12px] text-[var(--ink-mute)] transition-colors hover:text-[var(--ink)]"
+          style={{ background: "var(--surface)", border: "1px solid var(--line-soft)" }}
+        >
+          {busy ? "取消" : "只重生成这版"}
+        </button>
       </figcaption>
     </figure>
   );
