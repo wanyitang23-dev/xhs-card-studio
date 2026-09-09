@@ -45,6 +45,36 @@ const CJK_TYPOGRAPHY_RULES = `【中文排版硬规则 — 优先级高于任何
 `;
 
 /**
+ * Hard layout rules for a fixed-size card, prepended to every prompt that
+ * produces HTML.
+ *
+ * Measured from a real 10-card render: 6 cards had colliding text, 8 collisions
+ * in total. Every one had the same cause — the model laid the card out as a
+ * stack of `position:absolute` blocks at hand-guessed offsets (81 absolute
+ * blocks, 53 hardcoded `top:` values in one file). A heading that wraps to one
+ * more line than the model predicted then runs straight through whatever sits
+ * below it, because nothing is in flow to be pushed down. Four of the eight
+ * collisions were content landing on the `absolute bottom` footer.
+ *
+ * Fonts had loaded correctly in that render, so this is not a fallback-metrics
+ * problem — it is that guessed coordinates cannot survive real text.
+ */
+const CARD_LAYOUT_RULES = `【卡片版式硬规则 — 优先级高于任何模板里的写法】
+- **卡片内容必须走正常文档流, 不许用手写坐标摆放。**
+  卡片外壳: \`position:relative; width:<W>px; height:<H>px; overflow:hidden\`。
+  内容区: \`display:flex; flex-direction:column\` + \`padding\`, 让每一块自然把下一块往下推。
+- **\`position:absolute\` 只能用在不含文字的装饰层** (背景色块 / 圆环 / 噪点 / 渐变 / 贴纸)。
+  任何带文字的块都**不许**写 \`top:1018px\` 这种猜出来的坐标 — 标题只要比你预估多折一行,
+  就会直接压在下一块上。这是实际输出里出现最多的缺陷, 不是理论风险。
+- **页脚 (@账号 / 日期 / 页码) 也放进同一个 flex 流**, 用 \`margin-top:auto\` 顶到底部。
+  写成 \`position:absolute; bottom:64px\` 会被上面的正文盖住。
+- 正文区用 \`flex:1; min-height:0\`; 内容偏多时**减字号或减内边距**, 不要靠上移坐标去挤。
+- 不要用 \`<br>\` 拼行数来对齐坐标; 让文字自己折行, 版式要能容纳多折一行的情况。
+- 自检: 输出前想一遍「如果这个标题折成 N+1 行, 下面那块会不会被压到」。会, 就说明你用错了绝对定位。
+
+`;
+
+/**
  * How the cards should read.
  *
  * There used to be a second mode that reproduced the article's own sentences.
@@ -136,6 +166,7 @@ export function buildCoverPrompt(args: {
 }): string {
   return `${SHARED_DESIGN_DIRECTIVES}
 ${CJK_TYPOGRAPHY_RULES}
+${CARD_LAYOUT_RULES}
 ${args.skillBody.trim()}
 
 【本次任务: 只做封面这一张卡】
@@ -176,6 +207,7 @@ ${args.coverHtml}
 
   return `${SHARED_DESIGN_DIRECTIVES}
 ${CJK_TYPOGRAPHY_RULES}
+${CARD_LAYOUT_RULES}
 ${args.skillBody.trim()}
 
 【本次任务: 按已确认的分页出成品】

@@ -1,7 +1,7 @@
 "use client";
 
 import { create } from "zustand";
-import { persist } from "zustand/middleware";
+import { createJSONStorage, persist, type StateStorage } from "zustand/middleware";
 import type {
   Caption,
   CoverCandidate,
@@ -257,6 +257,9 @@ export const useXhs = create<State>()(
     {
       name: "xhs-anything",
       version: 1,
+      storage: createJSONStorage(() =>
+        quotaSafe(typeof window === "undefined" ? memoryStorage() : window.localStorage),
+      ),
       // zustand types `migrate` as returning the whole state; the persisted
       // slice is intentionally narrower, so the cast lives here rather than
       // leaking `never` into migrateV0's own return type.
@@ -278,6 +281,10 @@ export const useXhs = create<State>()(
           pageCount: t.pageCount,
           templateId: t.templateId,
           pages: t.pages,
+          // The user's uploaded screenshots. Unlike covers and rendered HTML
+          // these are *not* regenerable — dropping them left `imageAssetIds`
+          // pointing at nothing, and the render emitted <img src="asset:xxx">.
+          assets: t.assets,
           selectedCoverId: t.selectedCoverId,
           caption: t.caption,
         })),
@@ -355,4 +362,51 @@ export function activeTask(s: State): XhsTask {
  */
 export function useTask<T>(selector: (t: XhsTask) => T): T {
   return useXhs((s) => selector(activeTask(s)));
+}
+
+/**
+ * localStorage that degrades instead of throwing when it runs out of room.
+ *
+ * Attached screenshots are bounded on upload (see `image.ts`), but a task with
+ * several of them can still push the snapshot past the ~5 MB quota. The default
+ * behaviour there is a thrown `QuotaExceededError` inside zustand's write,
+ * which loses the *entire* snapshot — including the text the user typed, which
+ * costs almost nothing to keep.
+ *
+ * So on a failed write we shed the heaviest, most-replaceable payload (images)
+ * and try once more. Text survives; the user is told separately, by the missing
+ * image showing up as missing rather than as a broken tag in the output.
+ */
+export function quotaSafe(backing: StateStorage): StateStorage {
+  return {
+    getItem: (name) => backing.getItem(name),
+    removeItem: (name) => backing.removeItem(name),
+    setItem: (name, value) => {
+      try {
+        backing.setItem(name, value);
+        return;
+      } catch {
+        // fall through to the reduced write
+      }
+      try {
+        const parsed = JSON.parse(value) as {
+          state?: { tasks?: Array<{ assets?: Record<string, string> }> };
+        };
+        for (const t of parsed.state?.tasks ?? []) t.assets = {};
+        backing.setItem(name, JSON.stringify(parsed));
+      } catch {
+        // Out of options. Keeping the previous snapshot beats crashing the app.
+      }
+    },
+  };
+}
+
+/** Stand-in so the store can be constructed during SSR and in tests. */
+export function memoryStorage(): StateStorage {
+  const map = new Map<string, string>();
+  return {
+    getItem: (n) => map.get(n) ?? null,
+    removeItem: (n) => void map.delete(n),
+    setItem: (n, v) => void map.set(n, v),
+  };
 }

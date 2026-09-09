@@ -5,6 +5,7 @@ import { useTask, useXhs } from "@/lib/xhs/store";
 import { useFlow } from "@/lib/xhs/use-flow";
 import { parseFile } from "@/lib/parsers/file";
 import { RECOMMENDED_MAX_PAGES, MAX_PAGES, type XhsPage } from "@/lib/xhs/types";
+import { downscaleDataUrl } from "@/lib/xhs/image";
 
 const KIND_LABEL = { cover: "封面", content: "正文", ending: "结尾" } as const;
 
@@ -97,7 +98,11 @@ function PageCard({ page, index, total }: { page: XhsPage; index: number; total:
       for (const f of Array.from(files)) {
         try {
           const parsed = await parseFile(f);
-          if (parsed.format === "image" && parsed.dataUrl) added.push(addAsset(parsed.dataUrl));
+          // Bound it before it reaches the store: these are persisted now, and
+          // a raw phone screenshot is several megabytes of base64.
+          if (parsed.format === "image" && parsed.dataUrl) {
+            added.push(addAsset(await downscaleDataUrl(parsed.dataUrl)));
+          }
         } catch {
           // skip unreadable files; the rest of the batch still lands
         }
@@ -166,13 +171,32 @@ function PageCard({ page, index, total }: { page: XhsPage; index: number; total:
         <div className="mt-3 flex flex-wrap gap-2">
           {page.imageAssetIds.map((a) => (
             <span key={a} className="relative">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={assets[a] ?? ""}
-                alt="配图"
-                className="h-16 w-16 rounded-lg object-cover"
-                style={{ border: "1px solid var(--line-soft)" }}
-              />
+              {assets[a] ? (
+                /* eslint-disable-next-line @next/next/no-img-element */
+                <img
+                  src={assets[a]}
+                  alt="配图"
+                  className="h-16 w-16 rounded-lg object-cover"
+                  style={{ border: "1px solid var(--line-soft)" }}
+                />
+              ) : (
+                /* The bytes are gone (an old task saved before uploads were
+                   persisted, or a storage eviction). Say so here rather than
+                   letting it surface as a broken tag in the finished card. */
+                <span
+                  title="这张配图的数据已丢失，请重新上传"
+                  className="grid h-16 w-16 place-items-center rounded-lg text-center text-[10px] leading-tight"
+                  style={{
+                    border: "1px dashed var(--line-soft)",
+                    color: "var(--amber)",
+                    background: "rgba(178,98,0,0.06)",
+                  }}
+                >
+                  图片
+                  <br />
+                  已丢失
+                </span>
+              )}
               <button
                 type="button"
                 aria-label="移除这张配图"

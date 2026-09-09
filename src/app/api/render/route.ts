@@ -3,6 +3,7 @@ import { invokeAgent } from "@/lib/agents/invoke";
 import { loadSkill } from "@/lib/templates/loader";
 import { buildRenderPrompt } from "@/lib/xhs/prompts";
 import type { XhsPage } from "@/lib/xhs/types";
+import { resolveAssets } from "@/lib/xhs/assets";
 import { abortOn, SSE_HEADERS, toSseStream } from "@/lib/xhs/sse";
 
 export const runtime = "nodejs";
@@ -37,10 +38,7 @@ export async function POST(req: NextRequest) {
   // Swap the short `asset:<id>` tokens for the real bytes right before the
   // prompt is built — the client keeps the readable token in its state, the
   // agent needs something it can drop straight into an <img src>.
-  const inlined: XhsPage[] = pages.map((p) => ({
-    ...p,
-    imageAssetIds: (p.imageAssetIds ?? []).map((id) => assets[id] ?? id),
-  }));
+  const { pages: inlined } = resolveAssets(pages, assets);
 
   const prompt = buildRenderPrompt({ pages: inlined, skillBody: skill.body, coverHtml });
   const abortCtl = abortOn(req.signal);
