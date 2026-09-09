@@ -10,6 +10,7 @@ const KIND_LABEL = { cover: "封面", content: "正文", ending: "结尾" } as c
 
 export function StepOutline() {
   const pages = useXhs((s) => s.pages);
+  const requestedPages = useXhs((s) => s.requestedPages);
   const setStep = useXhs((s) => s.setStep);
   const allConfirmed = pages.length > 0 && pages.every((p) => p.confirmed);
 
@@ -28,6 +29,14 @@ export function StepOutline() {
             </span>
           )}
         </p>
+        {requestedPages !== null && requestedPages !== pages.length && (
+          <p
+            className="mt-2 rounded-xl px-3 py-2 text-[13px]"
+            style={{ background: "rgba(178,98,0,0.08)", color: "var(--amber)" }}
+          >
+            你要求 {requestedPages} 页，agent 给了 {pages.length} 页。可以直接用下面的 ＋ / × 增删，或者回上一步重新生成。
+          </p>
+        )}
       </header>
 
       <ol className="flex flex-col gap-3">

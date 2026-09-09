@@ -61,11 +61,16 @@ export function useFlow() {
           content: x.sourceText,
           format: x.format,
           mode: x.mode,
+          pageCount: x.pageCount,
         },
         {
           onOutline: (raw) => {
             const list = raw as Array<{ kind: PageKind; title: string; body: string }>;
-            useXhs.getState().setPages(list.map((p) => makePage(p.kind, p.title, p.body)));
+            const cur = useXhs.getState();
+            cur.setPages(list.map((p) => makePage(p.kind, p.title, p.body)));
+            // Record what was asked for so step ② can flag a count the agent
+            // did not honour, rather than silently reshaping the outline.
+            cur.setRequestedPages(typeof cur.pageCount === "number" ? cur.pageCount : null);
             got = true;
           },
           onMeta: (k, v) => useXhs.getState().pushLog("meta", `${k} = ${String(v)}`),

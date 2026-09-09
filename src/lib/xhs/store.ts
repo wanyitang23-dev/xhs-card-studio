@@ -2,7 +2,7 @@
 
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import type { ContentMode, CoverCandidate, PageKind, XhsPage } from "./types";
+import type { ContentMode, CoverCandidate, PageCountSetting, PageKind, XhsPage } from "./types";
 
 /** Which of the four steps the user is on. */
 export type Step = "source" | "outline" | "cover" | "render";
@@ -28,11 +28,14 @@ type State = {
   sourceText: string;
   format: string;
   mode: ContentMode;
+  pageCount: PageCountSetting;
   templateId: string;
   // ② outline
   pages: XhsPage[];
   outlineStatus: FlowStatus;
   outlineError?: string;
+  /** Exact page count asked for on the run that produced `pages`, if any. */
+  requestedPages: number | null;
   // ③ cover
   covers: CoverCandidate[];
   selectedCoverId?: string;
@@ -49,6 +52,7 @@ type State = {
   setSourceText: (t: string) => void;
   setFormat: (f: string) => void;
   setMode: (m: ContentMode) => void;
+  setPageCount: (n: PageCountSetting) => void;
   setTemplateId: (id: string) => void;
 
   setPages: (p: XhsPage[]) => void;
@@ -57,6 +61,7 @@ type State = {
   removePage: (id: string) => void;
   movePage: (id: string, dir: -1 | 1) => void;
   setOutlineStatus: (s: FlowStatus, err?: string) => void;
+  setRequestedPages: (n: number | null) => void;
 
   setCovers: (c: CoverCandidate[]) => void;
   patchCover: (id: string, patch: Partial<CoverCandidate>) => void;
@@ -77,9 +82,11 @@ const initial = {
   sourceText: "",
   format: "text",
   mode: "condensed" as ContentMode,
+  pageCount: "auto" as PageCountSetting,
   templateId: "card-xiaohongshu",
   pages: [] as XhsPage[],
   outlineStatus: "idle" as FlowStatus,
+  requestedPages: null as number | null,
   covers: [] as CoverCandidate[],
   finalHtml: "",
   renderStatus: "idle" as FlowStatus,
@@ -96,6 +103,7 @@ export const useXhs = create<State>()(
       setSourceText: (sourceText) => set({ sourceText }),
       setFormat: (format) => set({ format }),
       setMode: (mode) => set({ mode }),
+      setPageCount: (pageCount) => set({ pageCount }),
       setTemplateId: (templateId) => set({ templateId }),
 
       setPages: (pages) => set({ pages }),
@@ -125,6 +133,7 @@ export const useXhs = create<State>()(
           return { pages: reseal(next) };
         }),
       setOutlineStatus: (outlineStatus, outlineError) => set({ outlineStatus, outlineError }),
+      setRequestedPages: (requestedPages) => set({ requestedPages }),
 
       setCovers: (covers) => set({ covers }),
       patchCover: (id, patch) =>
@@ -144,7 +153,7 @@ export const useXhs = create<State>()(
         set((s) => ({ log: [...s.log.slice(-200), { ts: Date.now(), kind, text }] })),
       clearLog: () => set({ log: [] }),
       resetFlow: () =>
-        set({ ...initial, templateId: get().templateId, mode: get().mode }),
+        set({ ...initial, templateId: get().templateId, mode: get().mode, pageCount: get().pageCount }),
     }),
     {
       name: "xhs-anything",
@@ -155,6 +164,7 @@ export const useXhs = create<State>()(
         sourceText: s.sourceText,
         format: s.format,
         mode: s.mode,
+        pageCount: s.pageCount,
         templateId: s.templateId,
         pages: s.pages,
         selectedCoverId: s.selectedCoverId,

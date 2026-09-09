@@ -59,3 +59,21 @@ export type OutlineResponse = {
 export const MAX_PAGES = 18;
 export const RECOMMENDED_MAX_PAGES = 9;
 export const MIN_PAGES = 2;
+
+/**
+ * How many cards to produce.
+ *
+ * `"auto"` lets the agent decide from the content — but "decide" used to mean
+ * "split every beat onto its own card", which turned a 200-character post into
+ * seven pages. The auto branch now also has to honour a count the writer states
+ * in the copy itself ("4 张图讲清楚…"), and to leave short content short.
+ *
+ * A number is a hard target the agent is told to hit exactly, cover and ending
+ * included.
+ */
+export type PageCountSetting = "auto" | number;
+
+/** Clamp a user-entered count into something renderable. */
+export function clampPageCount(n: number): number {
+  return Math.max(MIN_PAGES, Math.min(MAX_PAGES, Math.round(n)));
+}

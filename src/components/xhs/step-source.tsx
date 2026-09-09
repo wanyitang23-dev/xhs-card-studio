@@ -6,6 +6,7 @@ import { useFlow } from "@/lib/xhs/use-flow";
 import { detectFormat } from "@/lib/parsers/auto";
 import { parseFile } from "@/lib/parsers/file";
 import type { ContentMode } from "@/lib/xhs/types";
+import { clampPageCount, MAX_PAGES, MIN_PAGES } from "@/lib/xhs/types";
 import { TemplateGallery } from "./template-gallery";
 
 const MODES: Array<{ id: ContentMode; label: string; hint: string }> = [
@@ -27,6 +28,8 @@ export function StepSource() {
   const setFormat = useXhs((s) => s.setFormat);
   const mode = useXhs((s) => s.mode);
   const setMode = useXhs((s) => s.setMode);
+  const pageCount = useXhs((s) => s.pageCount);
+  const setPageCount = useXhs((s) => s.setPageCount);
   const templateId = useXhs((s) => s.templateId);
   const setTemplateId = useXhs((s) => s.setTemplateId);
   const status = useXhs((s) => s.outlineStatus);
@@ -132,6 +135,61 @@ export function StepSource() {
               </button>
             );
           })}
+        </div>
+      </section>
+
+      <section>
+        <h2 className="mb-1 text-[15px] font-semibold text-[var(--ink)]">出几张图</h2>
+        <p className="mb-3 text-[13px] text-[var(--ink-faint)]">
+          封面和结尾都算在内。选「自动」时，如果你的文案里写了张数（比如「4 张图讲清楚…」），会按你写的来。
+        </p>
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setPageCount("auto")}
+            aria-pressed={pageCount === "auto"}
+            className="rounded-full px-4 py-1.5 text-[13px] transition-colors"
+            style={{
+              background: pageCount === "auto" ? "var(--coral)" : "var(--surface)",
+              color: pageCount === "auto" ? "#fff" : "var(--ink)",
+              border: `1px solid ${pageCount === "auto" ? "var(--coral)" : "var(--line-soft)"}`,
+            }}
+          >
+            自动
+          </button>
+          {[4, 6, 9].map((n) => (
+            <button
+              key={n}
+              type="button"
+              onClick={() => setPageCount(n)}
+              aria-pressed={pageCount === n}
+              className="rounded-full px-4 py-1.5 text-[13px] transition-colors"
+              style={{
+                background: pageCount === n ? "var(--coral)" : "var(--surface)",
+                color: pageCount === n ? "#fff" : "var(--ink)",
+                border: `1px solid ${pageCount === n ? "var(--coral)" : "var(--line-soft)"}`,
+              }}
+            >
+              {n} 张
+            </button>
+          ))}
+          <label className="flex items-center gap-1.5 text-[13px] text-[var(--ink-mute)]">
+            或
+            <input
+              type="number"
+              min={MIN_PAGES}
+              max={MAX_PAGES}
+              value={typeof pageCount === "number" ? pageCount : ""}
+              placeholder="自定"
+              onChange={(e) => {
+                const v = e.target.value.trim();
+                setPageCount(v === "" ? "auto" : clampPageCount(Number(v)));
+              }}
+              className="w-16 rounded-lg px-2 py-1 text-[13px] outline-none"
+              style={{ background: "var(--surface)", border: "1px solid var(--line-soft)" }}
+            />
+            张
+          </label>
         </div>
       </section>
 

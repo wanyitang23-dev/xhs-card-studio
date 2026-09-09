@@ -8,20 +8,44 @@
  */
 
 import { SHARED_DESIGN_DIRECTIVES } from "@/lib/templates/shared";
-import type { ContentMode, XhsPage } from "./types";
-import { MAX_PAGES, RECOMMENDED_MAX_PAGES } from "./types";
+import type { ContentMode, PageCountSetting, XhsPage } from "./types";
+import { MAX_PAGES, MIN_PAGES, RECOMMENDED_MAX_PAGES } from "./types";
 
 const MODE_RULES: Record<ContentMode, string> = {
   verbatim: `【表达方式: 保留原文】
 - 尽量沿用用户原文的句子和措辞, 不要改写成你自己的腔调。
-- 必须覆盖原文的每一个要点, 一个都不能丢。宁可多分几页, 也不要合并压缩。
+- 必须覆盖原文的每一个要点, 一个都不能丢。要点多到一页装不下时才拆页, 不要为了拆而拆。
 - 只允许做这些加工: 删掉纯过渡的废话、把长句拆短、给段落起一个短标题。`,
   condensed: `【表达方式: 可视化精简】
-- 把原文提炼成适合卡片阅读的短句, 一页一个核心观点。
+- 把原文提炼成适合卡片阅读的短句。
 - 每页正文控制在 60 字以内, 能用短语就不用整句。
 - 数字、对比、步骤优先做成可视化结构 (大数字 / 左右对比 / 编号步骤), 不要堆成一段话。
 - 提炼不等于丢信息: 原文的每个要点仍要有对应的页, 只是表达更短。`,
 };
+
+/**
+ * Paging guidance when the user has not fixed a count.
+ *
+ * The first version of this said "页数由内容的信息量决定" plus "一页只承载一个核心
+ * 观点", which reads to a model as *split every beat*. A 200-character post whose
+ * own headline promised "4 张图" came back as 7 pages. So the auto branch now
+ * leads with the two things that were missing: obey a count the copy states
+ * about itself, and leave short content short.
+ */
+const AUTO_PAGE_RULE = `- 页数由你判断, 但必须先看这两条:
+  1. **如果【用户内容】里写了张数, 就用那个数。** 例如标题是「4 张图讲清楚…」「三个习惯」,
+     那么总页数就是 4 / 3, 不要多也不要少 — 作者已经对读者承诺了这个数字。
+  2. **内容短就少分页, 不要硬凑。** 一句话能讲完的不要拆成两页; 联系紧密的两个点合成一页。
+     ${RECOMMENDED_MAX_PAGES} 页是上限参考, 不是目标 — 短文案做成 3-5 页很正常。
+- 只有当一页确实塞不下时才新开一页, 而不是每有一个句号就翻一页。`;
+
+/** Paging guidance when the user has fixed an exact count in the UI. */
+function exactPageRule(n: number): string {
+  return `- **总页数必须正好是 ${n} 页, 含封面和结尾。** 这是用户在界面上指定的, 不是建议值。
+  - 内容多于 ${n} 页装得下的量时: 合并相近的要点, 不要删掉任何要点。
+  - 内容不足 ${n} 页时: 把某个要点展开成一页, 或补一页承上启下的过渡, 但**不要编造原文没有的信息**。
+- 数一遍再输出: \`pages\` 数组的长度必须等于 ${n}。`;
+}
 
 /** Step ② — ask for a page-by-page plan as JSON, not HTML. */
 export function buildOutlinePrompt(args: {
@@ -29,7 +53,10 @@ export function buildOutlinePrompt(args: {
   format: string;
   mode: ContentMode;
   skillBody: string;
+  pageCount: PageCountSetting;
 }): string {
+  const pageRule =
+    args.pageCount === "auto" ? AUTO_PAGE_RULE : exactPageRule(args.pageCount);
   return `你正在把一篇内容拆解成**小红书图文卡片的分页大纲**。这一步**只输出 JSON**, 不要输出 HTML。
 
 【硬性规则】
@@ -49,8 +76,9 @@ export function buildOutlinePrompt(args: {
 
 【分页规则】
 - 第一页必须是 \`cover\`, 最后一页必须是 \`ending\`, 中间全是 \`content\`。
-- 页数由内容的信息量决定, **不是固定值**。一页只承载一个核心观点。
-- 总页数不得超过 ${MAX_PAGES} 页 (小红书单帖上限); 通常 ${RECOMMENDED_MAX_PAGES} 页以内阅读体验最好。
+- **封面和结尾都算在总页数里。**
+${pageRule}
+- 总页数不得低于 ${MIN_PAGES} 页, 不得超过 ${MAX_PAGES} 页 (小红书单帖上限)。
   如果内容多到装不下, 优先合并最次要的要点, 而不是删掉它们。
 - title 是卡片上的大字, 要短 (建议 12 字以内); body 是正文。
 

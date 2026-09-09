@@ -3,7 +3,15 @@ import { invokeAgent } from "@/lib/agents/invoke";
 import { loadSkill } from "@/lib/templates/loader";
 import { extractJson } from "@/lib/extract-json";
 import { buildOutlinePrompt } from "@/lib/xhs/prompts";
-import { MAX_PAGES, MIN_PAGES, type ContentMode, type OutlineResponse, type PageKind } from "@/lib/xhs/types";
+import {
+  clampPageCount,
+  MAX_PAGES,
+  MIN_PAGES,
+  type ContentMode,
+  type OutlineResponse,
+  type PageCountSetting,
+  type PageKind,
+} from "@/lib/xhs/types";
 import { abortOn, SSE_HEADERS, toSseStream } from "@/lib/xhs/sse";
 
 export const runtime = "nodejs";
@@ -15,6 +23,8 @@ type Body = {
   content: string;
   format?: string;
   mode?: ContentMode;
+  /** `"auto"`, or an exact card count the user set in the UI. */
+  pageCount?: PageCountSetting;
   model?: string;
   binOverride?: string;
 };
@@ -53,14 +63,27 @@ export async function POST(req: NextRequest) {
   } catch {
     return new Response("invalid JSON body", { status: 400 });
   }
-  const { agent, templateId, content, format = "text", mode = "condensed", model, binOverride } = body;
+  const {
+    agent,
+    templateId,
+    content,
+    format = "text",
+    mode = "condensed",
+    pageCount: rawPageCount = "auto",
+    model,
+    binOverride,
+  } = body;
   if (!agent || !templateId || !content?.trim()) {
     return new Response("missing required fields: agent, templateId, content", { status: 400 });
   }
   const skill = loadSkill(templateId);
   if (!skill) return new Response(`unknown template: ${templateId}`, { status: 400 });
 
-  const prompt = buildOutlinePrompt({ content, format, mode, skillBody: skill.body });
+  const pageCount: PageCountSetting =
+    typeof rawPageCount === "number" && Number.isFinite(rawPageCount)
+      ? clampPageCount(rawPageCount)
+      : "auto";
+  const prompt = buildOutlinePrompt({ content, format, mode, pageCount, skillBody: skill.body });
   const abortCtl = abortOn(req.signal);
   const source = invokeAgent({ agent, prompt, model, binOverride, signal: abortCtl.signal });
 
@@ -76,7 +99,7 @@ export async function POST(req: NextRequest) {
     },
     onDone: (send) => {
       const pages = normalizePages(extractJson<OutlineResponse>(acc));
-      if (pages) send("outline", { pages });
+      if (pages) send("outline", { pages, requested: pageCount });
       else
         send("error", {
           message:
