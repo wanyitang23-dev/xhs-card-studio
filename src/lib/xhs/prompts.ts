@@ -58,12 +58,24 @@ const CJK_TYPOGRAPHY_RULES = `【中文排版硬规则 — 优先级高于任何
  *
  * Fonts had loaded correctly in that render, so this is not a fallback-metrics
  * problem — it is that guessed coordinates cannot survive real text.
+ *
+ * The contrast half of the block came from the next render. The layout rule had
+ * worked — content was in flow, and the model had even labelled its own
+ * decoration layer — but a *background* was still absolutely positioned at a
+ * guessed `height:668px` while the white heading it was meant to sit on ran to
+ * 714px. 46px of near-white type ended up on the light paper at a contrast
+ * ratio of about 1.03:1. The original rule had listed 背景色块 as a legitimate
+ * decoration layer, which is exactly the exemption that let this through, so
+ * the two rules are now written to agree: what matters is not whether an
+ * element contains text, but whether any text's legibility depends on it.
  */
 const CARD_LAYOUT_RULES = `【卡片版式硬规则 — 优先级高于任何模板里的写法】
 - **卡片内容必须走正常文档流, 不许用手写坐标摆放。**
   卡片外壳: \`position:relative; width:<W>px; height:<H>px; overflow:hidden\`。
   内容区: \`display:flex; flex-direction:column\` + \`padding\`, 让每一块自然把下一块往下推。
-- **\`position:absolute\` 只能用在不含文字的装饰层** (背景色块 / 圆环 / 噪点 / 渐变 / 贴纸)。
+- **\`position:absolute\` 只能用在纯装饰层** (圆环 / 噪点 / 渐变光斑 / 贴纸 / 细线)。
+  判断标准不是「这个元素里有没有字」, 而是「有没有文字的可读性依赖它的位置或尺寸」 —
+  一块托着白字的深色背景**不是**装饰层, 见下面的配色规则。
   任何带文字的块都**不许**写 \`top:1018px\` 这种猜出来的坐标 — 标题只要比你预估多折一行,
   就会直接压在下一块上。这是实际输出里出现最多的缺陷, 不是理论风险。
 - **页脚 (@账号 / 日期 / 页码) 也放进同一个 flex 流**, 用 \`margin-top:auto\` 顶到底部。
@@ -71,6 +83,18 @@ const CARD_LAYOUT_RULES = `【卡片版式硬规则 — 优先级高于任何模
 - 正文区用 \`flex:1; min-height:0\`; 内容偏多时**减字号或减内边距**, 不要靠上移坐标去挤。
 - 不要用 \`<br>\` 拼行数来对齐坐标; 让文字自己折行, 版式要能容纳多折一行的情况。
 - 自检: 输出前想一遍「如果这个标题折成 N+1 行, 下面那块会不会被压到」。会, 就说明你用错了绝对定位。
+
+【配色硬规则 — 可读性不许依赖猜出来的尺寸】
+- **浅色文字必须放在深色块「内部」, 由文字把块撑开。**
+  写法: 深色块就是文字的父容器 (\`background:<深色>; padding:…\`), 文字在它里面走正常流。
+- **禁止**「绝对定位一个固定高度的深色背景 + 文字另外走流」这种组合。
+  背景色块虽然不含文字, 但白字能不能看见取决于它的高度 — 这不算装饰层, 不适用上面那条豁免。
+  实测缺陷: \`.block-clay{position:absolute;height:668px}\` 配白色标题, 标题实际折了 5 行、
+  底部到 714px, 于是有 46px 的白字落在浅色纸面上, 对比度约 1.03:1, 完全看不见。
+- 判据一句话: **谁决定了文字的颜色, 谁就必须包住这段文字。**
+- 想要「上深下浅」的分割版式: 让深色区是一个 flex 子项, 高度由它内部的内容撑出来,
+  浅色区是下一个 flex 子项。不要用固定 px 高度去切分卡片。
+- 同理: 深色文字压在浅色图片/浅色块上时, 也要保证那块背景一定覆盖到文字底部。
 
 `;
 
