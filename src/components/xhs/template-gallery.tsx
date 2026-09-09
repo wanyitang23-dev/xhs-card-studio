@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useElementSize } from "@/lib/xhs/use-element-size";
+import { ScaledDocument } from "./scaled-document";
 import { useTemplates, type TemplateDef } from "@/lib/templates";
 import { aspectBadge, parsePageCount, parseViewport } from "@/lib/xhs/aspect";
 
@@ -234,11 +235,11 @@ function ZoomModal({ tpl, onClose }: { tpl: TemplateDef; onClose: () => void }) 
             ×
           </button>
         </header>
-        <iframe
-          title={`${tpl.zhName} 完整预览`}
+        <ScaledDocument
+          authoredWidth={parseViewport(tpl.aspectHint).width}
           src={`/api/templates/${encodeURIComponent(tpl.id)}/preview`}
-          sandbox="allow-scripts allow-same-origin"
-          className="min-h-0 flex-1 border-0"
+          title={`${tpl.zhName} 完整预览`}
+          className="min-h-0 flex-1"
           style={{ background: "#fff" }}
         />
       </div>

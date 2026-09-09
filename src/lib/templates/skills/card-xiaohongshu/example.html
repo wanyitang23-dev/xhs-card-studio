@@ -6,9 +6,13 @@
 <script src="https://cdn.tailwindcss.com"></script>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;600;700;900&family=Inter:wght@500;600;700&display=swap" rel="stylesheet">
 <style>
+  /* Without this, `padding` is added on top of the box, so a 1080-wide card
+     measures 1208 and `aspect-ratio` computes a 1600px height — 0.755, not
+     the 0.750 Xiaohongshu expects. */
+  * { box-sizing:border-box; }
   body { margin:0; background:#f3eee5; font-family:'Noto Sans SC',sans-serif; padding:36px 0; -webkit-font-smoothing:antialiased; }
   .deck { display:flex; flex-direction:column; align-items:center; gap:24px; }
-  .card { width:1080px; max-width:96vw; aspect-ratio:3/4; border-radius:32px; overflow:hidden; position:relative; padding:80px 64px; display:flex; flex-direction:column; box-shadow:0 24px 60px -20px rgba(0,0,0,0.18); }
+  .card { width:1080px; height:1440px; flex:0 0 auto; border-radius:32px; overflow:hidden; position:relative; padding:80px 64px; display:flex; flex-direction:column; box-shadow:0 24px 60px -20px rgba(0,0,0,0.18); }
   .c1 { background:linear-gradient(160deg,#f7d2c2 0%,#f3a98a 100%); color:#3a1d10; }
   .c2 { background:linear-gradient(160deg,#fff7e6 0%,#ffe4b8 100%); color:#3a2e10; }
   .c3 { background:linear-gradient(160deg,#e8f0e3 0%,#bcd6b3 100%); color:#1f3a1f; }
