@@ -22,48 +22,68 @@ export function clampNegativeLetterSpacing(html: string): string {
   );
 }
 
+/** Every index where a document could begin, in order. */
+function starts(s: string, re: RegExp): number[] {
+  const out: number[] = [];
+  const g = new RegExp(re.source, re.flags.includes("g") ? re.flags : re.flags + "g");
+  for (let m = g.exec(s); m; m = g.exec(s)) out.push(m.index);
+  return out;
+}
+
+/**
+ * Slice out the last *complete* document that begins at one of `openings`.
+ *
+ * "Complete" means it has a closing tag of its own — found by scanning forward
+ * from the opening, never by taking the file's last `</html>`. That distinction
+ * is the whole point: an agent that answers with a draft and then a revision
+ * used to have both spliced into one string, so the second document's `<head>`
+ * landed inside the first one's `<body>` and its CSS rendered as page text.
+ *
+ * Preference is for the *last* complete document, because a model that emits
+ * two is revising forward — the later one is the answer. Falling back to the
+ * last opening with no close covers the streaming case, where the document
+ * currently arriving is legitimately unfinished.
+ */
+function lastDocument(s: string, openings: number[], close: string): string | null {
+  if (openings.length === 0) return null;
+  for (let i = openings.length - 1; i >= 0; i--) {
+    const from = openings[i];
+    const end = s.indexOf(close, from);
+    if (end !== -1) return s.slice(from, end + close.length);
+  }
+  // Nothing closed yet — still streaming. Show what has arrived.
+  return s.slice(openings[openings.length - 1]);
+}
+
 /**
  * Pulls the actual HTML document out of an agent's possibly chatty response.
- * Agents sometimes wrap output in ```html ... ``` fences or prepend explanation.
+ * Agents wrap output in ```html … ``` fences, prepend explanation, and
+ * sometimes answer with more than one document.
  */
 export function extractHtml(streamed: string): string {
   if (!streamed) return "";
   streamed = clampNegativeLetterSpacing(streamed);
 
-  // 1. Strip leading ```html fence (and trailing ```)
+  // 1. A real document wins, wherever it sits. Locating it by its own tags
+  //    rather than by fences also sidesteps the case where the *card content*
+  //    contains a ``` run, which used to truncate the document at that point.
+  const byDoctype = lastDocument(streamed, starts(streamed, /<!DOCTYPE\s+html/i), "</html>");
+  if (byDoctype) return byDoctype;
+
+  const byHtmlTag = lastDocument(streamed, starts(streamed, /<html[\s>]/i), "</html>");
+  if (byHtmlTag) return byHtmlTag;
+
+  // 2. No document tags at all — a fragment, possibly inside a fence.
   const fence = streamed.match(/```(?:html|HTML)?\s*([\s\S]*?)```/);
   if (fence) {
     const inner = fence[1].trim();
     if (inner.startsWith("<")) return inner;
   }
 
-  // 2. Find <!DOCTYPE html ... </html>
-  const doctypeStart = streamed.search(/<!DOCTYPE\s+html/i);
-  if (doctypeStart !== -1) {
-    const closeIdx = streamed.lastIndexOf("</html>");
-    if (closeIdx !== -1) {
-      return streamed.slice(doctypeStart, closeIdx + "</html>".length);
-    }
-    // streaming, partial — return from doctype to end
-    return streamed.slice(doctypeStart);
-  }
+  // 3. Begins with a root element — trust it.
+  if (streamed.trimStart().startsWith("<")) return streamed;
 
-  // 3. Find <html> ... </html>
-  const htmlStart = streamed.search(/<html[\s>]/i);
-  if (htmlStart !== -1) {
-    const closeIdx = streamed.lastIndexOf("</html>");
-    if (closeIdx !== -1) {
-      return streamed.slice(htmlStart, closeIdx + "</html>".length);
-    }
-    return streamed.slice(htmlStart);
-  }
-
-  // 4. If it begins with < (root element), trust it
-  if (streamed.trimStart().startsWith("<")) {
-    return streamed;
-  }
-
-  // 5. Wrap whatever we got in a minimal scaffold so something renders
+  // 4. Wrap whatever we got so something renders.
   return `<!DOCTYPE html><html><head><meta charset="utf-8"><script src="https://cdn.tailwindcss.com"></script></head><body class="p-8 font-sans"><pre class="whitespace-pre-wrap">${escape(
     streamed,
   )}</pre></body></html>`;
