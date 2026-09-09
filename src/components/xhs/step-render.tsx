@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef } from "react";
 import { ScaledDocument } from "./scaled-document";
-import { useXhs } from "@/lib/xhs/store";
+import { useTask, useXhs } from "@/lib/xhs/store";
 import { useFlow } from "@/lib/xhs/use-flow";
 import { previewHtml } from "@/lib/extract-html";
 import { ExportMenu } from "@/components/export-menu";
@@ -11,16 +11,16 @@ import { useTemplates } from "@/lib/templates";
 import { CaptionPane } from "./caption-pane";
 
 export function StepRender() {
-  const html = useXhs((s) => s.finalHtml);
-  const status = useXhs((s) => s.renderStatus);
-  const error = useXhs((s) => s.renderError);
-  const pages = useXhs((s) => s.pages);
-  const templateId = useXhs((s) => s.templateId);
+  const html = useTask((t) => t.finalHtml);
+  const status = useTask((t) => t.renderStatus);
+  const error = useTask((t) => t.renderError);
+  const pages = useTask((t) => t.pages);
+  const templateId = useTask((t) => t.templateId);
   const setStep = useXhs((s) => s.setStep);
   const zoom = useXhs((s) => s.previewZoom);
   const setZoom = useXhs((s) => s.setPreviewZoom);
-  const caption = useXhs((s) => s.caption);
-  const captionStatus = useXhs((s) => s.captionStatus);
+  const caption = useTask((t) => t.caption);
+  const captionStatus = useTask((t) => t.captionStatus);
   const templates = useTemplates();
   const { runRender, runCaption, cancel } = useFlow();
   const iframeRef = useRef<HTMLIFrameElement | null>(null);

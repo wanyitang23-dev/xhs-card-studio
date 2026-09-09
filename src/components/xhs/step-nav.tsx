@@ -1,6 +1,6 @@
 "use client";
 
-import { STEP_ORDER, useXhs, type Step } from "@/lib/xhs/store";
+import { STEP_ORDER, useTask, useXhs, type Step } from "@/lib/xhs/store";
 
 const LABELS: Record<Step, { n: string; title: string; hint: string }> = {
   source: { n: "1", title: "贴文章", hint: "原文 / 模板 / 表达方式" },
@@ -18,10 +18,10 @@ function reachable(step: Step, hasPages: boolean, hasCover: boolean): boolean {
 }
 
 export function StepNav() {
-  const step = useXhs((s) => s.step);
+  const step = useTask((t) => t.step);
   const setStep = useXhs((s) => s.setStep);
-  const pages = useXhs((s) => s.pages);
-  const selectedCoverId = useXhs((s) => s.selectedCoverId);
+  const pages = useTask((t) => t.pages);
+  const selectedCoverId = useTask((t) => t.selectedCoverId);
 
   const activeIdx = STEP_ORDER.indexOf(step);
 

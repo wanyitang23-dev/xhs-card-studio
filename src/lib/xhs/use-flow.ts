@@ -3,38 +3,55 @@
 import { useCallback, useRef } from "react";
 import { useStore } from "@/lib/store";
 import { streamSse } from "./sse-client";
-import { makePage, useXhs } from "./store";
+import { activeTask, makePage, useXhs, type XhsTask } from "./store";
 import type { Caption, PageKind } from "./types";
 import { coverLabel, mergeCoverRun } from "./cover-directions";
 
 /**
- * Drives the three agent-backed steps. Each returns when its stream ends;
- * `cancel()` aborts whatever is in flight.
+ * Drives the agent-backed steps.
  *
- * Agent / model / binary-override selection still lives in the original store
- * (shared with the top bar), so this hook reads it from there rather than
- * duplicating that state.
+ * Every run captures the task id it started on and writes back through
+ * `patchTask(id, …)`. That is what makes several articles safe to run at once:
+ * the user can switch tasks mid-render and the output still lands on the task
+ * that asked for it.
+ *
+ * Abort controllers are keyed by `${taskId}:${kind}` for the same reason —
+ * cancelling one task must not stop another.
  */
 export function useFlow() {
-  const abortRef = useRef<AbortController | null>(null);
-  const captionAbortRef = useRef<AbortController | null>(null);
-  /** One controller per cover direction, so tiles cancel independently. */
-  const coverAbortsRef = useRef<Map<string, AbortController>>(new Map());
+  const aborts = useRef<Map<string, AbortController>>(new Map());
 
-  const cancel = useCallback(() => {
-    abortRef.current?.abort();
-    abortRef.current = null;
-    captionAbortRef.current?.abort();
-    captionAbortRef.current = null;
-    for (const c of coverAbortsRef.current.values()) c.abort();
-    coverAbortsRef.current.clear();
+  const abortKey = (taskId: string, kind: string) => `${taskId}:${kind}`;
+
+  const start = useCallback((taskId: string, kind: string) => {
+    const key = abortKey(taskId, kind);
+    aborts.current.get(key)?.abort();
+    const ctl = new AbortController();
+    aborts.current.set(key, ctl);
+    return ctl;
+  }, []);
+
+  const finish = useCallback((taskId: string, kind: string, ctl: AbortController) => {
+    const key = abortKey(taskId, kind);
+    if (aborts.current.get(key) === ctl) aborts.current.delete(key);
+  }, []);
+
+  /** Stop everything in flight for one task. */
+  const cancel = useCallback((taskId?: string) => {
+    const id = taskId ?? useXhs.getState().activeId;
+    for (const [key, ctl] of aborts.current) {
+      if (key.startsWith(`${id}:`)) {
+        ctl.abort();
+        aborts.current.delete(key);
+      }
+    }
   }, []);
 
   /** Agent config from the shared top-bar store, plus a guard for "none picked". */
   const agentArgs = useCallback(() => {
     const s = useStore.getState();
     const agent = s.selectedAgent;
-    if (!agent) throw new Error("请先在顶部选择一个 agent");
+    if (!agent) throw new Error("请先在右上角选择一个 agent");
     const model = s.agentModels[agent];
     const binOverride = s.agentBinOverrides[agent]?.trim() || undefined;
     return {
@@ -44,222 +61,216 @@ export function useFlow() {
     };
   }, []);
 
-  const fresh = useCallback(() => {
-    cancel();
-    const ctl = new AbortController();
-    abortRef.current = ctl;
-    return ctl;
-  }, [cancel]);
+  /** Snapshot of the task a run targets, plus a bound patcher. */
+  const target = useCallback(() => {
+    const s = useXhs.getState();
+    const task = activeTask(s);
+    const patch = (p: Partial<XhsTask> | ((t: XhsTask) => Partial<XhsTask>)) =>
+      useXhs.getState().patchTask(task.id, p);
+    const read = () => useXhs.getState().tasks.find((t) => t.id === task.id);
+    return { task, patch, read };
+  }, []);
 
   /** ② Ask the agent to split the source into a page list. */
   const runOutline = useCallback(async () => {
-    const x = useXhs.getState();
-    const ctl = fresh();
-    x.clearLog();
-    x.setOutlineStatus("running", undefined);
+    const { task, patch, read } = target();
+    const ctl = start(task.id, "outline");
+    patch({ log: [], outlineStatus: "running", outlineError: undefined });
     try {
-      const args = agentArgs();
       let got = false;
       await streamSse(
         "/api/outline",
         {
-          ...args,
-          templateId: x.templateId,
-          content: x.sourceText,
-          format: x.format,
-          mode: x.mode,
-          pageCount: x.pageCount,
+          ...agentArgs(),
+          templateId: task.templateId,
+          content: task.sourceText,
+          format: task.format,
+          mode: task.mode,
+          pageCount: task.pageCount,
         },
         {
           onOutline: (raw) => {
             const list = raw as Array<{ kind: PageKind; title: string; body: string }>;
-            const cur = useXhs.getState();
-            cur.setPages(list.map((p) => makePage(p.kind, p.title, p.body)));
-            // Record what was asked for so step ② can flag a count the agent
-            // did not honour, rather than silently reshaping the outline.
-            cur.setRequestedPages(typeof cur.pageCount === "number" ? cur.pageCount : null);
+            patch({
+              pages: list.map((p) => makePage(p.kind, p.title, p.body)),
+              // Record what was asked for so step ② can flag a count the agent
+              // did not honour, rather than silently reshaping the outline.
+              requestedPages: typeof task.pageCount === "number" ? task.pageCount : null,
+            });
             got = true;
           },
-          onMeta: (k, v) => useXhs.getState().pushLog("meta", `${k} = ${String(v)}`),
-          onError: (m) => useXhs.getState().setOutlineStatus("error", m),
+          onError: (m) => patch({ outlineStatus: "error", outlineError: m }),
         },
         ctl.signal,
       );
-      const cur = useXhs.getState();
-      if (got) {
-        cur.setOutlineStatus("done");
-        cur.setStep("outline");
-      } else if (cur.outlineStatus !== "error") {
-        cur.setOutlineStatus("error", "agent 没有返回可用的分页大纲，请重试。");
+      const cur = read();
+      if (got) patch({ outlineStatus: "done", step: "outline" });
+      else if (cur?.outlineStatus !== "error") {
+        patch({ outlineStatus: "error", outlineError: "agent 没有返回可用的分页大纲，请重试。" });
       }
     } catch (err) {
-      if ((err as Error)?.name === "AbortError") {
-        useXhs.getState().setOutlineStatus("idle");
-        return;
-      }
-      useXhs.getState().setOutlineStatus("error", (err as Error)?.message ?? String(err));
+      if ((err as Error)?.name === "AbortError") patch({ outlineStatus: "idle" });
+      else patch({ outlineStatus: "error", outlineError: (err as Error)?.message ?? String(err) });
+    } finally {
+      finish(task.id, "outline", ctl);
     }
-  }, [agentArgs, fresh]);
+  }, [agentArgs, finish, start, target]);
 
   /**
    * ③ Generate cover candidates.
    *
    * Takes whichever directions the caller wants, so the UI can redo one tile
-   * without discarding the other two — regenerating all three costs three agent
-   * runs and throws away covers the user was happy with.
-   *
-   * Each direction gets its own AbortController: cancelling one must not kill
-   * the siblings, and they run concurrently because three sequential runs would
-   * take three times as long for no benefit.
+   * without discarding the other two. Each direction gets its own controller:
+   * cancelling one must not kill the siblings, and they run concurrently
+   * because three sequential runs would take three times as long.
    */
-  const runCovers = useCallback(async (directions: string[]) => {
-    const x = useXhs.getState();
-    const cover = x.pages[0];
-    if (!cover) throw new Error("还没有分页，请先生成大纲");
-    const args = agentArgs();
+  const runCovers = useCallback(
+    async (directions: string[]) => {
+      const { task, patch, read } = target();
+      const cover = task.pages[0];
+      if (!cover) throw new Error("还没有分页，请先生成大纲");
+      const args = agentArgs();
 
-    // Reset only the tiles being regenerated; keep every other tile's html.
-    x.setCovers(
-      mergeCoverRun(x.covers, directions, (id) => ({
-        id,
-        label: coverLabel(id),
-        html: "",
-        status: "running" as const,
-      })),
-    );
-    // Only drop the selection if the selected tile is one being replaced.
-    if (x.selectedCoverId && directions.includes(x.selectedCoverId)) x.selectCover(undefined);
+      // Reset only the tiles being regenerated; keep every other tile's html.
+      patch((t) => ({
+        covers: mergeCoverRun(t.covers, directions, (id) => ({
+          id,
+          label: coverLabel(id),
+          html: "",
+          status: "running" as const,
+        })),
+        // Only drop the selection if the selected tile is one being replaced.
+        ...(t.selectedCoverId && directions.includes(t.selectedCoverId)
+          ? { selectedCoverId: undefined }
+          : {}),
+      }));
 
-    await Promise.all(
-      directions.map(async (direction) => {
-        const ctl = new AbortController();
-        coverAbortsRef.current.get(direction)?.abort();
-        coverAbortsRef.current.set(direction, ctl);
-        try {
-          await streamSse(
-            "/api/cover",
-            {
-              ...args,
-              templateId: x.templateId,
-              title: cover.title,
-              body: cover.body,
-              direction,
-            },
-            {
-              onDelta: (t) =>
-                useXhs.setState((s) => ({
-                  covers: s.covers.map((c) =>
-                    c.id === direction ? { ...c, html: c.html + t } : c,
-                  ),
-                })),
-              // A file-write rescue replaces the accumulated text rather than
-              // appending to it — same contract as the main pipeline.
-              onHtml: (t) => useXhs.getState().patchCover(direction, { html: t }),
-              onError: (m) =>
-                useXhs.getState().patchCover(direction, { status: "error", error: m }),
-            },
-            ctl.signal,
-          );
-          const c = useXhs.getState().covers.find((v) => v.id === direction);
-          if (c?.status === "running") {
-            useXhs.getState().patchCover(direction, {
-              status: c.html.trim() ? "done" : "error",
-              error: c.html.trim() ? undefined : "agent 没有返回内容",
+      const patchCover = (id: string, p: Partial<import("./types").CoverCandidate>) =>
+        patch((t) => ({ covers: t.covers.map((c) => (c.id === id ? { ...c, ...p } : c)) }));
+
+      await Promise.all(
+        directions.map(async (direction) => {
+          const ctl = start(task.id, `cover:${direction}`);
+          try {
+            await streamSse(
+              "/api/cover",
+              {
+                ...args,
+                templateId: task.templateId,
+                title: cover.title,
+                body: cover.body,
+                direction,
+              },
+              {
+                onDelta: (t) =>
+                  patch((cur) => ({
+                    covers: cur.covers.map((c) =>
+                      c.id === direction ? { ...c, html: c.html + t } : c,
+                    ),
+                  })),
+                // A file-write rescue replaces the accumulated text rather than
+                // appending to it — same contract as the main pipeline.
+                onHtml: (t) => patchCover(direction, { html: t }),
+                onError: (m) => patchCover(direction, { status: "error", error: m }),
+              },
+              ctl.signal,
+            );
+            const c = read()?.covers.find((v) => v.id === direction);
+            if (c?.status === "running") {
+              patchCover(direction, {
+                status: c.html.trim() ? "done" : "error",
+                error: c.html.trim() ? undefined : "agent 没有返回内容",
+              });
+            }
+          } catch (err) {
+            if ((err as Error)?.name === "AbortError") {
+              patchCover(direction, { status: "error", error: "已取消" });
+              return;
+            }
+            patchCover(direction, {
+              status: "error",
+              error: (err as Error)?.message ?? String(err),
             });
+          } finally {
+            finish(task.id, `cover:${direction}`, ctl);
           }
-        } catch (err) {
-          if ((err as Error)?.name === "AbortError") {
-            useXhs.getState().patchCover(direction, { status: "error", error: "已取消" });
-            return;
-          }
-          useXhs.getState().patchCover(direction, {
-            status: "error",
-            error: (err as Error)?.message ?? String(err),
-          });
-        } finally {
-          if (coverAbortsRef.current.get(direction) === ctl) {
-            coverAbortsRef.current.delete(direction);
-          }
-        }
-      }),
-    );
-  }, [agentArgs]);
+        }),
+      );
+    },
+    [agentArgs, finish, start, target],
+  );
 
   /** Stop one cover mid-flight, leaving the others running. */
   const cancelCover = useCallback((direction: string) => {
-    coverAbortsRef.current.get(direction)?.abort();
-    coverAbortsRef.current.delete(direction);
+    const id = useXhs.getState().activeId;
+    const key = `${id}:cover:${direction}`;
+    aborts.current.get(key)?.abort();
+    aborts.current.delete(key);
   }, []);
 
   /** ④ Render the confirmed outline into the finished page. */
   const runRender = useCallback(async () => {
-    const x = useXhs.getState();
-    const ctl = fresh();
-    x.setFinalHtml("");
-    x.setRenderStatus("running", undefined);
+    const { task, patch, read } = target();
+    const ctl = start(task.id, "render");
+    patch({ finalHtml: "", renderStatus: "running", renderError: undefined });
     try {
-      const cover = x.covers.find((c) => c.id === x.selectedCoverId);
+      const cover = task.covers.find((c) => c.id === task.selectedCoverId);
       await streamSse(
         "/api/render",
         {
           ...agentArgs(),
-          templateId: x.templateId,
-          pages: x.pages,
-          mode: x.mode,
-          assets: x.assets,
+          templateId: task.templateId,
+          pages: task.pages,
+          mode: task.mode,
+          assets: task.assets,
           ...(cover?.html ? { coverHtml: cover.html } : {}),
         },
         {
-          onDelta: (t) => useXhs.getState().appendFinalHtml(t),
-          onHtml: (t) => useXhs.getState().setFinalHtml(t),
-          onMeta: (k, v) => useXhs.getState().pushLog("meta", `${k} = ${String(v)}`),
-          onError: (m) => useXhs.getState().setRenderStatus("error", m),
+          onDelta: (t) => patch((cur) => ({ finalHtml: cur.finalHtml + t })),
+          onHtml: (t) => patch({ finalHtml: t }),
+          onError: (m) => patch({ renderStatus: "error", renderError: m }),
         },
         ctl.signal,
       );
-      const cur = useXhs.getState();
-      if (cur.renderStatus !== "error") cur.setRenderStatus("done");
+      if (read()?.renderStatus !== "error") patch({ renderStatus: "done" });
     } catch (err) {
-      if ((err as Error)?.name === "AbortError") {
-        useXhs.getState().setRenderStatus("idle");
-        return;
-      }
-      useXhs.getState().setRenderStatus("error", (err as Error)?.message ?? String(err));
+      if ((err as Error)?.name === "AbortError") patch({ renderStatus: "idle" });
+      else patch({ renderStatus: "error", renderError: (err as Error)?.message ?? String(err) });
+    } finally {
+      finish(task.id, "render", ctl);
     }
-  }, [agentArgs, fresh]);
+  }, [agentArgs, finish, start, target]);
 
   /** ④-b Write the caption that goes beside the images. */
   const runCaption = useCallback(async () => {
-    const x = useXhs.getState();
-    if (!x.pages.length) return;
-    // Deliberately not sharing the render's AbortController: the caption is a
-    // separate, cheap call and cancelling the render should not kill it.
-    const ctl = new AbortController();
-    captionAbortRef.current?.abort();
-    captionAbortRef.current = ctl;
-    x.setCaptionStatus("running", undefined);
+    const { task, patch, read } = target();
+    if (!task.pages.length) return;
+    const ctl = start(task.id, "caption");
+    patch({ captionStatus: "running", captionError: undefined });
     try {
       await streamSse(
         "/api/caption",
-        { ...agentArgs(), pages: x.pages, mode: x.mode },
+        { ...agentArgs(), pages: task.pages, mode: task.mode },
         {
-          onCaption: (c) => useXhs.getState().setCaption(c as Caption),
-          onError: (m) => useXhs.getState().setCaptionStatus("error", m),
+          onCaption: (c) => patch({ caption: c as Caption }),
+          onError: (m) => patch({ captionStatus: "error", captionError: m }),
         },
         ctl.signal,
       );
-      const cur = useXhs.getState();
-      if (cur.captionStatus !== "error") {
-        cur.setCaptionStatus(cur.caption ? "done" : "error", cur.caption ? undefined : "agent 没有返回配文");
+      const cur = read();
+      if (cur?.captionStatus !== "error") {
+        patch({
+          captionStatus: cur?.caption ? "done" : "error",
+          captionError: cur?.caption ? undefined : "agent 没有返回配文",
+        });
       }
     } catch (err) {
-      if ((err as Error)?.name === "AbortError") {
-        useXhs.getState().setCaptionStatus("idle");
-        return;
-      }
-      useXhs.getState().setCaptionStatus("error", (err as Error)?.message ?? String(err));
+      if ((err as Error)?.name === "AbortError") patch({ captionStatus: "idle" });
+      else patch({ captionStatus: "error", captionError: (err as Error)?.message ?? String(err) });
+    } finally {
+      finish(task.id, "caption", ctl);
     }
-  }, [agentArgs]);
+  }, [agentArgs, finish, start, target]);
 
   return { runOutline, runCovers, runRender, runCaption, cancelCover, cancel };
 }

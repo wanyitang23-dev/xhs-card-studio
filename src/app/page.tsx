@@ -9,8 +9,9 @@ import { StepOutline } from "@/components/xhs/step-outline";
 import { StepCover } from "@/components/xhs/step-cover";
 import { StepRender } from "@/components/xhs/step-render";
 import { TemplateUpload } from "@/components/xhs/template-upload";
+import { TaskSidebar } from "@/components/xhs/task-sidebar";
 import { useStore, type AgentInfo } from "@/lib/store";
-import { useXhs } from "@/lib/xhs/store";
+import { useTask, useXhs } from "@/lib/xhs/store";
 
 export default function Home() {
   const welcomeAck = useStore((s) => s.welcomeAck);
@@ -18,7 +19,7 @@ export default function Home() {
   const agents = useStore((s) => s.agents);
   const setAgents = useStore((s) => s.setAgents);
   const locale = useStore((s) => s.locale);
-  const step = useXhs((s) => s.step);
+  const step = useTask((t) => t.step);
   const resetFlow = useXhs((s) => s.resetFlow);
 
   const [welcomeOpen, setWelcomeOpen] = useState(false);
@@ -102,11 +103,14 @@ export default function Home() {
         <StepNav />
       </div>
 
-      <div className="min-h-0 flex-1 overflow-auto">
-        {step === "source" && <StepSource />}
-        {step === "outline" && <StepOutline />}
-        {step === "cover" && <StepCover />}
-        {step === "render" && <StepRender />}
+      <div className="flex min-h-0 flex-1">
+        <TaskSidebar />
+        <div className="min-h-0 min-w-0 flex-1 overflow-auto">
+          {step === "source" && <StepSource />}
+          {step === "outline" && <StepOutline />}
+          {step === "cover" && <StepCover />}
+          {step === "render" && <StepRender />}
+        </div>
       </div>
 
       {welcomeOpen && <WelcomeModal onClose={() => setWelcomeOpen(false)} />}

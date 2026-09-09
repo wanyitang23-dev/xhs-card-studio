@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useRef } from "react";
-import { useXhs } from "@/lib/xhs/store";
+import { useTask, useXhs } from "@/lib/xhs/store";
 import { useFlow } from "@/lib/xhs/use-flow";
 import { detectFormat } from "@/lib/parsers/auto";
 import { parseFile } from "@/lib/parsers/file";
@@ -23,17 +23,17 @@ const MODES: Array<{ id: ContentMode; label: string; hint: string }> = [
 ];
 
 export function StepSource() {
-  const sourceText = useXhs((s) => s.sourceText);
+  const sourceText = useTask((t) => t.sourceText);
   const setSourceText = useXhs((s) => s.setSourceText);
   const setFormat = useXhs((s) => s.setFormat);
-  const mode = useXhs((s) => s.mode);
+  const mode = useTask((t) => t.mode);
   const setMode = useXhs((s) => s.setMode);
-  const pageCount = useXhs((s) => s.pageCount);
+  const pageCount = useTask((t) => t.pageCount);
   const setPageCount = useXhs((s) => s.setPageCount);
-  const templateId = useXhs((s) => s.templateId);
+  const templateId = useTask((t) => t.templateId);
   const setTemplateId = useXhs((s) => s.setTemplateId);
-  const status = useXhs((s) => s.outlineStatus);
-  const error = useXhs((s) => s.outlineError);
+  const status = useTask((t) => t.outlineStatus);
+  const error = useTask((t) => t.outlineError);
   const { runOutline, cancel } = useFlow();
   const fileRef = useRef<HTMLInputElement | null>(null);
 
@@ -223,7 +223,7 @@ export function StepSource() {
         {running && (
           <button
             type="button"
-            onClick={cancel}
+            onClick={() => cancel()}
             className="text-[13px] text-[var(--ink-faint)] underline underline-offset-2"
           >
             取消

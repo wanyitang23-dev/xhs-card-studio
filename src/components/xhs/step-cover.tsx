@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import { useXhs } from "@/lib/xhs/store";
+import { useTask, useXhs } from "@/lib/xhs/store";
 import { useFlow } from "@/lib/xhs/use-flow";
 import { previewHtml } from "@/lib/extract-html";
 import { useElementSize } from "@/lib/xhs/use-element-size";
@@ -12,11 +12,11 @@ import { COVER_DIRECTION_IDS, coverLabel } from "@/lib/xhs/cover-directions";
 
 
 export function StepCover() {
-  const covers = useXhs((s) => s.covers);
-  const selectedCoverId = useXhs((s) => s.selectedCoverId);
+  const covers = useTask((t) => t.covers);
+  const selectedCoverId = useTask((t) => t.selectedCoverId);
   const selectCover = useXhs((s) => s.selectCover);
   const setStep = useXhs((s) => s.setStep);
-  const cover = useXhs((s) => s.pages[0]);
+  const cover = useTask((t) => t.pages[0]);
   const { runCovers, cancelCover, cancel } = useFlow();
 
   const running = covers.some((c) => c.status === "running");
@@ -42,7 +42,7 @@ export function StepCover() {
           {running ? (
             <button
               type="button"
-              onClick={cancel}
+              onClick={() => cancel()}
               className="text-[13px] text-[var(--ink-faint)] underline underline-offset-2"
             >
               取消

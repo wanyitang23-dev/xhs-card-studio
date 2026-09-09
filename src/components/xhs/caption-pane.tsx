@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useState } from "react";
-import { useXhs } from "@/lib/xhs/store";
+import { useTask, useXhs } from "@/lib/xhs/store";
 import { useFlow } from "@/lib/xhs/use-flow";
 
 /** Xiaohongshu truncates the title in the feed at roughly this length. */
@@ -14,9 +14,9 @@ const TITLE_LIMIT = 20;
  * the user cut it apart again.
  */
 export function CaptionPane() {
-  const caption = useXhs((s) => s.caption);
-  const status = useXhs((s) => s.captionStatus);
-  const error = useXhs((s) => s.captionError);
+  const caption = useTask((t) => t.caption);
+  const status = useTask((t) => t.captionStatus);
+  const error = useTask((t) => t.captionError);
   const patchCaption = useXhs((s) => s.patchCaption);
   const { runCaption } = useFlow();
   const running = status === "running";

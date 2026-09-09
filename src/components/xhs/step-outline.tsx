@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useRef } from "react";
-import { useXhs } from "@/lib/xhs/store";
+import { useTask, useXhs } from "@/lib/xhs/store";
 import { useFlow } from "@/lib/xhs/use-flow";
 import { parseFile } from "@/lib/parsers/file";
 import { RECOMMENDED_MAX_PAGES, MAX_PAGES, type XhsPage } from "@/lib/xhs/types";
@@ -9,8 +9,8 @@ import { RECOMMENDED_MAX_PAGES, MAX_PAGES, type XhsPage } from "@/lib/xhs/types"
 const KIND_LABEL = { cover: "封面", content: "正文", ending: "结尾" } as const;
 
 export function StepOutline() {
-  const pages = useXhs((s) => s.pages);
-  const requestedPages = useXhs((s) => s.requestedPages);
+  const pages = useTask((t) => t.pages);
+  const requestedPages = useTask((t) => t.requestedPages);
   const setStep = useXhs((s) => s.setStep);
   const allConfirmed = pages.length > 0 && pages.every((p) => p.confirmed);
 
@@ -67,7 +67,7 @@ export function StepOutline() {
 }
 
 function ConfirmAll() {
-  const pages = useXhs((s) => s.pages);
+  const pages = useTask((t) => t.pages);
   const setPages = useXhs((s) => s.setPages);
   const allConfirmed = pages.every((p) => p.confirmed);
   return (
@@ -87,7 +87,7 @@ function PageCard({ page, index, total }: { page: XhsPage; index: number; total:
   const removePage = useXhs((s) => s.removePage);
   const movePage = useXhs((s) => s.movePage);
   const addAsset = useXhs((s) => s.addAsset);
-  const assets = useXhs((s) => s.assets);
+  const assets = useTask((t) => t.assets);
   const fileRef = useRef<HTMLInputElement | null>(null);
 
   const attach = useCallback(
