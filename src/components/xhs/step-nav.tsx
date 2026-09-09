@@ -3,7 +3,7 @@
 import { STEP_ORDER, useTask, useXhs, type Step } from "@/lib/xhs/store";
 
 const LABELS: Record<Step, { n: string; title: string; hint: string }> = {
-  source: { n: "1", title: "贴文章", hint: "原文 / 模板 / 表达方式" },
+  source: { n: "1", title: "贴文章", hint: "原文 / 张数 / 模板" },
   outline: { n: "2", title: "定分页", hint: "逐页改文案、传配图" },
   cover: { n: "3", title: "挑封面", hint: "三版并排对比" },
   render: { n: "4", title: "出成品", hint: "生成完整图文" },

@@ -7,7 +7,6 @@ import {
   clampPageCount,
   MAX_PAGES,
   MIN_PAGES,
-  type ContentMode,
   type OutlineResponse,
   type PageCountSetting,
   type PageKind,
@@ -22,7 +21,6 @@ type Body = {
   templateId: string;
   content: string;
   format?: string;
-  mode?: ContentMode;
   /** `"auto"`, or an exact card count the user set in the UI. */
   pageCount?: PageCountSetting;
   model?: string;
@@ -68,7 +66,6 @@ export async function POST(req: NextRequest) {
     templateId,
     content,
     format = "text",
-    mode = "condensed",
     pageCount: rawPageCount = "auto",
     model,
     binOverride,
@@ -83,7 +80,7 @@ export async function POST(req: NextRequest) {
     typeof rawPageCount === "number" && Number.isFinite(rawPageCount)
       ? clampPageCount(rawPageCount)
       : "auto";
-  const prompt = buildOutlinePrompt({ content, format, mode, pageCount, skillBody: skill.body });
+  const prompt = buildOutlinePrompt({ content, format, pageCount, skillBody: skill.body });
   const abortCtl = abortOn(req.signal);
   const source = invokeAgent({ agent, prompt, model, binOverride, signal: abortCtl.signal });
 

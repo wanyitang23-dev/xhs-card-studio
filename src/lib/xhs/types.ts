@@ -8,13 +8,6 @@
  * full render, which is the expensive part.
  */
 
-/** How faithfully the cards should track the source text. */
-export type ContentMode =
-  /** Keep every point; cards carry the user's sentences largely intact. */
-  | "verbatim"
-  /** Distil into punchy card copy; fewer words, same substance. */
-  | "condensed";
-
 export type PageKind = "cover" | "content" | "ending";
 
 /** One card. The user may edit every field before the final render. */

@@ -2,7 +2,7 @@ import { NextRequest } from "next/server";
 import { invokeAgent } from "@/lib/agents/invoke";
 import { extractJson } from "@/lib/extract-json";
 import { buildCaptionPrompt } from "@/lib/xhs/prompts";
-import type { ContentMode, XhsPage } from "@/lib/xhs/types";
+import type { XhsPage } from "@/lib/xhs/types";
 import { abortOn, SSE_HEADERS, toSseStream } from "@/lib/xhs/sse";
 
 export const runtime = "nodejs";
@@ -11,7 +11,6 @@ export const dynamic = "force-dynamic";
 type Body = {
   agent: string;
   pages: XhsPage[];
-  mode?: ContentMode;
   model?: string;
   binOverride?: string;
 };
@@ -54,7 +53,7 @@ export async function POST(req: NextRequest) {
   } catch {
     return new Response("invalid JSON body", { status: 400 });
   }
-  const { agent, pages, mode = "condensed", model, binOverride } = body;
+  const { agent, pages, model, binOverride } = body;
   if (!agent || !Array.isArray(pages) || pages.length === 0) {
     return new Response("missing required fields: agent, pages", { status: 400 });
   }
@@ -62,7 +61,7 @@ export async function POST(req: NextRequest) {
   const abortCtl = abortOn(req.signal);
   const source = invokeAgent({
     agent,
-    prompt: buildCaptionPrompt({ pages, mode }),
+    prompt: buildCaptionPrompt({ pages }),
     model,
     binOverride,
     signal: abortCtl.signal,

@@ -5,29 +5,14 @@ import { useTask, useXhs } from "@/lib/xhs/store";
 import { useFlow } from "@/lib/xhs/use-flow";
 import { detectFormat } from "@/lib/parsers/auto";
 import { parseFile } from "@/lib/parsers/file";
-import type { ContentMode } from "@/lib/xhs/types";
 import { clampPageCount, MAX_PAGES, MIN_PAGES } from "@/lib/xhs/types";
 import { TemplateGallery } from "./template-gallery";
 
-const MODES: Array<{ id: ContentMode; label: string; hint: string }> = [
-  {
-    id: "verbatim",
-    label: "保留原文",
-    hint: "沿用你的句子和措辞，一个要点都不丢。适合观点文、教程。",
-  },
-  {
-    id: "condensed",
-    label: "可视化精简",
-    hint: "提炼成卡片短句，数字和对比做成视觉结构。适合干货、清单。",
-  },
-];
 
 export function StepSource() {
   const sourceText = useTask((t) => t.sourceText);
   const setSourceText = useXhs((s) => s.setSourceText);
   const setFormat = useXhs((s) => s.setFormat);
-  const mode = useTask((t) => t.mode);
-  const setMode = useXhs((s) => s.setMode);
   const pageCount = useTask((t) => t.pageCount);
   const setPageCount = useXhs((s) => s.setPageCount);
   const templateId = useTask((t) => t.templateId);
@@ -108,33 +93,6 @@ export function StepSource() {
               e.target.value = "";
             }}
           />
-        </div>
-      </section>
-
-      <section>
-        <h2 className="mb-3 text-[15px] font-semibold text-[var(--ink)]">表达方式</h2>
-        <div className="grid gap-2 sm:grid-cols-2">
-          {MODES.map((m) => {
-            const on = mode === m.id;
-            return (
-              <button
-                key={m.id}
-                type="button"
-                onClick={() => setMode(m.id)}
-                aria-pressed={on}
-                className="rounded-xl p-3 text-left transition-colors"
-                style={{
-                  background: on ? "var(--coral-soft)" : "var(--surface)",
-                  border: `1px solid ${on ? "var(--coral)" : "var(--line-soft)"}`,
-                }}
-              >
-                <span className="block text-[14px] font-semibold text-[var(--ink)]">{m.label}</span>
-                <span className="mt-1 block text-[12px] leading-snug text-[var(--ink-mute)]">
-                  {m.hint}
-                </span>
-              </button>
-            );
-          })}
         </div>
       </section>
 

@@ -2,7 +2,7 @@ import { NextRequest } from "next/server";
 import { invokeAgent } from "@/lib/agents/invoke";
 import { loadSkill } from "@/lib/templates/loader";
 import { buildRenderPrompt } from "@/lib/xhs/prompts";
-import type { ContentMode, XhsPage } from "@/lib/xhs/types";
+import type { XhsPage } from "@/lib/xhs/types";
 import { abortOn, SSE_HEADERS, toSseStream } from "@/lib/xhs/sse";
 
 export const runtime = "nodejs";
@@ -12,7 +12,6 @@ type Body = {
   agent: string;
   templateId: string;
   pages: XhsPage[];
-  mode?: ContentMode;
   /** The winning cover's HTML, so the render keeps its exact design. */
   coverHtml?: string;
   /** `asset:<id>` → `data:image/...` for screenshots the user attached. */
@@ -28,7 +27,7 @@ export async function POST(req: NextRequest) {
   } catch {
     return new Response("invalid JSON body", { status: 400 });
   }
-  const { agent, templateId, pages, mode = "condensed", coverHtml, assets = {}, model, binOverride } = body;
+  const { agent, templateId, pages, coverHtml, assets = {}, model, binOverride } = body;
   if (!agent || !templateId || !Array.isArray(pages) || pages.length === 0) {
     return new Response("missing required fields: agent, templateId, pages", { status: 400 });
   }
@@ -43,7 +42,7 @@ export async function POST(req: NextRequest) {
     imageAssetIds: (p.imageAssetIds ?? []).map((id) => assets[id] ?? id),
   }));
 
-  const prompt = buildRenderPrompt({ pages: inlined, mode, skillBody: skill.body, coverHtml });
+  const prompt = buildRenderPrompt({ pages: inlined, skillBody: skill.body, coverHtml });
   const abortCtl = abortOn(req.signal);
   const source = invokeAgent({ agent, prompt, model, binOverride, signal: abortCtl.signal });
 

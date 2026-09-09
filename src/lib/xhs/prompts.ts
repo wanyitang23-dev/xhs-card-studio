@@ -8,7 +8,7 @@
  */
 
 import { SHARED_DESIGN_DIRECTIVES } from "@/lib/templates/shared";
-import type { ContentMode, PageCountSetting, XhsPage } from "./types";
+import type { PageCountSetting, XhsPage } from "./types";
 import { MAX_PAGES, MIN_PAGES, RECOMMENDED_MAX_PAGES } from "./types";
 
 /**
@@ -44,17 +44,19 @@ const CJK_TYPOGRAPHY_RULES = `【中文排版硬规则 — 优先级高于任何
 
 `;
 
-const MODE_RULES: Record<ContentMode, string> = {
-  verbatim: `【表达方式: 保留原文】
-- 尽量沿用用户原文的句子和措辞, 不要改写成你自己的腔调。
-- 必须覆盖原文的每一个要点, 一个都不能丢。要点多到一页装不下时才拆页, 不要为了拆而拆。
-- 只允许做这些加工: 删掉纯过渡的废话、把长句拆短、给段落起一个短标题。`,
-  condensed: `【表达方式: 可视化精简】
+/**
+ * How the cards should read.
+ *
+ * There used to be a second mode that reproduced the article's own sentences.
+ * It was dropped: a card is a few dozen characters of display type, so pasting
+ * paragraphs into one fights the format rather than using it.
+ */
+const CARD_VOICE = `【表达方式】
 - 把原文提炼成适合卡片阅读的短句。
 - 每页正文控制在 60 字以内, 能用短语就不用整句。
 - 数字、对比、步骤优先做成可视化结构 (大数字 / 左右对比 / 编号步骤), 不要堆成一段话。
-- 提炼不等于丢信息: 原文的每个要点仍要有对应的页, 只是表达更短。`,
-};
+- 提炼不等于丢信息: 原文的每个要点仍要有对应的页, 只是表达更短。`;
+
 
 /**
  * Paging guidance when the user has not fixed a count.
@@ -84,7 +86,6 @@ function exactPageRule(n: number): string {
 export function buildOutlinePrompt(args: {
   content: string;
   format: string;
-  mode: ContentMode;
   skillBody: string;
   pageCount: PageCountSetting;
 }): string {
@@ -115,7 +116,7 @@ ${pageRule}
   如果内容多到装不下, 优先合并最次要的要点, 而不是删掉它们。
 - title 是卡片上的大字, 要短 (建议 12 字以内); body 是正文。
 
-${MODE_RULES[args.mode]}
+${CARD_VOICE}
 
 【这套卡片将使用的视觉模板 — 仅供你判断分页粒度, 这一步不要写任何 HTML】
 ${args.skillBody.trim()}
@@ -153,7 +154,6 @@ ${args.body ? `副标题 / 钩子: ${args.body}` : "（无副标题）"}
 /** Step ④ — the finished multi-card page, built from the confirmed outline. */
 export function buildRenderPrompt(args: {
   pages: XhsPage[];
-  mode: ContentMode;
   skillBody: string;
   coverHtml?: string;
 }): string {
@@ -183,7 +183,7 @@ ${args.skillBody.trim()}
 - 你的工作只是把每一页**做好看**: 挑版式、配色、字号层级、图文排布。
 - 后续内容页的视觉风格必须和封面保持同一套系统。
 
-${MODE_RULES[args.mode]}
+${CARD_VOICE}
 
 ${coverBlock}
 【已确认的分页 — 共 ${args.pages.length} 页】
@@ -229,7 +229,7 @@ ${args.html}
  * the pictures, this is the text beside them. Asked for as JSON so the UI can
  * offer per-field copy buttons rather than one blob.
  */
-export function buildCaptionPrompt(args: { pages: XhsPage[]; mode: ContentMode }): string {
+export function buildCaptionPrompt(args: { pages: XhsPage[] }): string {
   const outline = args.pages
     .map((p, i) => `第 ${i + 1} 页 [${p.kind}] ${p.title}${p.body ? ` — ${p.body}` : ""}`)
     .join("\n");

@@ -6,7 +6,6 @@ const v0 = {
   step: "outline",
   sourceText: "# 广告排序三部曲\n召回、粗排、精排",
   format: "markdown",
-  mode: "verbatim",
   pageCount: 6,
   templateId: "deck-xhs-white",
   previewZoom: 0.75,
@@ -27,7 +26,6 @@ describe("migrateV0", () => {
     expect(t.sourceText).toBe(v0.sourceText);
     expect(t.pages).toHaveLength(2);
     expect(t.templateId).toBe("deck-xhs-white");
-    expect(t.mode).toBe("verbatim");
     expect(t.pageCount).toBe(6);
     expect(t.step).toBe("outline");
     expect(t.selectedCoverId).toBe("big-type");

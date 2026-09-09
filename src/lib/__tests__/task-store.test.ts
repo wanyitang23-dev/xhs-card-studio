@@ -16,12 +16,10 @@ describe("task management", () => {
     expect(s().activeId).toBe(id);
   });
 
-  it("carries the template and mode over to a new task", () => {
+  it("carries the template over to a new task", () => {
     s().setTemplateId("deck-xhs-white");
-    s().setMode("verbatim");
     s().addTask();
     expect(activeTask(s()).templateId).toBe("deck-xhs-white");
-    expect(activeTask(s()).mode).toBe("verbatim");
     // …but not the article itself
     expect(activeTask(s()).sourceText).toBe("");
   });

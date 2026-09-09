@@ -4,7 +4,6 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import type {
   Caption,
-  ContentMode,
   CoverCandidate,
   PageCountSetting,
   PageKind,
@@ -53,7 +52,6 @@ export type XhsTask = {
   // ① source
   sourceText: string;
   format: string;
-  mode: ContentMode;
   pageCount: PageCountSetting;
   templateId: string;
   // ② outline
@@ -88,7 +86,6 @@ export function makeTask(name: string, seedFrom?: Partial<XhsTask>): XhsTask {
     step: "source",
     sourceText: "",
     format: "text",
-    mode: seedFrom?.mode ?? "condensed",
     pageCount: seedFrom?.pageCount ?? "auto",
     templateId: seedFrom?.templateId ?? DEFAULT_TEMPLATE,
     pages: [],
@@ -134,7 +131,6 @@ type State = {
   setStep: (s: Step) => void;
   setSourceText: (t: string) => void;
   setFormat: (f: string) => void;
-  setMode: (m: ContentMode) => void;
   setPageCount: (n: PageCountSetting) => void;
   setTemplateId: (id: string) => void;
 
@@ -210,7 +206,6 @@ export const useXhs = create<State>()(
             ...(t.nameIsCustom ? {} : { name: deriveName(sourceText, t.name) }),
           })),
         setFormat: (format) => patchActive({ format }),
-        setMode: (mode) => patchActive({ mode }),
         setPageCount: (pageCount) => patchActive({ pageCount }),
         setTemplateId: (templateId) => patchActive({ templateId }),
 
@@ -280,7 +275,6 @@ export const useXhs = create<State>()(
           step: t.step,
           sourceText: t.sourceText,
           format: t.format,
-          mode: t.mode,
           pageCount: t.pageCount,
           templateId: t.templateId,
           pages: t.pages,
@@ -326,7 +320,7 @@ export function migrateV0(persisted: unknown, version: number): MigratedState {
     ...(legacy.step ? { step: legacy.step } : {}),
     ...(legacy.sourceText ? { sourceText: legacy.sourceText } : {}),
     ...(legacy.format ? { format: legacy.format } : {}),
-    ...(legacy.mode ? { mode: legacy.mode } : {}),
+    // v0 also stored a `mode`; that feature is gone, so it is dropped here.
     ...(legacy.pageCount ? { pageCount: legacy.pageCount } : {}),
     ...(legacy.templateId ? { templateId: legacy.templateId } : {}),
     ...(Array.isArray(legacy.pages) ? { pages: legacy.pages } : {}),

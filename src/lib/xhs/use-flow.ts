@@ -85,7 +85,6 @@ export function useFlow() {
           templateId: task.templateId,
           content: task.sourceText,
           format: task.format,
-          mode: task.mode,
           pageCount: task.pageCount,
         },
         {
@@ -221,7 +220,6 @@ export function useFlow() {
           ...agentArgs(),
           templateId: task.templateId,
           pages: task.pages,
-          mode: task.mode,
           assets: task.assets,
           ...(cover?.html ? { coverHtml: cover.html } : {}),
         },
@@ -250,7 +248,7 @@ export function useFlow() {
     try {
       await streamSse(
         "/api/caption",
-        { ...agentArgs(), pages: task.pages, mode: task.mode },
+        { ...agentArgs(), pages: task.pages },
         {
           onCaption: (c) => patch({ caption: c as Caption }),
           onError: (m) => patch({ captionStatus: "error", captionError: m }),

@@ -4,7 +4,6 @@ import { buildOutlinePrompt } from "@/lib/xhs/prompts";
 const base = {
   content: "# 4 张图讲清楚 AI 知识库\n同一个模型，为什么有人用得准？",
   format: "markdown",
-  mode: "condensed" as const,
   skillBody: "【模板: 测试】",
 };
 
@@ -41,8 +40,4 @@ describe("buildOutlinePrompt · page count", () => {
     }
   });
 
-  it("keeps verbatim mode from inflating the count", () => {
-    const p = buildOutlinePrompt({ ...base, mode: "verbatim", pageCount: "auto" });
-    expect(p).toContain("要点多到一页装不下时才拆页, 不要为了拆而拆");
-  });
 });
