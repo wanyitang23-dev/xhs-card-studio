@@ -1,0 +1,61 @@
+/**
+ * Data model for the four-step Xiaohongshu flow.
+ *
+ *   ① 贴文章 → ② 拆页清单 (outline) → ③ 封面三选一 (cover) → ④ 出成品 (render)
+ *
+ * The original html-anything pipeline was one-shot: content → HTML. Steps ②
+ * and ③ exist so the user confirms structure and cover *before* paying for a
+ * full render, which is the expensive part.
+ */
+
+/** How faithfully the cards should track the source text. */
+export type ContentMode =
+  /** Keep every point; cards carry the user's sentences largely intact. */
+  | "verbatim"
+  /** Distil into punchy card copy; fewer words, same substance. */
+  | "condensed";
+
+export type PageKind = "cover" | "content" | "ending";
+
+/** One card. The user may edit every field before the final render. */
+export type XhsPage = {
+  id: string;
+  kind: PageKind;
+  /** Big text on the card. */
+  title: string;
+  /** Supporting copy. Empty is legal — some covers are title-only. */
+  body: string;
+  /**
+   * `asset:<id>` tokens for user-uploaded screenshots to embed *in this card*.
+   * Resolved to inline `data:` URLs at render time, mirroring how the original
+   * pipeline handles editor images.
+   */
+  imageAssetIds: string[];
+  /** The user has reviewed this page and it is ready to render. */
+  confirmed: boolean;
+};
+
+/** One candidate cover in the step-③ comparison. */
+export type CoverCandidate = {
+  id: string;
+  /** Short human label for the variant, e.g. "大字标题" / "拼贴". */
+  label: string;
+  /** Streaming target — accumulates while the agent writes. */
+  html: string;
+  status: "pending" | "running" | "done" | "error";
+  error?: string;
+};
+
+/** Shape the outline endpoint asks the agent to return. */
+export type OutlineResponse = {
+  pages: Array<{
+    kind?: string;
+    title?: string;
+    body?: string;
+  }>;
+};
+
+/** Sensible caps. Xiaohongshu allows 18 images per post; past ~9 engagement drops. */
+export const MAX_PAGES = 18;
+export const RECOMMENDED_MAX_PAGES = 9;
+export const MIN_PAGES = 2;
