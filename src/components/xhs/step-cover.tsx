@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { useTask, useXhs } from "@/lib/xhs/store";
 import { useFlow } from "@/lib/xhs/use-flow";
 import { previewHtml } from "@/lib/extract-html";
@@ -23,8 +23,16 @@ export function StepCover() {
 
   // Kick off the first batch automatically — the user already committed to
   // this step by navigating here, so an extra "generate" click is friction.
+  //
+  // `started` guards React StrictMode's double-mount in dev, the same way
+  // step ④ does. Without it the effect fired twice, the second `runCovers`
+  // aborted the first one's three controllers, and all three tiles ended up
+  // stuck on 「已取消」 while their replacements were still streaming.
+  const started = useRef(false);
   useEffect(() => {
-    if (covers.length === 0 && cover) void runCovers(COVER_DIRECTION_IDS);
+    if (started.current || covers.length > 0 || !cover) return;
+    started.current = true;
+    void runCovers(COVER_DIRECTION_IDS);
     // Intentionally once-on-mount: re-running on every covers change would loop.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);

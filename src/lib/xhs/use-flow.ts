@@ -36,14 +36,34 @@ export function useFlow() {
     if (aborts.current.get(key) === ctl) aborts.current.delete(key);
   }, []);
 
-  /** Stop everything in flight for one task. */
+  /**
+   * True while `ctl` is still the controller registered for this slot — i.e.
+   * this run has *not* been superseded by a newer one.
+   *
+   * A superseded run must write nothing when its abort lands. Without this, the
+   * losing run's `catch` fired after the winner had already set the tile to
+   * "running" and stamped "已取消" over it, which wedged the tile: the winner's
+   * own completion check (`if status === "running"`) then no longer matched, so
+   * the tile stayed cancelled while its agent was still streaming. That is the
+   * three-blank-cards-all-labelled-已取消 state.
+   */
+  const isCurrent = useCallback(
+    (taskId: string, kind: string, ctl: AbortController) =>
+      aborts.current.get(abortKey(taskId, kind)) === ctl,
+    [],
+  );
+
+  /**
+   * Stop everything in flight for one task.
+   *
+   * The entry is left in the map on purpose — `finish` removes it in the run's
+   * own `finally`. Deleting it here would make `isCurrent` false for a run the
+   * user deliberately cancelled, so the tile would never say so.
+   */
   const cancel = useCallback((taskId?: string) => {
     const id = taskId ?? useXhs.getState().activeId;
     for (const [key, ctl] of aborts.current) {
-      if (key.startsWith(`${id}:`)) {
-        ctl.abort();
-        aborts.current.delete(key);
-      }
+      if (key.startsWith(`${id}:`)) ctl.abort();
     }
   }, []);
 
@@ -108,12 +128,14 @@ export function useFlow() {
         patch({ outlineStatus: "error", outlineError: "agent 没有返回可用的分页大纲，请重试。" });
       }
     } catch (err) {
-      if ((err as Error)?.name === "AbortError") patch({ outlineStatus: "idle" });
+      if ((err as Error)?.name === "AbortError") {
+        if (isCurrent(task.id, "outline", ctl)) patch({ outlineStatus: "idle" });
+      }
       else patch({ outlineStatus: "error", outlineError: (err as Error)?.message ?? String(err) });
     } finally {
       finish(task.id, "outline", ctl);
     }
-  }, [agentArgs, finish, start, target]);
+  }, [agentArgs, finish, isCurrent, start, target]);
 
   /**
    * ③ Generate cover candidates.
@@ -183,7 +205,11 @@ export function useFlow() {
             }
           } catch (err) {
             if ((err as Error)?.name === "AbortError") {
-              patchCover(direction, { status: "error", error: "已取消" });
+              // Superseded by a newer run for this same tile — that run owns
+              // the tile's state now, so say nothing.
+              if (isCurrent(task.id, `cover:${direction}`, ctl)) {
+                patchCover(direction, { status: "error", error: "已取消" });
+              }
               return;
             }
             patchCover(direction, {
@@ -196,15 +222,14 @@ export function useFlow() {
         }),
       );
     },
-    [agentArgs, finish, start, target],
+    [agentArgs, finish, isCurrent, start, target],
   );
 
   /** Stop one cover mid-flight, leaving the others running. */
   const cancelCover = useCallback((direction: string) => {
     const id = useXhs.getState().activeId;
-    const key = `${id}:cover:${direction}`;
-    aborts.current.get(key)?.abort();
-    aborts.current.delete(key);
+    // Abort only; `finish` clears the entry. See `cancel` for why.
+    aborts.current.get(`${id}:cover:${direction}`)?.abort();
   }, []);
 
   /** ④ Render the confirmed outline into the finished page. */
@@ -232,12 +257,14 @@ export function useFlow() {
       );
       if (read()?.renderStatus !== "error") patch({ renderStatus: "done" });
     } catch (err) {
-      if ((err as Error)?.name === "AbortError") patch({ renderStatus: "idle" });
+      if ((err as Error)?.name === "AbortError") {
+        if (isCurrent(task.id, "render", ctl)) patch({ renderStatus: "idle" });
+      }
       else patch({ renderStatus: "error", renderError: (err as Error)?.message ?? String(err) });
     } finally {
       finish(task.id, "render", ctl);
     }
-  }, [agentArgs, finish, start, target]);
+  }, [agentArgs, finish, isCurrent, start, target]);
 
   /** ④-b Write the caption that goes beside the images. */
   const runCaption = useCallback(async () => {
@@ -263,12 +290,14 @@ export function useFlow() {
         });
       }
     } catch (err) {
-      if ((err as Error)?.name === "AbortError") patch({ captionStatus: "idle" });
+      if ((err as Error)?.name === "AbortError") {
+        if (isCurrent(task.id, "caption", ctl)) patch({ captionStatus: "idle" });
+      }
       else patch({ captionStatus: "error", captionError: (err as Error)?.message ?? String(err) });
     } finally {
       finish(task.id, "caption", ctl);
     }
-  }, [agentArgs, finish, start, target]);
+  }, [agentArgs, finish, isCurrent, start, target]);
 
   return { runOutline, runCovers, runRender, runCaption, cancelCover, cancel };
 }
