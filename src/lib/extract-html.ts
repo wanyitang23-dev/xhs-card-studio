@@ -22,6 +22,61 @@ export function clampNegativeLetterSpacing(html: string): string {
   );
 }
 
+
+/**
+ * Stop Tailwind's Preflight from silently erasing hand-written heading sizes.
+ *
+ * Measured on a real cover whose title vanished. The author's stylesheet said
+ * `h1{font-size:150px}` and the heading rendered at 16px. Both rules match at
+ * specificity (0,0,1):
+ *
+ *   sheet 1  the document's own <style>   h1                    font-size:150px
+ *   sheet 2  injected by the Play CDN     h1,h2,h3,h4,h5,h6     font-size:inherit
+ *
+ * The Play CDN builds its stylesheet at runtime and appends it, so source order
+ * decides and Preflight always wins. Anything styled through a class is
+ * untouched — a class beats an element selector — which is why only the
+ * headline disappeared while the rest of the card looked right. Nothing about
+ * the generated HTML looks wrong when you read it.
+ *
+ * Preflight is disabled, and the parts of it that are actually load-bearing
+ * (margin and list normalisation, sane media defaults) are restored as a base
+ * layer placed *before* the document's own styles, so the author still wins
+ * every conflict. Tailwind's utility classes are unaffected — Preflight is only
+ * the reset.
+ */
+const BASE_RESET = `<style data-xhs="base-reset">*,::before,::after{box-sizing:border-box}` +
+  `html{-webkit-text-size-adjust:100%}body{margin:0;line-height:1.5}` +
+  `h1,h2,h3,h4,h5,h6,p,figure,blockquote,dl,dd,pre{margin:0}` +
+  `ol,ul,menu{list-style:none;margin:0;padding:0}` +
+  `img,svg,video,canvas,audio,iframe,embed,object{display:block;vertical-align:middle}` +
+  `img,video{max-width:100%;height:auto}` +
+  `button,input,optgroup,select,textarea{font:inherit;color:inherit;margin:0}` +
+  `table{border-collapse:collapse}</style>`;
+
+const TAILWIND_CDN = /<script\b[^>]*\bsrc\s*=\s*["'][^"']*cdn\.tailwindcss\.com[^"']*["'][^>]*>\s*<\/script>/i;
+
+export function neutralizeTailwindPreflight(html: string): string {
+  const cdn = TAILWIND_CDN.exec(html);
+  if (!cdn) return html; // No Play CDN, no Preflight, nothing to undo.
+  if (/data-xhs="base-reset"/.test(html)) return html; // already processed
+
+  // The config has to come *after* the CDN tag; that is how Play reads it.
+  const configured = html.replace(
+    TAILWIND_CDN,
+    (tag) => `${tag}\n<script>tailwind.config={corePlugins:{preflight:false}}</script>`,
+  );
+
+  // The base layer has to come *before* the document's own styles so that any
+  // rule the author wrote continues to win on source order.
+  const head = /<head\b[^>]*>/i.exec(configured);
+  if (head) {
+    const at = head.index + head[0].length;
+    return configured.slice(0, at) + "\n" + BASE_RESET + configured.slice(at);
+  }
+  return BASE_RESET + "\n" + configured;
+}
+
 /** Every index where a document could begin, in order. */
 function starts(s: string, re: RegExp): number[] {
   const out: number[] = [];
@@ -68,10 +123,10 @@ export function extractHtml(streamed: string): string {
   //    rather than by fences also sidesteps the case where the *card content*
   //    contains a ``` run, which used to truncate the document at that point.
   const byDoctype = lastDocument(streamed, starts(streamed, /<!DOCTYPE\s+html/i), "</html>");
-  if (byDoctype) return byDoctype;
+  if (byDoctype) return neutralizeTailwindPreflight(byDoctype);
 
   const byHtmlTag = lastDocument(streamed, starts(streamed, /<html[\s>]/i), "</html>");
-  if (byHtmlTag) return byHtmlTag;
+  if (byHtmlTag) return neutralizeTailwindPreflight(byHtmlTag);
 
   // 2. No document tags at all — a fragment, possibly inside a fence.
   const fence = streamed.match(/```(?:html|HTML)?\s*([\s\S]*?)```/);
