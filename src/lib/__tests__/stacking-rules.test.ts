@@ -57,4 +57,27 @@ describe("重叠层级规则", () => {
     expect(prompts.cover).toContain("537-679");
     expect(prompts.cover).toContain("只露出底下 42px");
   });
+
+  // The first version of the stacking rule produced a worse defect than the
+  // one it fixed: told to raise content with position:relative, the model
+  // wrote a blanket `.slab > *`, which also caught the two absolutely
+  // positioned blobs and dropped them into flow. 460px + 380px of decoration
+  // entered the layout, the dark slab grew from ~870px to 1708px inside a
+  // 1440px card, and the entire light half fell off the bottom.
+  for (const [name, p] of Object.entries(prompts)) {
+    it(`${name} prompt 禁止用 .父容器 > * 一刀切地抬升内容`, () => {
+      expect(p).toContain("不许用");
+      expect(p).toContain("这种一刀切的写法去抬升内容");
+    });
+
+    it(`${name} prompt 说明一刀切会把装饰层拽回布局`, () => {
+      expect(p).toContain("装饰球于是掉回正常流里占掉大片高度");
+      expect(p).toContain("1708px");
+    });
+
+    it(`${name} prompt 给出了两种正确写法`, () => {
+      expect(p).toContain("点名要抬升的元素");
+      expect(p).toContain(".slab > .blob{ position:absolute }");
+    });
+  }
 });
