@@ -1,8 +1,6 @@
-# 小红书图文 · 分步生成
+# 小红书图文自动化生成
 
-在本地 coding-agent CLI 上跑的小红书图文工具。派生自
-[`html-anything`](https://github.com/nexu-io/html-anything)，改成**分步确认**的流程：
-在花钱出整套图之前，先把分页和封面定下来。
+在本地 coding-agent CLI 上跑的小红书图文工具。
 
 ## 跑起来
 
