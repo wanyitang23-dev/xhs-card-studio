@@ -1,11 +1,12 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useTask, useXhs } from "@/lib/xhs/store";
 import { useFlow } from "@/lib/xhs/use-flow";
 import { previewHtml } from "@/lib/extract-html";
 import { useElementSize } from "@/lib/xhs/use-element-size";
 import { DEFAULT_VIEWPORT } from "@/lib/xhs/aspect";
+import { cardFitTransform, measureCard, type CardBox } from "@/lib/xhs/measure-card";
 import type { CoverCandidate } from "@/lib/xhs/types";
 import { COVER_DIRECTION_IDS, coverLabel } from "@/lib/xhs/cover-directions";
 
@@ -164,29 +165,69 @@ function CoverTile({
 }
 
 /**
- * A cover candidate rendered at the authored card size and scaled to the tile.
+ * A cover candidate, scaled so the *card* fills the tile.
  *
- * The scale used to be hard-coded at 0.28, which only fit one tile width; the
- * grid is responsive, so it left a gap at most window sizes.
+ * The scale used to be hard-coded at 0.28, then derived from a nominal
+ * 1080×1440 viewport. Both assume the document is nothing but the card. That
+ * broke once the agent started copying the example's gallery shell
+ * (`body{padding:36px 0}`, a `.deck` wrapper, rounded corners and a drop
+ * shadow) around its single cover: the tile scaled the shell, so the card
+ * rendered small and inset with dead space around it.
+ *
+ * So measure the card in the loaded document and fit that instead. Correct for
+ * a bare card, for one wrapped in a shell, and for one authored at some other
+ * size — the preview no longer has to know which it got.
  */
 function ScaledCover({ html, label }: { html: string; label: string }) {
   const { ref, size } = useElementSize<HTMLDivElement>();
-  const vp = DEFAULT_VIEWPORT;
-  const scale = size ? Math.min(size.width / vp.width, size.height / vp.height) : 0;
+  const frameRef = useRef<HTMLIFrameElement | null>(null);
+  const [card, setCard] = useState<CardBox | null>(null);
+
+  const remeasure = useCallback(() => {
+    const box = measureCard(frameRef.current);
+    // Keep the last good box on a failed read — a transient null would make the
+    // tile jump to blank and back.
+    if (box) setCard(box);
+  }, []);
+
+  // Web fonts land after `load` and can change the card's height, so measure
+  // again once they settle.
+  const onLoad = useCallback(() => {
+    remeasure();
+    const doc = frameRef.current?.contentDocument;
+    doc?.fonts?.ready.then(remeasure).catch(() => {});
+  }, [remeasure]);
+
+  // The document is replaced on every re-render of the stream, so re-measure
+  // as new markup arrives rather than only once.
+  useEffect(() => {
+    const t = setTimeout(remeasure, 120);
+    return () => clearTimeout(t);
+  }, [html, remeasure]);
+
+  // Lay the document out at the width cards are authored for; only the display
+  // size is scaled, so the card's own layout never changes.
+  const layoutWidth = DEFAULT_VIEWPORT.width;
+  const box = card ?? { x: 0, y: 0, ...DEFAULT_VIEWPORT };
+  const fit = size ? cardFitTransform(box, size) : { scale: 0, x: 0, y: 0 };
 
   return (
     <div ref={ref} className="absolute inset-0 overflow-hidden">
-      {scale > 0 && (
+      {fit.scale > 0 && (
         <iframe
+          ref={frameRef}
           title={`封面预览 · ${label}`}
           srcDoc={previewHtml(html)}
           sandbox="allow-scripts allow-same-origin"
           scrolling="no"
-          className="absolute left-1/2 top-1/2 border-0"
+          onLoad={onLoad}
+          className="absolute left-0 top-0 origin-top-left border-0"
           style={{
-            width: vp.width,
-            height: vp.height,
-            transform: `translate(-50%, -50%) scale(${scale})`,
+            width: layoutWidth,
+            // Tall enough that a shell with page padding is not clipped before
+            // it can be measured.
+            height: Math.max(DEFAULT_VIEWPORT.height, box.y + box.height) + 200,
+            transform: `translate(${fit.x}px, ${fit.y}px) scale(${fit.scale})`,
             pointerEvents: "none",
           }}
         />
