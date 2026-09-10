@@ -181,6 +181,7 @@ export function useFlow() {
                 title: cover.title,
                 body: cover.body,
                 direction,
+                handle: task.handle,
               },
               {
                 onDelta: (t) =>
@@ -246,6 +247,7 @@ export function useFlow() {
           templateId: task.templateId,
           pages: task.pages,
           assets: task.assets,
+          handle: task.handle,
           ...(cover?.html ? { coverHtml: cover.html } : {}),
         },
         {

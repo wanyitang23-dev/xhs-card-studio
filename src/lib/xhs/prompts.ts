@@ -137,6 +137,36 @@ function exactPageRule(n: number): string {
 - 数一遍再输出: \`pages\` 数组的长度必须等于 ${n}。`;
 }
 
+/**
+ * What goes in the footer's author slot.
+ *
+ * Every template's `SKILL.md` asks for 作者名 / 水印 there, and the layout rules
+ * ask for a footer, but nothing supplied a name — so the agent filled the slot
+ * from imagination. Across six runs it produced six different handles, and
+ * within a single batch of three covers it produced three. For a real account
+ * that is worse than an empty slot: the watermark is supposed to be a fixed
+ * identity.
+ *
+ * Declining to enter one is a real choice, not a gap to be filled. So the empty
+ * branch redirects the slot to a topic keyword drawn from the user's own
+ * content — the footer still has something to sit in, and nothing claims to be
+ * an account that does not exist.
+ */
+export function footerRule(handle: string | undefined | null): string {
+  const h = (handle ?? "").trim().replace(/^@+/, "");
+  if (h) {
+    return `【页脚署名 — 原样使用, 不许改写】
+- 每张卡的页脚水印一律写 \`@${h}\`, 一个字都不要改, 不要加后缀、不要意译、不要每页换一个。
+- 这是用户的真实账号名, 和标题正文一样属于锁定内容。`;
+  }
+  return `【页脚署名 — 用户没有提供账号, 不许编】
+- **不要编造任何账号名 / 昵称 / 作者名**, 也不要写 \`@你的名字\`、\`@某某\` 这类占位符。
+- 页脚那个位置改放**内容关键词**: 从用户内容里取 1-3 个主题词, 写成 \`#关键词\` 的形式
+  (例如 \`#产品复盘\` \`#Agent\`), 不要加 \`@\`。
+- 关键词必须来自用户内容里真实出现过的主题, 不要另行发挥。
+- 如果版式上这个位置放关键词很别扭, 就让它留空, 也好过写一个假账号。`;
+}
+
 /** Step ② — ask for a page-by-page plan as JSON, not HTML. */
 export function buildOutlinePrompt(args: {
   content: string;
@@ -190,6 +220,8 @@ export function buildCoverPrompt(args: {
   skillBody: string;
   /** The template's own `example.html` — what the user saw when they picked it. */
   exampleHtml?: string;
+  /** The account name for the footer watermark; empty means "do not invent one". */
+  handle?: string;
 }): string {
   return `${SHARED_DESIGN_DIRECTIVES}
 ${CJK_TYPOGRAPHY_RULES}
@@ -208,6 +240,8 @@ ${exampleReferenceBlock(args.exampleHtml)}
 【这一版的视觉方向】
 ${args.direction}
 
+${footerRule(args.handle)}
+
 【封面文案 — 原样使用, 不要改写】
 主标题: ${args.title}
 ${args.body ? `副标题 / 钩子: ${args.body}` : "（无副标题）"}
@@ -221,6 +255,8 @@ export function buildRenderPrompt(args: {
   coverHtml?: string;
   /** The template's own `example.html` — what the user saw when they picked it. */
   exampleHtml?: string;
+  /** The account name for the footer watermark; empty means "do not invent one". */
+  handle?: string;
 }): string {
   const pageBlocks = args.pages
     .map((p, i) => {
@@ -251,6 +287,8 @@ ${exampleReferenceBlock(args.exampleHtml)}
 - 后续内容页的视觉风格必须和封面保持同一套系统。
 
 ${CARD_VOICE}
+
+${footerRule(args.handle)}
 
 ${coverBlock}
 【已确认的分页 — 共 ${args.pages.length} 页】

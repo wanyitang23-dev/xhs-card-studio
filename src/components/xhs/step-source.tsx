@@ -17,6 +17,8 @@ export function StepSource() {
   const setPageCount = useXhs((s) => s.setPageCount);
   const templateId = useTask((t) => t.templateId);
   const setTemplateId = useXhs((s) => s.setTemplateId);
+  const handle = useTask((t) => t.handle);
+  const setHandle = useXhs((s) => s.setHandle);
   const status = useTask((t) => t.outlineStatus);
   const error = useTask((t) => t.outlineError);
   const { runOutline, cancel } = useFlow();
@@ -148,6 +150,28 @@ export function StepSource() {
             />
             张
           </label>
+        </div>
+      </section>
+
+      <section>
+        <h2 className="mb-1 text-[15px] font-semibold text-[var(--ink)]">你的小红书号</h2>
+        <p className="mb-3 text-[13px] text-[var(--ink-faint)]">
+          会印在每张卡的页脚水印上，原样使用。留空也不会瞎编一个 —— 那个位置改放内容关键词。
+        </p>
+        <div
+          className="flex w-full max-w-sm items-center rounded-xl px-3 py-2"
+          style={{ background: "var(--surface)", border: "1px solid var(--line-soft)" }}
+        >
+          <span className="select-none pr-0.5 text-[14px] text-[var(--ink-faint)]">@</span>
+          <input
+            value={handle}
+            // Strip a pasted "@" so the prefix is never doubled up.
+            onChange={(e) => setHandle(e.target.value.replace(/^@+/, ""))}
+            placeholder="不填也可以"
+            spellCheck={false}
+            maxLength={40}
+            className="w-full bg-transparent text-[14px] text-[var(--ink)] outline-none"
+          />
         </div>
       </section>
 

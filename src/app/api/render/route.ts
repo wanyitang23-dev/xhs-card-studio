@@ -17,6 +17,8 @@ type Body = {
   coverHtml?: string;
   /** `asset:<id>` → `data:image/...` for screenshots the user attached. */
   assets?: Record<string, string>;
+  /** The user's account name for the footer watermark. Empty = do not invent one. */
+  handle?: string;
   model?: string;
   binOverride?: string;
 };
@@ -28,7 +30,16 @@ export async function POST(req: NextRequest) {
   } catch {
     return new Response("invalid JSON body", { status: 400 });
   }
-  const { agent, templateId, pages, coverHtml, assets = {}, model, binOverride } = body;
+  const {
+    agent,
+    templateId,
+    pages,
+    coverHtml,
+    assets = {},
+    handle = "",
+    model,
+    binOverride,
+  } = body;
   if (!agent || !templateId || !Array.isArray(pages) || pages.length === 0) {
     return new Response("missing required fields: agent, templateId, pages", { status: 400 });
   }
@@ -45,6 +56,7 @@ export async function POST(req: NextRequest) {
     skillBody: skill.body,
     coverHtml,
     exampleHtml: skill.exampleHtml,
+    handle,
   });
   const abortCtl = abortOn(req.signal);
   const source = invokeAgent({ agent, prompt, model, binOverride, signal: abortCtl.signal });

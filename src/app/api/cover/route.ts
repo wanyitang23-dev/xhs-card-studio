@@ -15,6 +15,8 @@ type Body = {
   body?: string;
   /** Which of {@link COVER_DIRECTIONS} to nudge this variant toward. */
   direction: string;
+  /** The user's account name for the footer watermark. Empty = do not invent one. */
+  handle?: string;
   model?: string;
   binOverride?: string;
 };
@@ -26,7 +28,16 @@ export async function POST(req: NextRequest) {
   } catch {
     return new Response("invalid JSON body", { status: 400 });
   }
-  const { agent, templateId, title, body: subtitle = "", direction, model, binOverride } = body;
+  const {
+    agent,
+    templateId,
+    title,
+    body: subtitle = "",
+    direction,
+    handle = "",
+    model,
+    binOverride,
+  } = body;
   if (!agent || !templateId || !title?.trim()) {
     return new Response("missing required fields: agent, templateId, title", { status: 400 });
   }
@@ -42,6 +53,7 @@ export async function POST(req: NextRequest) {
     direction: dir.text,
     skillBody: skill.body,
     exampleHtml: skill.exampleHtml,
+    handle,
   });
   const abortCtl = abortOn(req.signal);
   const source = invokeAgent({ agent, prompt, model, binOverride, signal: abortCtl.signal });

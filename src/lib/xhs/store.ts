@@ -54,6 +54,16 @@ export type XhsTask = {
   format: string;
   pageCount: PageCountSetting;
   templateId: string;
+  /**
+   * The account name stamped into each card's footer, without the leading `@`.
+   *
+   * Every template asks for 作者名 / 水印 in its footer but nothing used to
+   * supply one, so the agent filled the slot with an invention — a different
+   * one each run ("@产品复盘日记", "@Agent 手记", "@做 Agent 的日常"), and
+   * sometimes a different one per cover in the same batch. Empty means the user
+   * declined, which is not a licence to make one up: see `footerRule`.
+   */
+  handle: string;
   // ② outline
   pages: XhsPage[];
   outlineStatus: FlowStatus;
@@ -88,6 +98,8 @@ export function makeTask(name: string, seedFrom?: Partial<XhsTask>): XhsTask {
     format: "text",
     pageCount: seedFrom?.pageCount ?? "auto",
     templateId: seedFrom?.templateId ?? DEFAULT_TEMPLATE,
+    // Carried into new tasks: one person's handle does not change per article.
+    handle: seedFrom?.handle ?? "",
     pages: [],
     outlineStatus: "idle",
     requestedPages: null,
@@ -133,6 +145,7 @@ type State = {
   setFormat: (f: string) => void;
   setPageCount: (n: PageCountSetting) => void;
   setTemplateId: (id: string) => void;
+  setHandle: (handle: string) => void;
 
   setPages: (p: XhsPage[]) => void;
   patchPage: (id: string, patch: Partial<XhsPage>) => void;
@@ -208,6 +221,7 @@ export const useXhs = create<State>()(
         setFormat: (format) => patchActive({ format }),
         setPageCount: (pageCount) => patchActive({ pageCount }),
         setTemplateId: (templateId) => patchActive({ templateId }),
+        setHandle: (handle: string) => patchActive({ handle }),
 
         setPages: (pages) => patchActive({ pages }),
         patchPage: (id, patch) =>
@@ -280,6 +294,7 @@ export const useXhs = create<State>()(
           format: t.format,
           pageCount: t.pageCount,
           templateId: t.templateId,
+          handle: t.handle,
           pages: t.pages,
           // The user's uploaded screenshots. Unlike covers and rendered HTML
           // these are *not* regenerable — dropping them left `imageAssetIds`
