@@ -1,6 +1,6 @@
 # 小红书图文自动化生成
 
-不用配置API KEY，可以直接在本地 coding-agent CLI 上生成的可视化小红书图文工具。
+不用配置API KEY，可以直接在本地 coding-agent CLI 上运行的可视化小红书图文生产工具。
 
 ## 跑起来
 
