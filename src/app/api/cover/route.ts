@@ -41,6 +41,7 @@ export async function POST(req: NextRequest) {
     body: subtitle,
     direction: dir.text,
     skillBody: skill.body,
+    exampleHtml: skill.exampleHtml,
   });
   const abortCtl = abortOn(req.signal);
   const source = invokeAgent({ agent, prompt, model, binOverride, signal: abortCtl.signal });

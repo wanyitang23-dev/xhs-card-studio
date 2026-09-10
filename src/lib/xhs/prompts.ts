@@ -8,6 +8,7 @@
  */
 
 import { SHARED_DESIGN_DIRECTIVES } from "@/lib/templates/shared";
+import { exampleReferenceBlock } from "./example-ref";
 import type { PageCountSetting, XhsPage } from "./types";
 import { MAX_PAGES, MIN_PAGES, RECOMMENDED_MAX_PAGES } from "./types";
 
@@ -187,11 +188,14 @@ export function buildCoverPrompt(args: {
   body: string;
   direction: string;
   skillBody: string;
+  /** The template's own `example.html` — what the user saw when they picked it. */
+  exampleHtml?: string;
 }): string {
   return `${SHARED_DESIGN_DIRECTIVES}
 ${CJK_TYPOGRAPHY_RULES}
 ${CARD_LAYOUT_RULES}
 ${args.skillBody.trim()}
+${exampleReferenceBlock(args.exampleHtml)}
 
 【本次任务: 只做封面这一张卡】
 - 只输出**一张** \`1080×1440\` 的封面卡片, 不要输出后续内容页。
@@ -211,6 +215,8 @@ export function buildRenderPrompt(args: {
   pages: XhsPage[];
   skillBody: string;
   coverHtml?: string;
+  /** The template's own `example.html` — what the user saw when they picked it. */
+  exampleHtml?: string;
 }): string {
   const pageBlocks = args.pages
     .map((p, i) => {
@@ -233,6 +239,7 @@ ${args.coverHtml}
 ${CJK_TYPOGRAPHY_RULES}
 ${CARD_LAYOUT_RULES}
 ${args.skillBody.trim()}
+${exampleReferenceBlock(args.exampleHtml)}
 
 【本次任务: 按已确认的分页出成品】
 - 分页已经由用户逐页确认过。**页数、每页的标题和正文都已锁定, 一个字都不许改, 不许合并、不许拆分、不许增删页。**

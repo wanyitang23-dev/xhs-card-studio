@@ -40,7 +40,12 @@ export async function POST(req: NextRequest) {
   // agent needs something it can drop straight into an <img src>.
   const { pages: inlined } = resolveAssets(pages, assets);
 
-  const prompt = buildRenderPrompt({ pages: inlined, skillBody: skill.body, coverHtml });
+  const prompt = buildRenderPrompt({
+    pages: inlined,
+    skillBody: skill.body,
+    coverHtml,
+    exampleHtml: skill.exampleHtml,
+  });
   const abortCtl = abortOn(req.signal);
   const source = invokeAgent({ agent, prompt, model, binOverride, signal: abortCtl.signal });
 
