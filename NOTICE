@@ -1,0 +1,31 @@
+xhs-card-studio
+Copyright 2026 wanyitang23-dev
+
+This product is a derivative work of html-anything
+(https://github.com/nexu-io/html-anything), licensed under the
+Apache License, Version 2.0. The upstream LICENSE is retained
+verbatim in ./LICENSE.
+
+Apache-2.0 §4(b) requires derivative works to state what was
+changed. The substantive changes in this fork are:
+
+  * Replaced the single-shot "content in, page out" flow with a
+    four-step pipeline (outline / cover / render / caption) so the
+    page count and the text of every card are confirmed by the user
+    before the expensive render runs.
+  * Added src/lib/xhs/* — the step machine, its prompt builders, the
+    multi-task store, and the SSE flow driver.
+  * Added a JSON extractor (src/lib/extract-json.ts) so step ② can
+    return a structured outline rather than HTML.
+  * Rewrote src/lib/extract-html.ts to take the last complete
+    document instead of splicing the first opening tag to the last
+    closing one.
+  * Added hard prompt rules for CJK typography, fixed-size card
+    layout, and text/background contrast.
+  * Added user-uploaded templates, a live-preview template gallery,
+    per-card image attachments, and a user-supplied footer handle.
+  * Added the Xiaohongshu card templates under
+    src/lib/templates/skills/ and converted them all to 1080×1440.
+
+Files inherited from html-anything and modified in place are noted
+where the change is not obvious from the surrounding code.

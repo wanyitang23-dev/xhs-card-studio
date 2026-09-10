@@ -26,7 +26,7 @@ npm run dev
 
 | 步骤 | 做什么 | 接口 |
 |---|---|---|
-| ① 贴文章 | 粘贴内容、定张数、选模板 | — |
+| ① 贴文章 | 粘贴内容、定张数、填小红书号、选模板 | — |
 | ② 定分页 | agent 先拆好，你逐页改文案、加减页、传配图，逐页确认 | `POST /api/outline` |
 | ③ 挑封面 | 同一份文案生成三种构图，并排对比选一个 | `POST /api/cover` ×3 并发 |
 | ④ 出成品 | 按锁定的分页 + 选定封面生成完整 HTML，导出 PNG；右栏同时产出可一键复制的标题 / 正文 / 标签 | `POST /api/render`、`POST /api/caption` |
@@ -75,3 +75,10 @@ npm run build
 npm run typecheck
 npm test
 ```
+
+## 许可证
+
+Apache License 2.0，见 [`LICENSE`](LICENSE)。
+
+本项目派生自 [`html-anything`](https://github.com/nexu-io/html-anything)（同为 Apache-2.0）。
+按协议 §4(b) 的要求，改动清单记录在 [`NOTICE`](NOTICE) 里。
