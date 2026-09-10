@@ -145,16 +145,17 @@ function CoverTile({
         )}
       </button>
       <figcaption className="flex items-center gap-2 text-[13px]">
-        <span className="shrink-0 font-medium text-[var(--ink)]">{cover.label}</span>
+        <span className="mr-auto shrink-0 font-medium text-[var(--ink)]">{cover.label}</span>
         {cover.status === "error" && (
           <span className="truncate text-[12px]" style={{ color: "var(--red)" }}>
             {cover.error}
           </span>
         )}
+        {cover.html && <CopyHtmlButton html={cover.html} />}
         <button
           type="button"
           onClick={busy ? onCancel : onRegenerate}
-          className="ml-auto shrink-0 rounded-lg px-2.5 py-1 text-[12px] text-[var(--ink-mute)] transition-colors hover:text-[var(--ink)]"
+          className="shrink-0 rounded-lg px-2.5 py-1 text-[12px] text-[var(--ink-mute)] transition-colors hover:text-[var(--ink)]"
           style={{ background: "var(--surface)", border: "1px solid var(--line-soft)" }}
         >
           {busy ? "取消" : "只重生成这版"}
@@ -233,5 +234,52 @@ function ScaledCover({ html, label }: { html: string; label: string }) {
         />
       )}
     </div>
+  );
+}
+
+/**
+ * Hand the raw generated HTML to the clipboard.
+ *
+ * When a card comes out wrong, a screenshot only shows the symptom — whether
+ * the type is small because the agent wrote a small font-size, or because a
+ * declaration silently failed to apply, is not visible in a picture. This is
+ * the difference between diagnosing the defect and guessing at it.
+ */
+function CopyHtmlButton({ html }: { html: string }) {
+  const [done, setDone] = useState(false);
+
+  const copy = useCallback(async () => {
+    const text = previewHtml(html);
+    try {
+      await navigator.clipboard.writeText(text);
+    } catch {
+      // clipboard API needs a secure context; http://localhost is not one in
+      // every browser, so fall back to the old selection-based copy.
+      const ta = document.createElement("textarea");
+      ta.value = text;
+      ta.style.position = "fixed";
+      ta.style.opacity = "0";
+      document.body.appendChild(ta);
+      ta.select();
+      try {
+        document.execCommand("copy");
+      } finally {
+        ta.remove();
+      }
+    }
+    setDone(true);
+    setTimeout(() => setDone(false), 1500);
+  }, [html]);
+
+  return (
+    <button
+      type="button"
+      onClick={copy}
+      title="复制这版的原始 HTML，排版出问题时可以直接发给别人看"
+      className="shrink-0 rounded-lg px-2.5 py-1 text-[12px] text-[var(--ink-mute)] transition-colors hover:text-[var(--ink)]"
+      style={{ background: "var(--surface)", border: "1px solid var(--line-soft)" }}
+    >
+      {done ? "已复制" : "复制 HTML"}
+    </button>
   );
 }
