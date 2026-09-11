@@ -33,11 +33,14 @@ describe("字号规则", () => {
     }
   });
 
-  it("标题有明确的字号下限", () => {
+  it("不再规定标题字号下限 — 那条是误诊的产物", () => {
+    // It was added believing the prompt had told the model to shrink type. The
+    // headline was never small; Tailwind Preflight was overriding it, and
+    // neutralizeTailwindPreflight fixes that in code. A speculative floor with
+    // no evidence behind it is prompt weight for nothing.
     for (const p of [cover, render]) {
-      expect(p).toContain("标题有字号下限");
-      expect(p).toContain("≥64px");
-      expect(p).toContain("≥86px");
+      expect(p).not.toContain("标题有字号下限");
+      expect(p).not.toContain("≥86px");
     }
   });
 

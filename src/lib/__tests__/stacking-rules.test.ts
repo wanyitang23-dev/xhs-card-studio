@@ -53,9 +53,11 @@ describe("重叠层级规则", () => {
     expect(prompts.cover).toContain("重叠硬规则");
   });
 
-  it("规则里带着实测数字, 不是空泛建议", () => {
-    expect(prompts.cover).toContain("537-679");
-    expect(prompts.cover).toContain("只露出底下 42px");
+  it("保留了「为什么」, 但不再背诵当时的测量过程", () => {
+    // A rule needs its reason to be followed; it does not need the case notes.
+    expect(prompts.cover).toContain("位置算对了不等于画得出来");
+    expect(prompts.cover).not.toContain("537-679");
+    expect(prompts.cover).not.toContain("只露出底下 42px");
   });
 
   // The first version of the stacking rule produced a worse defect than the
@@ -72,7 +74,9 @@ describe("重叠层级规则", () => {
 
     it(`${name} prompt 说明一刀切会把装饰层拽回布局`, () => {
       expect(p).toContain("装饰球于是掉回正常流里占掉大片高度");
-      expect(p).toContain("1708px");
+      // The imperative and its reason stay; the forensic walkthrough does not.
+      expect(p).toContain("能把深色块撑到超出整张卡片");
+      expect(p).not.toContain("1708px");
     });
 
     it(`${name} prompt 给出了两种正确写法`, () => {

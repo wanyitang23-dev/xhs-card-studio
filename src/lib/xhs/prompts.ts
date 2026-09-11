@@ -7,10 +7,51 @@
  * finished multi-card page.
  */
 
-import { SHARED_DESIGN_DIRECTIVES } from "@/lib/templates/shared";
 import { exampleReferenceBlock } from "./example-ref";
 import type { PageCountSetting, XhsPage } from "./types";
 import { MAX_PAGES, MIN_PAGES, RECOMMENDED_MAX_PAGES } from "./types";
+
+/**
+ * The design directives for a fixed-size card, trimmed from the inherited
+ * `SHARED_DESIGN_DIRECTIVES`.
+ *
+ * The inherited block was written for "turn a document into a deck", where the
+ * model decides how many slides to produce. Both card prompts are the opposite
+ * case — the cover is exactly one card, and the render's pages are already
+ * locked word for word — so its longest section told the model to do something
+ * the surrounding prompt forbids. It also carried "宁可多页也不要把多个独立
+ * 要点硬塞进一页", the exact wording removed from the paging rule after a
+ * 200-character post came back as seven pages.
+ *
+ * What is kept verbatim is everything the extraction pipeline depends on:
+ * no file tools, stream the document as the reply body, open with
+ * `<!DOCTYPE html>`, close with `</html>`, no markdown fences. Those are a
+ * contract with `extractHtml`, not style advice.
+ *
+ * `shared.ts` itself is left alone — `/api/convert` still imports it.
+ */
+const XHS_CARD_DIRECTIVES = `
+你是世界级的视觉设计师 + 资深前端工程师。请输出一份**自包含的单文件 HTML**，要求：
+
+【硬性技术要求】
+- **禁止使用 Write / Edit / MultiEdit / Bash / Create / 任何文件系统工具**。不要把 HTML 写到任何 \`.html\` 文件里。前端直接捕获你的 stdout 文本, 文件落盘由前端负责。
+- 直接把完整的 HTML 文档作为助手回复的正文流式输出。不要先说"我来生成"、"已输出至 …"之类的话。
+- 文档以 \`<!DOCTYPE html>\` 开头, 末尾以 \`</html>\` 结束。
+- 在 \`<head>\` 中通过 CDN 引入 Tailwind v3 Play (https://cdn.tailwindcss.com) 与所需的 Google Fonts。
+- 不要引用任何外部图片 URL（除非你能保证 URL 长期有效；优先使用 CSS / SVG 内联绘制）。
+- 必要的脚本（图表、动画）通过 jsdelivr CDN 引入；保持单文件可双击打开即用。
+- 输出**纯 HTML**, 不要用 markdown 代码围栏包裹, 不要任何解释性文字。第一个字符必须是 \`<\`。
+
+【设计准则 — 世界级标准】
+- 排版: 中文优先 \`Noto Sans SC\` / \`Noto Serif SC\`, 英文 \`Inter\` / \`Manrope\` / \`SF Pro\` 风格。
+- 色彩: 使用 1 个主色 + 2 个中性色 + 至多 1 个强调色; 大胆留白; 不使用纯黑纯白 (#000/#fff), 改用 \`#0a0a0a\` / \`#fafafa\`。
+- 网格: 8 px 基线; 标题与正文有清晰的层级。
+- 微观细节: 圆角统一 (rounded-xl/2xl), 投影柔和 (shadow-sm/lg), 边框 1px \`#e5e7eb\` / \`#262626\`。
+
+【内容真实性】
+- **必须使用用户提供的真实数据**, 不要编造、不要 lorem ipsum、不要 "Your text here"。
+
+`;
 
 /**
  * Hard typography rules for Chinese cards, prepended to every prompt that
@@ -42,9 +83,6 @@ const CJK_TYPOGRAPHY_RULES = `【中文排版硬规则 — 优先级高于任何
 - **字号必须验算。** 写下一个字号前, 先估算「这行有几个字 × 字号」会不会超出卡片宽度 (减去左右内边距)。
   **放不下的第一手段是换行, 不是缩字号。** 中文标题折成两三行是正常排版, 缩成小字则是设计失败。
   两者都不够时才适度减字号, 并且不要靠负字距硬塞。
-- **标题有字号下限。** 卡片主标题不得小于卡片宽度的 6%(1080 宽的卡即 ≥64px), 封面主标题不得小于
-  8%(即 ≥86px) —— 封面主标题是整张卡的视觉焦点, 必须一眼可读。
-  宁可让标题占掉半张卡、宁可删掉旁边的装饰元素, 也不要把它缩到和正文一样大。
 - 中英文混排时中英文之间留半角空格。
 
 `;
@@ -95,8 +133,7 @@ const CARD_LAYOUT_RULES = `【卡片版式硬规则 — 优先级高于任何模
   写法: 深色块就是文字的父容器 (\`background:<深色>; padding:…\`), 文字在它里面走正常流。
 - **禁止**「绝对定位一个固定高度的深色背景 + 文字另外走流」这种组合。
   背景色块虽然不含文字, 但白字能不能看见取决于它的高度 — 这不算装饰层, 不适用上面那条豁免。
-  实测缺陷: \`.block-clay{position:absolute;height:668px}\` 配白色标题, 标题实际折了 5 行、
-  底部到 714px, 于是有 46px 的白字落在浅色纸面上, 对比度约 1.03:1, 完全看不见。
+  标题多折一行就会掉到浅色区上, 白字压白底, 等于看不见。
 - 判据一句话: **谁决定了文字的颜色, 谁就必须包住这段文字。**
 - 想要「上深下浅」的分割版式: 让深色区是一个 flex 子项, 高度由它内部的内容撑出来,
   浅色区是下一个 flex 子项。不要用固定 px 高度去切分卡片。
@@ -106,18 +143,14 @@ const CARD_LAYOUT_RULES = `【卡片版式硬规则 — 优先级高于任何模
 - **用负边距把一个块提上去压在前一个块上时, 它必须写 \`position:relative\` 和更大的 \`z-index\`。**
   否则它会被压在下面。原因是绘制顺序: 同一层叠上下文里, **定位元素(哪怕只写了
   \`position:relative\` 没写 z-index)比普通静态块后画**, 所以静态元素一定输给定位过的兄弟。
-- 实测缺陷: \`.slab{position:relative}\` 深色块 0-637px, 下面浅色区里的浮层卡片用
-  \`margin-top:-100px\` 上提到 537-679px, 想压在分界线上。布局完全正确, 但命中测试显示
-  537-637 这 100px 画出来的是 slab —— 卡片只露出底下 42px, 文字被吃掉大半。
-  补上 \`position:relative;z-index:3\` 后, 几何一点没变, 卡片正常显示在最上层。
+- 位置算对了不等于画得出来: 浮层的几何完全正确, 却整块被前面那个定位过的色块盖住,
+  只露出边界以下的一小条。
 - 一句话: **位置对了不等于看得见。** 只要两个块在视觉上重叠, 就必须明确谁在上面, 不能靠默认。
 - 反过来: 深色块自己写了 \`position:relative\` 时, 别忘了它会盖住后面所有没定位的兄弟内容。
 - **不许用 \`.父容器 > *\` 这种一刀切的写法去抬升内容。** 它会把你特意用
   \`position:absolute\` 抽出布局的装饰层一起罩进去, 装饰球于是掉回正常流里占掉大片高度。
-  两条选择器优先级都是 (0,1,0), 写在后面的赢 —— 你自己写的 \`.blob{position:absolute}\` 会输。
-  实测缺陷: \`.slab > *{position:relative}\` 让两个 460px / 380px 的光斑进入布局,
-  深色块从约 870px 撑到 1708px(卡片只有 1440), 下半张浅色区整个被顶到卡片外, 正文、
-  三个格子、页脚分别超出底部 384 / 594 / 654px, 成品只剩一块黑底。
+  两条选择器优先级都是 (0,1,0), 写在后面的赢 —— 你自己写的 \`.blob{position:absolute}\` 会输,
+  几百 px 的光斑掉回布局, 能把深色块撑到超出整张卡片, 下半张卡全被顶出去。
   **正确写法: 点名要抬升的元素** (\`.slab > .topbar, .slab > h1 { position:relative; z-index:2 }\`),
   或者在后面补一条更具体的 \`.slab > .blob{ position:absolute }\` 把装饰层救回来。
 
@@ -253,7 +286,7 @@ export function buildCoverPrompt(args: {
    */
   images?: string[];
 }): string {
-  return `${SHARED_DESIGN_DIRECTIVES}
+  return `${XHS_CARD_DIRECTIVES}
 ${CJK_TYPOGRAPHY_RULES}
 ${CARD_LAYOUT_RULES}
 ${args.skillBody.trim()}
@@ -344,7 +377,7 @@ ${args.coverHtml}
 `
     : "";
 
-  return `${SHARED_DESIGN_DIRECTIVES}
+  return `${XHS_CARD_DIRECTIVES}
 ${CJK_TYPOGRAPHY_RULES}
 ${CARD_LAYOUT_RULES}
 ${args.skillBody.trim()}
@@ -353,9 +386,9 @@ ${exampleReferenceBlock(args.exampleHtml)}
 【本次任务: 按已确认的分页出成品】
 - 分页已经由用户逐页确认过。**页数、每页的标题和正文都已锁定, 一个字都不许改, 不许合并、不许拆分、不许增删页。**
 - 你的工作只是把每一页**做好看**: 挑版式、配色、字号层级、图文排布。
+- 数字、对比、步骤优先做成可视化结构 (大数字 / 左右对比 / 编号步骤), 不要堆成一段话 ——
+  但这是**排版手段**, 文字本身依然一个字都不许改。
 - 后续内容页的视觉风格必须和封面保持同一套系统。
-
-${CARD_VOICE}
 
 ${footerRule(args.handle)}
 
