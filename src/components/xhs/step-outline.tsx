@@ -5,7 +5,7 @@ import { useTask, useXhs } from "@/lib/xhs/store";
 import { useFlow } from "@/lib/xhs/use-flow";
 import { parseFile } from "@/lib/parsers/file";
 import { RECOMMENDED_MAX_PAGES, MAX_PAGES, type XhsPage } from "@/lib/xhs/types";
-import { downscaleDataUrl } from "@/lib/xhs/image";
+import { prepareImage } from "@/lib/xhs/image";
 
 const KIND_LABEL = { cover: "封面", content: "正文", ending: "结尾" } as const;
 
@@ -99,9 +99,12 @@ function PageCard({ page, index, total }: { page: XhsPage; index: number; total:
         try {
           const parsed = await parseFile(f);
           // Bound it before it reaches the store: these are persisted now, and
-          // a raw phone screenshot is several megabytes of base64.
+          // a raw phone screenshot is several megabytes of base64. The size is
+          // kept alongside so the agent is told the aspect ratio rather than
+          // guessing at a picture it never sees.
           if (parsed.format === "image" && parsed.dataUrl) {
-            added.push(addAsset(await downscaleDataUrl(parsed.dataUrl)));
+            const { dataUrl, size } = await prepareImage(parsed.dataUrl);
+            added.push(addAsset(dataUrl, size ?? undefined));
           }
         } catch {
           // skip unreadable files; the rest of the batch still lands

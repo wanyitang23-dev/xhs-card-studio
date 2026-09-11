@@ -189,6 +189,7 @@ export function useFlow() {
                 // after generation, so uploading them here would be ~300 KB per
                 // request, three times over, for data the server never reads.
                 imageAssetIds: (cover.imageAssetIds ?? []).filter((id) => !!task.assets[id]),
+                imageMeta: task.assetMeta,
               },
               {
                 onDelta: (t) =>
@@ -258,6 +259,7 @@ export function useFlow() {
             imageAssetIds: (p.imageAssetIds ?? []).filter((id) => !!task.assets[id]),
           })),
           handle: task.handle,
+          imageMeta: task.assetMeta,
           ...(cover?.html ? { coverHtml: cover.html } : {}),
         },
         {

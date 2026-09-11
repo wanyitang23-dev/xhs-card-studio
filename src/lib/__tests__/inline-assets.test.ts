@@ -103,10 +103,16 @@ describe("prompt 里只出现短标记, 绝不出现图片字节", () => {
     expect(p).toContain("输出就被截断");
   });
 
-  it("带一张图的 prompt 不会比不带图的大多少", () => {
+  it("带一张图的 prompt 只多出几百字符, 而不是几十万", () => {
     const bare = buildRenderPrompt({ pages: [page([])], skillBody: "模板" });
-    const withImg = buildRenderPrompt({ pages: [page(["asset:pic1"])], skillBody: "模板" });
-    // The old design added the whole data URL here; this must stay tiny.
-    expect(withImg.length - bare.length).toBeLessThan(300);
+    const withImg = buildRenderPrompt({
+      pages: [page(["asset:pic1"])],
+      skillBody: "模板",
+      imageMeta: { "asset:pic1": { width: 1170, height: 2532 } },
+    });
+    // The old design put the whole data URL here — hundreds of thousands of
+    // characters. The bound is loose enough for the token line plus the ratio
+    // rule, and tight enough that inlined bytes could never fit under it.
+    expect(withImg.length - bare.length).toBeLessThan(600);
   });
 });

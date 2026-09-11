@@ -18,6 +18,8 @@ type Body = {
   // are substituted in the browser after generation and never reach the server.
   /** The user's account name for the footer watermark. Empty = do not invent one. */
   handle?: string;
+  /** `asset:<id>` → real pixel size, so the prompt states the ratio. */
+  imageMeta?: Record<string, { width: number; height: number }>;
   model?: string;
   binOverride?: string;
 };
@@ -35,6 +37,7 @@ export async function POST(req: NextRequest) {
     pages,
     coverHtml,
     handle = "",
+    imageMeta,
     model,
     binOverride,
   } = body;
@@ -57,6 +60,7 @@ export async function POST(req: NextRequest) {
     coverHtml,
     exampleHtml: skill.exampleHtml,
     handle,
+    imageMeta,
   });
   const abortCtl = abortOn(req.signal);
   const source = invokeAgent({ agent, prompt, model, binOverride, signal: abortCtl.signal });

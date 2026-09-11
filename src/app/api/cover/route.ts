@@ -22,6 +22,8 @@ type Body = {
    * substituted in the browser after generation and never reach the server.
    */
   imageAssetIds?: string[];
+  /** `asset:<id>` → real pixel size, so the prompt states the ratio. */
+  imageMeta?: Record<string, { width: number; height: number }>;
   model?: string;
   binOverride?: string;
 };
@@ -41,6 +43,7 @@ export async function POST(req: NextRequest) {
     direction,
     handle = "",
     imageAssetIds,
+    imageMeta,
     model,
     binOverride,
   } = body;
@@ -61,6 +64,7 @@ export async function POST(req: NextRequest) {
     exampleHtml: skill.exampleHtml,
     handle,
     images: imageAssetIds ?? [],
+    imageMeta,
   });
   const abortCtl = abortOn(req.signal);
   const source = invokeAgent({ agent, prompt, model, binOverride, signal: abortCtl.signal });

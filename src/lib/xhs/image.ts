@@ -50,6 +50,45 @@ export function dataUrlBytes(dataUrl: string): number {
  * far better than a lost one. The caller is expected to be in the browser;
  * outside it (tests, SSR) the original comes straight back.
  */
+/** An image's real pixel size, kept so nothing downstream has to guess it. */
+export type ImageSize = { width: number; height: number };
+
+/**
+ * Decode just far enough to read an image's intrinsic size.
+ *
+ * The dimensions are known at upload — `downscaleDataUrl` already decodes the
+ * image — but they used to be thrown away, leaving the agent to guess the
+ * aspect ratio of a picture it cannot see. It guessed by pinning a height and
+ * cropping with `object-fit:cover`, which is how a portrait screenshot ended up
+ * as a thin horizontal strip.
+ *
+ * Also usable as a backfill: an asset uploaded before sizes were stored can be
+ * measured from its data URL on demand, so nothing has to be re-uploaded.
+ */
+export async function measureDataUrl(dataUrl: string): Promise<ImageSize | null> {
+  if (typeof document === "undefined" || !dataUrl.startsWith("data:image/")) return null;
+  try {
+    const img = await loadImage(dataUrl);
+    const w = img.naturalWidth;
+    const h = img.naturalHeight;
+    return w > 0 && h > 0 ? { width: w, height: h } : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Downscale and report the size actually stored, so the caller never has to
+ * decode the image a second time.
+ */
+export async function prepareImage(
+  dataUrl: string,
+  maxEdge: number = MAX_EDGE,
+): Promise<{ dataUrl: string; size: ImageSize | null }> {
+  const out = await downscaleDataUrl(dataUrl, maxEdge);
+  return { dataUrl: out, size: await measureDataUrl(out) };
+}
+
 export async function downscaleDataUrl(
   dataUrl: string,
   maxEdge: number = MAX_EDGE,

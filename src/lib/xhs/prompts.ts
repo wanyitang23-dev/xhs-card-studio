@@ -285,6 +285,8 @@ export function buildCoverPrompt(args: {
    * field for them — so a picture attached in step 2 silently never appeared.
    */
   images?: string[];
+  /** Real pixel sizes for those images, so the ratio is stated, not guessed. */
+  imageMeta?: ImageMeta;
 }): string {
   return `${XHS_CARD_DIRECTIVES}
 ${CJK_TYPOGRAPHY_RULES}
@@ -304,11 +306,62 @@ ${exampleReferenceBlock(args.exampleHtml)}
 ${args.direction}
 
 ${footerRule(args.handle)}
-${coverImageBlock(args.images)}
+${coverImageBlock(args.images, args.imageMeta)}
 【封面文案 — 原样使用, 不要改写】
 主标题: ${args.title}
 ${args.body ? `副标题 / 钩子: ${args.body}` : "（无副标题）"}
 `;
+}
+
+/**
+ * How to reserve space for a picture whose real size is now stated.
+ *
+ * The previous wording — "the size is unknown, so pin a height and use
+ * `object-fit:cover`" — guaranteed a crop: `cover` fills the box and discards
+ * whatever does not fit. A portrait screenshot in a 928x300 box loses most of
+ * itself. The size is no longer unknown, so the box can simply match it.
+ */
+const IMAGE_RATIO_RULE = `- **按下面给出的真实宽高比留版面**: 用 \`aspect-ratio: 宽 / 高\` 或按比例算出的
+  宽高, 让容器和图片同比例。**不要写死一个高度再用 \`object-fit:cover\` 去填满** ——
+  \`cover\` 会把超出容器的部分裁掉, 竖图塞进横条里就只剩中间一条。
+- 确实想做满幅裁切时才用 \`cover\`, 并且要清楚那是有意为之, 而不是因为不知道比例。
+`;
+
+/**
+ * The same rule when no size is on record.
+ *
+ * Pointing at "the ratio given below" when nothing is given would be a dangling
+ * reference, so the fallback asks for a container that follows the image
+ * instead of one that constrains it.
+ */
+const IMAGE_RATIO_RULE_UNKNOWN = `- 这张图的尺寸没有记录。**不要写死高度再用 \`object-fit:cover\`** —— 那会把图裁掉。
+  给容器定宽度、让高度跟着图片走 (\`height:auto\`), 或者用 \`object-fit:contain\` 完整显示。
+`;
+
+/** Whichever form of the rule the available metadata supports. */
+function imageRatioRule(tokens: string[], meta: ImageMeta | undefined): string {
+  return tokens.some((t) => meta?.[t]?.width && meta?.[t]?.height)
+    ? IMAGE_RATIO_RULE
+    : IMAGE_RATIO_RULE_UNKNOWN;
+}
+
+/** `asset:<id>` → the picture's real pixel size, for prompts that place images. */
+export type ImageMeta = Record<string, { width: number; height: number }>;
+
+/**
+ * One line describing an attached picture.
+ *
+ * The size is the whole point. Without it the model is placing a picture it
+ * cannot see, and the only safe-looking move is to pin a box and crop to fill
+ * — which is exactly how a 1170x2532 screenshot came back as a thin strip.
+ */
+function imageLine(token: string, meta: ImageMeta | undefined): string {
+  const size = meta?.[token];
+  if (!size?.width || !size?.height) return `  - ${token}`;
+  const { width, height } = size;
+  const r = width / height;
+  const shape = r > 1.15 ? "横图" : r < 0.87 ? "竖图" : "方图";
+  return `  - ${token} — ${width}×${height} (${shape}, 宽高比 ${r.toFixed(2)})`;
 }
 
 /**
@@ -319,7 +372,7 @@ ${args.body ? `副标题 / 钩子: ${args.body}` : "（无副标题）"}
  * and then quietly failed to reach the agent. It is the user's own material;
  * an attached image should be visible in the thing it was attached to.
  */
-function coverImageBlock(images: string[] | undefined): string {
+function coverImageBlock(images: string[] | undefined, meta?: ImageMeta): string {
   if (!images?.length) return "";
   return `
 【这一页的配图 — 必须真的出现在卡片里】
@@ -329,9 +382,7 @@ function coverImageBlock(images: string[] | undefined): string {
   图片数据有几十万个字符, 你抄不完, 抄到一半输出就被截断、整张卡片作废。
 - 配图是内容的一部分, 不是装饰: 给它安排真实的版面位置 (整幅、半幅、圆角卡片里都可以),
   不要缩成角落里的小图标。图片区域和文字区域不要互相压盖。
-- 图片的实际长宽未知, 所以要给它一个确定的容器 (例如固定高度 + \`object-fit:cover\`),
-  不要让它按原始尺寸把版面撑开。
-${images.map((token) => `  - ${token}`).join("\n")}
+${imageRatioRule(images, meta)}${images.map((t) => imageLine(t, meta)).join("\n")}
 `;
 }
 
@@ -344,6 +395,8 @@ export function buildRenderPrompt(args: {
   exampleHtml?: string;
   /** The account name for the footer watermark; empty means "do not invent one". */
   handle?: string;
+  /** Real pixel sizes for attached images, so the ratio is stated, not guessed. */
+  imageMeta?: ImageMeta;
 }): string {
   const pageBlocks = args.pages
     .map((p, i) => {
@@ -353,7 +406,7 @@ export function buildRenderPrompt(args: {
       const imgs = p.imageAssetIds.length
         ? `\n  配图 (必须嵌入这一页, 写成 <img src="asset:xxx">, src 就用下面的短标记本身,
     工具会在生成后替换成真实图片; 不要自己写 base64、不要改成占位图):\n${p.imageAssetIds
-            .map((a) => `  - ${a}`)
+            .map((a) => imageLine(a, args.imageMeta))
             .join("\n")}`
         : "";
       return `第 ${i + 1} 页 [${p.kind}]\n  标题: ${p.title}\n  正文: ${p.body || "（无）"}${imgs}`;
@@ -391,7 +444,14 @@ ${exampleReferenceBlock(args.exampleHtml)}
 - 后续内容页的视觉风格必须和封面保持同一套系统。
 
 ${footerRule(args.handle)}
-
+${
+    args.pages.some((p) => p.imageAssetIds.length)
+      ? `\n【配图的版面】\n${imageRatioRule(
+          args.pages.flatMap((p) => p.imageAssetIds),
+          args.imageMeta,
+        )}`
+      : ""
+  }
 ${coverBlock}
 【已确认的分页 — 共 ${args.pages.length} 页】
 ${pageBlocks}

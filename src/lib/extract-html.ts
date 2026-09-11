@@ -52,7 +52,11 @@ const BASE_RESET = `<style data-xhs="base-reset">*,::before,::after{box-sizing:b
   `h1,h2,h3,h4,h5,h6,p,figure,blockquote,dl,dd,pre{margin:0}` +
   `ol,ul,menu{list-style:none;margin:0;padding:0}` +
   `img,svg,video,canvas,audio,iframe,embed,object{display:block;vertical-align:middle}` +
-  `img,video{max-width:100%;height:auto}` +
+  // `fill` is CSS's default and distorts a picture whenever both dimensions are
+  // constrained; `contain` letterboxes instead. This is a *default*, not an
+  // override — it sits before the document's own styles, so an author who
+  // deliberately writes `object-fit:cover` still wins.
+  `img,video{max-width:100%;height:auto;object-fit:contain}` +
   `button,input,optgroup,select,textarea{font:inherit;color:inherit;margin:0}` +
   `table{border-collapse:collapse}</style>`;
 

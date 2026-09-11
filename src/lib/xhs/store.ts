@@ -82,6 +82,13 @@ export type XhsTask = {
 
   /** `asset:<id>` → data URL, for screenshots attached to individual pages. */
   assets: Record<string, string>;
+  /**
+   * `asset:<id>` → the picture's real pixel size.
+   *
+   * Kept so the agent is told the aspect ratio instead of guessing it. Missing
+   * entries are fine — older uploads are measured from their data URL on demand.
+   */
+  assetMeta: Record<string, { width: number; height: number }>;
   log: Array<{ ts: number; kind: string; text: string }>;
 };
 
@@ -109,6 +116,7 @@ export function makeTask(name: string, seedFrom?: Partial<XhsTask>): XhsTask {
     caption: null,
     captionStatus: "idle",
     assets: {},
+    assetMeta: {},
     log: [],
   };
 }
@@ -156,7 +164,8 @@ type State = {
   selectCover: (id?: string) => void;
   patchCaption: (patch: Partial<Caption>) => void;
 
-  addAsset: (dataUrl: string) => string;
+  addAsset: (dataUrl: string, size?: { width: number; height: number }) => string;
+  setAssetSize: (key: string, size: { width: number; height: number }) => void;
   setPreviewZoom: (z: number) => void;
   resetFlow: () => void;
 };
@@ -255,11 +264,16 @@ export const useXhs = create<State>()(
         patchCaption: (patch) =>
           patchActive((t) => (t.caption ? { caption: { ...t.caption, ...patch } } : {})),
 
-        addAsset: (dataUrl) => {
+        addAsset: (dataUrl, size) => {
           const key = `asset:${nid("a")}`;
-          patchActive((t) => ({ assets: { ...t.assets, [key]: dataUrl } }));
+          patchActive((t) => ({
+            assets: { ...t.assets, [key]: dataUrl },
+            ...(size ? { assetMeta: { ...t.assetMeta, [key]: size } } : {}),
+          }));
           return key;
         },
+        setAssetSize: (key, size) =>
+          patchActive((t) => ({ assetMeta: { ...t.assetMeta, [key]: size } })),
         setPreviewZoom: (previewZoom) => set({ previewZoom }),
         resetFlow: () =>
           patchActive((t) => {
@@ -300,6 +314,7 @@ export const useXhs = create<State>()(
           // these are *not* regenerable — dropping them left `imageAssetIds`
           // pointing at nothing, and the render emitted <img src="asset:xxx">.
           assets: t.assets,
+          assetMeta: t.assetMeta,
           selectedCoverId: t.selectedCoverId,
           caption: t.caption,
         })),
