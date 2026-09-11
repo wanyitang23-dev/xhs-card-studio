@@ -3,7 +3,6 @@ import { invokeAgent } from "@/lib/agents/invoke";
 import { loadSkill } from "@/lib/templates/loader";
 import { buildRenderPrompt } from "@/lib/xhs/prompts";
 import type { XhsPage } from "@/lib/xhs/types";
-import { resolveAssets } from "@/lib/xhs/assets";
 import { abortOn, SSE_HEADERS, toSseStream } from "@/lib/xhs/sse";
 
 export const runtime = "nodejs";
@@ -15,8 +14,8 @@ type Body = {
   pages: XhsPage[];
   /** The winning cover's HTML, so the render keeps its exact design. */
   coverHtml?: string;
-  /** `asset:<id>` → `data:image/...` for screenshots the user attached. */
-  assets?: Record<string, string>;
+  // Attached screenshots travel as `asset:<id>` tokens on each page; the bytes
+  // are substituted in the browser after generation and never reach the server.
   /** The user's account name for the footer watermark. Empty = do not invent one. */
   handle?: string;
   model?: string;
@@ -35,7 +34,6 @@ export async function POST(req: NextRequest) {
     templateId,
     pages,
     coverHtml,
-    assets = {},
     handle = "",
     model,
     binOverride,
@@ -49,7 +47,9 @@ export async function POST(req: NextRequest) {
   // Swap the short `asset:<id>` tokens for the real bytes right before the
   // prompt is built — the client keeps the readable token in its state, the
   // agent needs something it can drop straight into an <img src>.
-  const { pages: inlined } = resolveAssets(pages, assets);
+  // The client already dropped tokens it has no bytes for, so the agent is
+  // never told about an image that cannot be substituted back in.
+  const inlined: XhsPage[] = pages;
 
   const prompt = buildRenderPrompt({
     pages: inlined,

@@ -1,3 +1,5 @@
+import { inlineAssets } from "./xhs/inline-assets";
+
 /**
  * Clamp negative `letter-spacing` to zero.
  *
@@ -155,8 +157,12 @@ function escape(s: string): string {
  * For previews while the stream is still arriving — make sure we always
  * produce a closing </body></html> so the iframe can render incrementally.
  */
-export function previewHtml(streamed: string): string {
-  const html = extractHtml(streamed);
+export function previewHtml(
+  streamed: string,
+  /** `asset:<id>` → data URL. The agent writes tokens; the bytes land here. */
+  assets?: Record<string, string>,
+): string {
+  const html = inlineAssets(extractHtml(streamed), assets);
   if (!html) return "";
   if (/<\/html>/i.test(html)) return html;
   return html + "\n</body>\n</html>";

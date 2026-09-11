@@ -12,6 +12,7 @@ import {
 } from "@/lib/export/image";
 import { downloadHtml } from "@/lib/export/download";
 import { extractHtml } from "@/lib/extract-html";
+import { inlineAssets } from "@/lib/xhs/inline-assets";
 import { parseDeck } from "@/lib/deck";
 import {
   exportDeckPngZip,
@@ -26,9 +27,14 @@ type ExportMenuProps = {
    * the four-step flow keeps its output in its own store and passes it here.
    */
   html?: string;
+  /**
+   * `asset:<id>` → data URL. The agent emits tokens, so a downloaded file must
+   * have the real bytes put back in or it exports with placeholders.
+   */
+  assets?: Record<string, string>;
 };
 
-export function ExportMenu({ iframeRef, html: htmlProp }: ExportMenuProps) {
+export function ExportMenu({ iframeRef, html: htmlProp, assets }: ExportMenuProps) {
   const storeHtml = useStore((s) => selectActiveTask(s)?.html ?? "");
   const html = htmlProp ?? storeHtml;
   const [open, setOpen] = useState(false);
@@ -67,10 +73,10 @@ export function ExportMenu({ iframeRef, html: htmlProp }: ExportMenuProps) {
       }
     };
 
-  const cleanHtml = () => extractHtml(html);
+  const cleanHtml = () => inlineAssets(extractHtml(html), assets);
   // Re-parse for the deck section. Cheap because parseDeck is regex-only and
   // the menu only opens on user click.
-  const deck = useMemo(() => parseDeck(extractHtml(html)), [html]);
+  const deck = useMemo(() => parseDeck(inlineAssets(extractHtml(html), assets)), [html, assets]);
 
   const sections: Array<{
     title: string;

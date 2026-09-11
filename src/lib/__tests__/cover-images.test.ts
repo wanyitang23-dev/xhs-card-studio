@@ -42,17 +42,21 @@ describe("封面 prompt 带上配图", () => {
     body: "钩子",
     direction: "巨字标题",
     skillBody: "模板",
-    images: [DATA],
+    images: ["asset:pic1"],
   });
 
-  it("图片数据真的进了 prompt", () => {
-    expect(withImg).toContain(DATA);
+  it("配图的短标记进了 prompt, 图片字节没有", () => {
+    expect(withImg).toContain("asset:pic1");
+    expect(withImg).not.toContain(DATA);
     expect(withImg).toContain("必须真的出现在卡片里");
   });
 
-  it("要求原样使用 src, 不许换成占位图或背景图", () => {
-    expect(withImg).toContain("不要改成占位图");
-    expect(withImg).toContain("不要换成 CSS 背景");
+  it("要求 src 写短标记本身, 并禁止自己写图片字节", () => {
+    // Handing the model a data URL meant it had to copy the base64 back out,
+    // which truncated the answer mid-string.
+    expect(withImg).toContain("就写这个短标记本身");
+    expect(withImg).toContain("不要自己写");
+    expect(withImg).toContain("不要编造图片 URL 或占位图");
   });
 
   it("要求给配图真实版面, 而不是缩成小图标", () => {

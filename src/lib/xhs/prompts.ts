@@ -290,11 +290,15 @@ function coverImageBlock(images: string[] | undefined): string {
   if (!images?.length) return "";
   return `
 【这一页的配图 — 必须真的出现在卡片里】
-- 下面 ${images.length} 张图是用户为封面上传的, 用 \`<img src="…">\` 原样嵌进卡片。
-- \`src\` 一字不改地用下面的完整字符串, 不要改成占位图、不要换成 CSS 背景、不要省略。
+- 下面 ${images.length} 张图是用户为封面上传的。用 \`<img src="asset:xxx">\` 嵌进卡片,
+  \`src\` **就写这个短标记本身**, 工具会在你输出之后把真实图片替换进去。
+- **绝对不要自己写 \`data:image/...;base64,\` 这类内容**, 也不要编造图片 URL 或占位图。
+  图片数据有几十万个字符, 你抄不完, 抄到一半输出就被截断、整张卡片作废。
 - 配图是内容的一部分, 不是装饰: 给它安排真实的版面位置 (整幅、半幅、圆角卡片里都可以),
   不要缩成角落里的小图标。图片区域和文字区域不要互相压盖。
-${images.map((src) => `  - ${src}`).join("\n")}
+- 图片的实际长宽未知, 所以要给它一个确定的容器 (例如固定高度 + \`object-fit:cover\`),
+  不要让它按原始尺寸把版面撑开。
+${images.map((token) => `  - ${token}`).join("\n")}
 `;
 }
 
@@ -310,8 +314,12 @@ export function buildRenderPrompt(args: {
 }): string {
   const pageBlocks = args.pages
     .map((p, i) => {
+      // Tokens, never bytes: a data URL here would have to be copied back out
+      // of the model verbatim, and a few hundred thousand characters of base64
+      // truncates the answer long before the document closes.
       const imgs = p.imageAssetIds.length
-        ? `\n  配图 (必须原样嵌入这一页, 用 <img src="…"> , 不要改成占位图):\n${p.imageAssetIds
+        ? `\n  配图 (必须嵌入这一页, 写成 <img src="asset:xxx">, src 就用下面的短标记本身,
+    工具会在生成后替换成真实图片; 不要自己写 base64、不要改成占位图):\n${p.imageAssetIds
             .map((a) => `  - ${a}`)
             .join("\n")}`
         : "";

@@ -1,4 +1,3 @@
-import { resolveIds } from "@/lib/xhs/assets";
 import { NextRequest } from "next/server";
 import { invokeAgent } from "@/lib/agents/invoke";
 import { loadSkill } from "@/lib/templates/loader";
@@ -18,9 +17,11 @@ type Body = {
   direction: string;
   /** The user's account name for the footer watermark. Empty = do not invent one. */
   handle?: string;
-  /** `asset:<id>` tokens attached to the cover page, plus the bytes behind them. */
+  /**
+   * `asset:<id>` tokens attached to the cover page. Ids only — the bytes are
+   * substituted in the browser after generation and never reach the server.
+   */
   imageAssetIds?: string[];
-  assets?: Record<string, string>;
   model?: string;
   binOverride?: string;
 };
@@ -40,7 +41,6 @@ export async function POST(req: NextRequest) {
     direction,
     handle = "",
     imageAssetIds,
-    assets = {},
     model,
     binOverride,
   } = body;
@@ -60,7 +60,7 @@ export async function POST(req: NextRequest) {
     skillBody: skill.body,
     exampleHtml: skill.exampleHtml,
     handle,
-    images: resolveIds(imageAssetIds, assets).images,
+    images: imageAssetIds ?? [],
   });
   const abortCtl = abortOn(req.signal);
   const source = invokeAgent({ agent, prompt, model, binOverride, signal: abortCtl.signal });

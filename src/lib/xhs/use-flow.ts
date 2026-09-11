@@ -184,8 +184,11 @@ export function useFlow() {
                 handle: task.handle,
                 // The cover page can carry an attachment too; step 3 used to
                 // drop it because the endpoint had no field for it.
-                imageAssetIds: cover.imageAssetIds,
-                assets: task.assets,
+                //
+                // Only the ids travel. The bytes are substituted in the browser
+                // after generation, so uploading them here would be ~300 KB per
+                // request, three times over, for data the server never reads.
+                imageAssetIds: (cover.imageAssetIds ?? []).filter((id) => !!task.assets[id]),
               },
               {
                 onDelta: (t) =>
@@ -249,8 +252,11 @@ export function useFlow() {
         {
           ...agentArgs(),
           templateId: task.templateId,
-          pages: task.pages,
-          assets: task.assets,
+          // Same as the cover step: ids only, bytes stay in the browser.
+          pages: task.pages.map((p) => ({
+            ...p,
+            imageAssetIds: (p.imageAssetIds ?? []).filter((id) => !!task.assets[id]),
+          })),
           handle: task.handle,
           ...(cover?.html ? { coverHtml: cover.html } : {}),
         },

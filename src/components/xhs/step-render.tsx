@@ -45,7 +45,8 @@ export function StepRender() {
   }, [status, caption, captionStatus, runCaption]);
 
   const running = status === "running";
-  const display = useMemo(() => previewHtml(html), [html]);
+  const assets = useTask((t) => t.assets);
+  const display = useMemo(() => previewHtml(html, assets), [html, assets]);
   // Lay the page out at the width the cards were authored for. The pane is
   // narrower than that, so the iframe is scaled down for display only —
   // `clientWidth` stays 1080, which is what the PNG export reads.
@@ -89,7 +90,7 @@ export function StepRender() {
           >
             {running ? "取消" : "重新生成"}
           </button>
-          <ExportMenu iframeRef={iframeRef} html={html} />
+          <ExportMenu iframeRef={iframeRef} html={html} assets={assets} />
         </div>
       </header>
 

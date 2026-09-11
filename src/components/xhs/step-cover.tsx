@@ -180,6 +180,7 @@ function CoverTile({
  * size — the preview no longer has to know which it got.
  */
 function ScaledCover({ html, label }: { html: string; label: string }) {
+  const assets = useTask((t) => t.assets);
   const { ref, size } = useElementSize<HTMLDivElement>();
   const frameRef = useRef<HTMLIFrameElement | null>(null);
   const [card, setCard] = useState<CardBox | null>(null);
@@ -218,7 +219,7 @@ function ScaledCover({ html, label }: { html: string; label: string }) {
         <iframe
           ref={frameRef}
           title={`封面预览 · ${label}`}
-          srcDoc={previewHtml(html)}
+          srcDoc={previewHtml(html, assets)}
           sandbox="allow-scripts allow-same-origin"
           scrolling="no"
           onLoad={onLoad}
@@ -246,10 +247,11 @@ function ScaledCover({ html, label }: { html: string; label: string }) {
  * the difference between diagnosing the defect and guessing at it.
  */
 function CopyHtmlButton({ html }: { html: string }) {
+  const assets = useTask((t) => t.assets);
   const [done, setDone] = useState(false);
 
   const copy = useCallback(async () => {
-    const text = previewHtml(html);
+    const text = previewHtml(html, assets);
     try {
       await navigator.clipboard.writeText(text);
     } catch {
@@ -269,7 +271,7 @@ function CopyHtmlButton({ html }: { html: string }) {
     }
     setDone(true);
     setTimeout(() => setDone(false), 1500);
-  }, [html]);
+  }, [html, assets]);
 
   return (
     <button
