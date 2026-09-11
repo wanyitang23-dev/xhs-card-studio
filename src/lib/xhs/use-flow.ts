@@ -182,6 +182,10 @@ export function useFlow() {
                 body: cover.body,
                 direction,
                 handle: task.handle,
+                // The cover page can carry an attachment too; step 3 used to
+                // drop it because the endpoint had no field for it.
+                imageAssetIds: cover.imageAssetIds,
+                assets: task.assets,
               },
               {
                 onDelta: (t) =>

@@ -246,6 +246,12 @@ export function buildCoverPrompt(args: {
   exampleHtml?: string;
   /** The account name for the footer watermark; empty means "do not invent one". */
   handle?: string;
+  /**
+   * Screenshots the user attached to the cover page, already resolved to data
+   * URLs. The cover step used to ignore these entirely — the endpoint had no
+   * field for them — so a picture attached in step 2 silently never appeared.
+   */
+  images?: string[];
 }): string {
   return `${SHARED_DESIGN_DIRECTIVES}
 ${CJK_TYPOGRAPHY_RULES}
@@ -265,10 +271,30 @@ ${exampleReferenceBlock(args.exampleHtml)}
 ${args.direction}
 
 ${footerRule(args.handle)}
-
+${coverImageBlock(args.images)}
 【封面文案 — 原样使用, 不要改写】
 主标题: ${args.title}
 ${args.body ? `副标题 / 钩子: ${args.body}` : "（无副标题）"}
+`;
+}
+
+/**
+ * The cover's attached pictures.
+ *
+ * Step 2 lets a screenshot be attached to any page, the cover included, but
+ * `/api/cover` had no field to carry one — so the picture showed in the outline
+ * and then quietly failed to reach the agent. It is the user's own material;
+ * an attached image should be visible in the thing it was attached to.
+ */
+function coverImageBlock(images: string[] | undefined): string {
+  if (!images?.length) return "";
+  return `
+【这一页的配图 — 必须真的出现在卡片里】
+- 下面 ${images.length} 张图是用户为封面上传的, 用 \`<img src="…">\` 原样嵌进卡片。
+- \`src\` 一字不改地用下面的完整字符串, 不要改成占位图、不要换成 CSS 背景、不要省略。
+- 配图是内容的一部分, 不是装饰: 给它安排真实的版面位置 (整幅、半幅、圆角卡片里都可以),
+  不要缩成角落里的小图标。图片区域和文字区域不要互相压盖。
+${images.map((src) => `  - ${src}`).join("\n")}
 `;
 }
 
@@ -293,8 +319,19 @@ export function buildRenderPrompt(args: {
     })
     .join("\n\n");
 
+  // The cover is locked, but page 1 can still carry an attachment that the
+  // locked cover never had — the cover step and the outline are separate. Left
+  // unsaid, "reproduce this card exactly" and "embed this image" contradict
+  // each other and the image is what gets dropped.
+  const coverHasImages = (args.pages[0]?.imageAssetIds?.length ?? 0) > 0;
   const coverBlock = args.coverHtml
-    ? `\n【封面已定稿 — 第 1 页必须完全沿用下面这张卡的设计 (配色 / 字体 / 版式), 只把它原样搬进最终页面】
+    ? `\n【封面已定稿 — 第 1 页必须完全沿用下面这张卡的设计 (配色 / 字体 / 版式), 只把它原样搬进最终页面】${
+        coverHasImages
+          ? `
+**例外: 第 1 页列出的配图必须出现在这张卡上。** 如果定稿的封面里还没有它, 就在保持
+原有配色、字体、字号层级不变的前提下, 给它腾出版面位置 —— 沿用设计不等于丢掉用户的图。`
+          : ""
+      }
 ${args.coverHtml}
 `
     : "";

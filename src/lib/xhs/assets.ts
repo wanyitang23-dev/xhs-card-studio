@@ -25,3 +25,21 @@ export function resolveAssets(
   });
   return { pages: resolved, missing };
 }
+
+/**
+ * The same resolution for a bare list of tokens — the cover step has one page,
+ * not a list of them.
+ */
+export function resolveIds(
+  ids: string[] | undefined,
+  assets: Record<string, string>,
+): { images: string[]; missing: number } {
+  let missing = 0;
+  const images: string[] = [];
+  for (const id of ids ?? []) {
+    const url = assets[id];
+    if (typeof url === "string" && url.length > 0) images.push(url);
+    else missing++;
+  }
+  return { images, missing };
+}
