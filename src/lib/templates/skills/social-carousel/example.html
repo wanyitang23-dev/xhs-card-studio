@@ -31,9 +31,14 @@
     --mono:   'JetBrains Mono', ui-monospace, SFMono-Regular, monospace;
   }
 
-  .deck { display:flex; flex-direction:column; align-items:center; gap:24px; }
+  .deck { display:flex; flex-direction:column; gap:24px; }
+  /* Not `align-items:center`: when the card is wider than the window, centring
+     splits the overflow across both sides and the left half becomes
+     unreachable — you cannot scroll left of the scroll origin. An auto inline
+     margin centres the card when it fits and collapses to 0 when it does not,
+     so a narrow window shows the card from its left edge instead. */
 
-  .card {
+  .card { margin-inline:auto;
     width:1080px; height:1440px; flex:0 0 auto;
     border-radius:32px; overflow:hidden; position:relative;
     padding:88px 72px; display:flex; flex-direction:column;

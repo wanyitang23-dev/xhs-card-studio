@@ -19,12 +19,17 @@
   *{ box-sizing:border-box; }
   body{ margin:0; background:#f6ece2; padding:36px 0;
         font-family:'Noto Sans SC',sans-serif; -webkit-font-smoothing:antialiased; }
-  .deck{ display:flex; flex-direction:column; align-items:center; gap:24px; }
+  .deck{ display:flex; flex-direction:column; gap:24px; }
+  /* Not `align-items:center`: when the card is wider than the window, centring
+     splits the overflow across both sides and the left half becomes
+     unreachable — you cannot scroll left of the scroll origin. An auto inline
+     margin centres the card when it fits and collapses to 0 when it does not,
+     so a narrow window shows the card from its left edge instead. */
 
   /* One fixed 3:4 card, the same skeleton every Xiaohongshu template here uses. */
   /* Pin the box. `aspect-ratio` is only a preferred size — overflowing content
      grows the card and silently breaks the 3:4 export ratio. */
-  .card{ width:1080px; height:1440px; flex:0 0 auto; border-radius:36px;
+  .card{ margin-inline:auto; width:1080px; height:1440px; flex:0 0 auto; border-radius:36px;
          overflow:hidden; position:relative; padding:88px 76px;
          display:flex; flex-direction:column; color:var(--xp-ink);
          background:var(--xp-bg); box-shadow:0 24px 60px -20px rgba(42,35,64,.18); }

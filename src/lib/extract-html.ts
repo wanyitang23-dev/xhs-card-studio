@@ -60,6 +60,53 @@ const BASE_RESET = `<style data-xhs="base-reset">*,::before,::after{box-sizing:b
   `button,input,optgroup,select,textarea{font:inherit;color:inherit;margin:0}` +
   `table{border-collapse:collapse}</style>`;
 
+/**
+ * Keep the left edge of an over-wide deck reachable.
+ *
+ * Every bundled template stacks its cards with `align-items:center`, and so does
+ * every deck an agent writes from them. When the window is narrower than the
+ * card — opening an exported 1080px deck in a 700px window, say — centring
+ * splits the overflow across both sides, and the left half lands before the
+ * scroll origin, where no amount of scrolling reaches it. A user opening their
+ * own export sees the first ~190px of every card sliced off.
+ *
+ * `min-width:max-content` makes the body as wide as its widest child, so the
+ * centring has the card's own width to work with and resolves to no offset at
+ * all. It binds only when the content is already wider than the viewport;
+ * when the window is roomy, `max-content` is under the available width and
+ * nothing changes. Cards carry an explicit `width`, so their intrinsic
+ * contribution is that width and not the length of an unwrapped paragraph.
+ *
+ * The templates were fixed too, but a rule the agent is free to rewrite is not
+ * a guarantee, and this also repairs decks generated before that fix.
+ */
+const FIT_GUARD = `<style data-xhs="fit">body{min-width:max-content}</style>`;
+
+/**
+ * Any pixel length big enough to overflow a phone-width window. A document
+ * with none cannot have the problem, and gets no injection — the guard is for
+ * fixed-size card decks, not for every fragment that passes through here.
+ */
+const WIDE_PX = /\b([6-9]\d{2}|[1-9]\d{3})px\b/;
+
+function keepLeftEdgeReachable(html: string): string {
+  if (/data-xhs="fit"/.test(html)) return html;
+  if (!WIDE_PX.test(html)) return html;
+  // Before the document's own styles, so an author who sets `min-width`
+  // deliberately still wins on source order.
+  const head = /<head\b[^>]*>/i.exec(html);
+  if (head) {
+    const at = head.index + head[0].length;
+    return html.slice(0, at) + "\n" + FIT_GUARD + html.slice(at);
+  }
+  return FIT_GUARD + "\n" + html;
+}
+
+/** Every fix that applies to a complete document, in the order they compose. */
+function finishDocument(html: string): string {
+  return keepLeftEdgeReachable(neutralizeTailwindPreflight(html));
+}
+
 const TAILWIND_CDN = /<script\b[^>]*\bsrc\s*=\s*["'][^"']*cdn\.tailwindcss\.com[^"']*["'][^>]*>\s*<\/script>/i;
 
 export function neutralizeTailwindPreflight(html: string): string {
@@ -129,10 +176,10 @@ export function extractHtml(streamed: string): string {
   //    rather than by fences also sidesteps the case where the *card content*
   //    contains a ``` run, which used to truncate the document at that point.
   const byDoctype = lastDocument(streamed, starts(streamed, /<!DOCTYPE\s+html/i), "</html>");
-  if (byDoctype) return neutralizeTailwindPreflight(byDoctype);
+  if (byDoctype) return finishDocument(byDoctype);
 
   const byHtmlTag = lastDocument(streamed, starts(streamed, /<html[\s>]/i), "</html>");
-  if (byHtmlTag) return neutralizeTailwindPreflight(byHtmlTag);
+  if (byHtmlTag) return finishDocument(byHtmlTag);
 
   // 2. No document tags at all — a fragment, possibly inside a fence.
   const fence = streamed.match(/```(?:html|HTML)?\s*([\s\S]*?)```/);

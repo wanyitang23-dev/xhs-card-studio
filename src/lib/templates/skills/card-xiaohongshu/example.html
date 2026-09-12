@@ -13,8 +13,13 @@
      dropped; it is declared here so this file no longer depends on it, and so
      the example renders exactly as a generated card does (see BASE_RESET). */
   body { margin:0; background:#f3eee5; font-family:'Noto Sans SC',sans-serif; padding:36px 0; line-height:1.5; -webkit-font-smoothing:antialiased; }
-  .deck { display:flex; flex-direction:column; align-items:center; gap:24px; }
-  .card { width:1080px; height:1440px; flex:0 0 auto; border-radius:32px; overflow:hidden; position:relative; padding:80px 64px; display:flex; flex-direction:column; box-shadow:0 24px 60px -20px rgba(0,0,0,0.18); }
+  .deck { display:flex; flex-direction:column; gap:24px; }
+  /* Not `align-items:center`: when the card is wider than the window, centring
+     splits the overflow across both sides and the left half becomes
+     unreachable — you cannot scroll left of the scroll origin. An auto inline
+     margin centres the card when it fits and collapses to 0 when it does not,
+     so a narrow window shows the card from its left edge instead. */
+  .card { margin-inline:auto; width:1080px; height:1440px; flex:0 0 auto; border-radius:32px; overflow:hidden; position:relative; padding:80px 64px; display:flex; flex-direction:column; box-shadow:0 24px 60px -20px rgba(0,0,0,0.18); }
   .c1 { background:linear-gradient(160deg,#f7d2c2 0%,#f3a98a 100%); color:#3a1d10; }
   .c2 { background:linear-gradient(160deg,#fff7e6 0%,#ffe4b8 100%); color:#3a2e10; }
   .c3 { background:linear-gradient(160deg,#e8f0e3 0%,#bcd6b3 100%); color:#1f3a1f; }

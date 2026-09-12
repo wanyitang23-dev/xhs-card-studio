@@ -16,11 +16,16 @@
   *{ box-sizing:border-box; }
   body{ margin:0; background:#eef0f4; padding:36px 0;
         font-family:'Noto Sans SC',sans-serif; -webkit-font-smoothing:antialiased; }
-  .deck{ display:flex; flex-direction:column; align-items:center; gap:24px; }
+  .deck{ display:flex; flex-direction:column; gap:24px; }
+  /* Not `align-items:center`: when the card is wider than the window, centring
+     splits the overflow across both sides and the left half becomes
+     unreachable — you cannot scroll left of the scroll origin. An auto inline
+     margin centres the card when it fits and collapses to 0 when it does not,
+     so a narrow window shows the card from its left edge instead. */
 
   /* Pinned box. `aspect-ratio` is only a preferred size — overflowing content
      would grow the card and silently break the export ratio. */
-  .card{ width:1080px; height:1440px; flex:0 0 auto; border-radius:36px;
+  .card{ margin-inline:auto; width:1080px; height:1440px; flex:0 0 auto; border-radius:36px;
          overflow:hidden; position:relative; padding:84px 76px 84px;
          display:flex; flex-direction:column; background:var(--xw-bg); color:var(--xw-ink);
          box-shadow:0 24px 60px -20px rgba(17,19,24,.16); }
