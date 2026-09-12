@@ -90,8 +90,12 @@ describe("砍掉的矛盾不许回来", () => {
   });
 
   it("拆页那一步仍然保留提炼要求 — 那才是它的本职", () => {
-    expect(outline).toContain("把原文提炼成适合卡片阅读的短句");
-    expect(outline).toContain("每页正文控制在 60 字以内");
+    // The wording moved when the flat 60-character cap became a budget derived
+    // from the source length (see outline-body-length.test.ts). The requirement
+    // this guards is unchanged: the outline step condenses, and says by how
+    // much. Only the sentence carrying it is different.
+    expect(outline).toContain("提炼不等于丢信息");
+    expect(outline).toMatch(/每页正文 \*\*\d+-\d+ 字\*\*/);
   });
 
   it("重复的规则只留一处", () => {

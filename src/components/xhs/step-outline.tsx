@@ -166,7 +166,10 @@ function PageCard({ page, index, total }: { page: XhsPage; index: number; total:
         value={page.body}
         onChange={(e) => patchPage(page.id, { body: e.target.value, confirmed: false })}
         placeholder="正文（可留空）"
-        rows={2}
+        /* Bodies used to be capped at 60 characters, so two rows showed a whole
+           one. A long source now yields 120-220 characters across a few lines;
+           two rows turned that into a scrollbar the user had to fight to edit. */
+        rows={5}
         className="mt-2 w-full resize-y bg-transparent text-[13px] leading-relaxed text-[var(--ink-mute)] outline-none"
       />
 

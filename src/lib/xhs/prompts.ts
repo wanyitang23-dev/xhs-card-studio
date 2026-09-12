@@ -157,17 +157,75 @@ const CARD_LAYOUT_RULES = `【卡片版式硬规则 — 优先级高于任何模
 `;
 
 /**
+ * How much room one card's body gets.
+ *
+ * There used to be a single flat cap: 60 characters per page. That number is
+ * right for a 200-character post, and wrong for everything longer. Applied to a
+ * 2,600-character study note it turns every page into a bullet — the
+ * derivation, the numbers and the author's own voice all get summarised away,
+ * and the finished deck reads like the *outline of* the article rather than the
+ * article. That is the defect this tiering fixes.
+ *
+ * The budget is derived from the source in code rather than described to the
+ * model, because it is the one quantity here that is knowable exactly.
+ *
+ * The top of the range (220) is comfortably inside what a 1080x1440 card holds:
+ * at the body sizes these templates set, the text area takes roughly 390
+ * characters before anything overflows.
+ */
+function bodyLengthRule(contentChars: number): string {
+  if (contentChars < 400) {
+    return `- 原文很短 (约 ${contentChars} 字), 每页正文 **40-80 字**, 能用短语就不用整句。`;
+  }
+  if (contentChars < 1200) {
+    return `- 原文中等长度 (约 ${contentChars} 字), 每页正文 **60-120 字**。`;
+  }
+  return `- 原文较长 (约 ${contentChars} 字), 每页正文 **120-220 字**。
+  **120 字是下限, 不是上限**: 写不到 120 字, 说明你在写目录, 不是在写卡片。
+  正文可以分成 2-4 小段 (段间用 \\n 换行), 例如「引子 + 公式/例子 + 结论」。`;
+}
+
+/**
+ * Keep the author's own sentences.
+ *
+ * An earlier version of this file had a second mode that reproduced the
+ * article's sentences wholesale, and it was dropped for a good reason: a card
+ * is display type, and pasting whole paragraphs into one fights the format.
+ * But dropping it entirely went too far the other way — with nothing asking for
+ * the source's own words, every page came back paraphrased into generic
+ * summary, which is exactly how a formula, a number or a first-person aside
+ * disappears.
+ *
+ * So it returns scoped: not "reproduce the article", but "these four kinds of
+ * material are quoted, not restated". Everything else is still condensed.
+ */
+const KEEP_SOURCE_WORDS = `【尽量用原文自己的句子】
+- 原文里已经说得好的句子**直接搬过来**, 不要改写成你自己的话。以下四类一律原样保留:
+  1. **公式、算式、推导** — 连中间步骤一起留 (例 \`A = R − V = 8 − 5 = 3\`), 不要只留结论。
+  2. **具体数字、专有名词、英文术语** (chosen / rejected / on-policy 这类保持原文, 不要翻译)。
+  3. **作者的第一人称心得** ("我以前一直以为…"), 这是这篇内容的味道, 概括掉就没了。
+  4. **原文自己提的问题句** ("那 DPO 在干嘛?"), 它天然适合做卡片标题或一页的开头。
+- 改写只做两件事: 删掉过渡废话, 把长句断成适合卡片阅读的短行。
+- **自检**: 只看这一页的读者, 应该拿到和读原文那一段**一样的信息**,
+  而不是只知道"这段在讲什么"。如果你写出来的是后者, 把这一页重写。`;
+
+/**
  * How the cards should read.
  *
- * There used to be a second mode that reproduced the article's own sentences.
- * It was dropped: a card is a few dozen characters of display type, so pasting
- * paragraphs into one fights the format rather than using it.
+ * The old "数字、对比、步骤优先做成可视化结构" line used to live here. It was
+ * moved out, not deleted: it is a layout instruction, and it already appears in
+ * `buildRenderPrompt` where the layout is actually decided. At outline time it
+ * did damage — it reads as permission to reduce a derivation to one big number.
  */
-const CARD_VOICE = `【表达方式】
-- 把原文提炼成适合卡片阅读的短句。
-- 每页正文控制在 60 字以内, 能用短语就不用整句。
-- 数字、对比、步骤优先做成可视化结构 (大数字 / 左右对比 / 编号步骤), 不要堆成一段话。
-- 提炼不等于丢信息: 原文的每个要点仍要有对应的页, 只是表达更短。`;
+function cardVoice(contentChars: number): string {
+  return `【表达方式】
+${bodyLengthRule(contentChars)}
+- 提炼不等于丢信息: 原文的每个要点仍要有对应的页, 只是表达更紧凑。
+- 上面的字数只约束 \`content\` 页。\`cover\` 的 body 是一行钩子 (20 字内, 可以为空),
+  \`ending\` 的 body 是行动号召, 这两页都不受字数下限约束。
+
+${KEEP_SOURCE_WORDS}`;
+}
 
 
 /**
@@ -240,6 +298,7 @@ export function buildOutlinePrompt(args: {
 2. 不要 markdown 围栏, 不要任何解释性文字。
 3. **禁止使用 Write / Edit / Bash 等文件工具**, 直接把 JSON 写在回复正文里。
 4. 不要捏造原文里没有的数据、案例或数字。
+5. \`body\` 里需要换行时, 写成 JSON 转义 \`\\n\`, 不要写真实换行符 — 否则 JSON 解析会失败。
 
 【JSON 结构】
 {
@@ -256,9 +315,9 @@ export function buildOutlinePrompt(args: {
 ${pageRule}
 - 总页数不得低于 ${MIN_PAGES} 页, 不得超过 ${MAX_PAGES} 页 (小红书单帖上限)。
   如果内容多到装不下, 优先合并最次要的要点, 而不是删掉它们。
-- title 是卡片上的大字, 要短 (建议 12 字以内); body 是正文。
+- title 是卡片上的大字, 要短 (建议 12 字以内); body 是这一页的正文, 长度见下面【表达方式】。
 
-${CARD_VOICE}
+${cardVoice(args.content.length)}
 
 【这套卡片将使用的视觉模板 — 仅供你判断分页粒度, 这一步不要写任何 HTML】
 ${args.skillBody.trim()}
@@ -409,7 +468,11 @@ export function buildRenderPrompt(args: {
             .map((a) => imageLine(a, args.imageMeta))
             .join("\n")}`
         : "";
-      return `第 ${i + 1} 页 [${p.kind}]\n  标题: ${p.title}\n  正文: ${p.body || "（无）"}${imgs}`;
+      // A body can now span several lines. Indent the continuation lines so the
+      // page block stays one visually distinct unit instead of the second line
+      // looking like a new top-level field.
+      const body = (p.body || "（无）").replace(/\n/g, "\n    ");
+      return `第 ${i + 1} 页 [${p.kind}]\n  标题: ${p.title}\n  正文: ${body}${imgs}`;
     })
     .join("\n\n");
 
