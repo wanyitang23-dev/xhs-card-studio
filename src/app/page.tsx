@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { Bot, RotateCcw, Upload } from "lucide-react";
 import { WelcomeModal } from "@/components/welcome-modal";
 import { SettingsModal } from "@/components/settings-modal";
 import { StepNav } from "@/components/xhs/step-nav";
@@ -64,21 +65,22 @@ export default function Home() {
   const agentLabel = agents.find((a) => a.id === selectedAgent)?.label ?? "选择 agent";
 
   return (
-    <main className="flex h-screen flex-col" style={{ background: "var(--paper)" }}>
+    <main className="aurora-shell flex h-screen flex-col" style={{ background: "var(--paper)" }}>
       <header
-        className="flex items-center gap-3 px-4 py-2.5"
+        className="app-header flex items-center gap-3 px-4 py-2.5"
         style={{ borderBottom: "1px solid var(--line-faint)" }}
       >
-        <span className="text-[15px] font-semibold text-[var(--ink)]">
+        <span className="app-brand text-[15px] font-semibold text-[var(--ink)]">
           小红书图文 <span className="text-[var(--ink-faint)]">· 分步生成</span>
         </span>
-        <div className="ml-auto flex items-center gap-2">
+        <div className="app-header-actions ml-auto flex items-center gap-2">
           <button
             type="button"
             onClick={() => setUploadOpen(true)}
-            className="rounded-lg px-3 py-1.5 text-[13px]"
+            className="glass-control rounded-lg px-3 py-1.5 text-[13px]"
             style={{ background: "var(--surface)", border: "1px solid var(--line-soft)" }}
           >
+            <Upload aria-hidden="true" />
             上传模板
           </button>
           <button
@@ -86,29 +88,31 @@ export default function Home() {
             onClick={() => {
               if (confirm("清空当前内容，重新开始？")) resetFlow();
             }}
-            className="rounded-lg px-3 py-1.5 text-[13px]"
+            className="glass-control rounded-lg px-3 py-1.5 text-[13px]"
             style={{ background: "var(--surface)", border: "1px solid var(--line-soft)" }}
           >
+            <RotateCcw aria-hidden="true" />
             重新开始
           </button>
           <button
             type="button"
             onClick={() => setSettingsOpen(true)}
-            className="rounded-lg px-3 py-1.5 text-[13px]"
+            className="glass-control agent-control rounded-lg px-3 py-1.5 text-[13px]"
             style={{ background: "var(--surface)", border: "1px solid var(--line-soft)" }}
           >
+            <Bot aria-hidden="true" />
             {agentLabel}
           </button>
         </div>
       </header>
 
-      <div style={{ borderBottom: "1px solid var(--line-faint)" }}>
+      <div className="app-stepbar" style={{ borderBottom: "1px solid var(--line-faint)" }}>
         <StepNav />
       </div>
 
-      <div className="flex min-h-0 flex-1">
+      <div className="app-workspace flex min-h-0 flex-1">
         <TaskSidebar />
-        <div className="min-h-0 min-w-0 flex-1 overflow-auto">
+        <div className="app-canvas min-h-0 min-w-0 flex-1 overflow-auto">
           {step === "source" && <StepSource />}
           {step === "outline" && <StepOutline />}
           {step === "cover" && <StepCover />}

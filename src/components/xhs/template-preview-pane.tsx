@@ -1,5 +1,6 @@
 "use client";
 
+import { LayoutTemplate, PanelRightClose, PanelRightOpen } from "lucide-react";
 import { useTemplates } from "@/lib/templates";
 import { parseViewport, aspectBadge, parsePageCount } from "@/lib/xhs/aspect";
 import { ScaledDocument } from "./scaled-document";
@@ -34,10 +35,10 @@ export function TemplatePreviewPane({
         type="button"
         onClick={onToggle}
         title="展开模板预览"
-        className="hidden w-10 shrink-0 flex-col items-center gap-2 py-4 text-[12px] text-[var(--ink-faint)] transition-colors hover:text-[var(--ink)] lg:flex"
+        className="preview-collapsed hidden w-10 shrink-0 flex-col items-center gap-2 py-4 text-[12px] text-[var(--ink-faint)] transition-colors hover:text-[var(--ink)] lg:flex"
         style={{ borderLeft: "1px solid var(--line-faint)", background: "var(--surface)" }}
       >
-        <span aria-hidden>‹</span>
+        <PanelRightOpen aria-hidden="true" />
         <span style={{ writingMode: "vertical-rl" }}>模板预览</span>
       </button>
     );
@@ -45,16 +46,17 @@ export function TemplatePreviewPane({
 
   return (
     <aside
-      className="hidden min-h-0 w-[38%] min-w-[340px] max-w-[560px] shrink-0 flex-col lg:flex"
+      className="template-preview-panel hidden min-h-0 w-[38%] min-w-[340px] max-w-[560px] shrink-0 flex-col lg:flex"
       style={{ borderLeft: "1px solid var(--line-faint)", background: "var(--surface)" }}
     >
       <header
-        className="flex items-center gap-2 px-4 py-2.5"
+        className="template-preview-header flex items-center gap-2 px-4 py-2.5"
         style={{ borderBottom: "1px solid var(--line-faint)" }}
       >
         <div className="min-w-0">
-          <p className="truncate text-[13px] font-semibold text-[var(--ink)]">
-            {tpl ? `${tpl.emoji} ${tpl.zhName}` : "模板预览"}
+          <p className="flex items-center gap-1.5 truncate text-[13px] font-semibold text-[var(--ink)]">
+            <LayoutTemplate aria-hidden="true" className="h-3.5 w-3.5 shrink-0 text-[var(--ink-faint)]" />
+            {tpl ? tpl.zhName : "模板预览"}
           </p>
           <p className="truncate text-[11.5px] text-[var(--ink-faint)]">
             {tpl
@@ -69,14 +71,14 @@ export function TemplatePreviewPane({
           onClick={onToggle}
           aria-label="收起模板预览"
           title="收起"
-          className="ml-auto shrink-0 rounded-md px-1.5 text-[16px] text-[var(--ink-faint)] transition-colors hover:text-[var(--ink)]"
+          className="icon-control ml-auto shrink-0 rounded-md px-1.5 text-[16px] text-[var(--ink-faint)] transition-colors hover:text-[var(--ink)]"
         >
-          ›
+          <PanelRightClose aria-hidden="true" />
         </button>
       </header>
 
       {tpl?.example?.hasHtml ? (
-        <div className="flex min-h-0 flex-1 p-3">
+        <div className="template-preview-stage flex min-h-0 flex-1 p-3">
           <ScaledDocument
             // Keyed so switching templates gets a fresh iframe rather than
             // navigating the existing one, which would keep the old scroll offset.
@@ -84,7 +86,7 @@ export function TemplatePreviewPane({
             authoredWidth={parseViewport(tpl.aspectHint).width}
             src={`/api/templates/${encodeURIComponent(tpl.id)}/preview`}
             title={`${tpl.zhName} 预览`}
-            className="min-h-0 w-full flex-1 rounded-xl"
+            className="template-preview-document min-h-0 w-full flex-1 rounded-xl"
             style={{ background: "#fff", border: "1px solid var(--line-faint)" }}
           />
         </div>

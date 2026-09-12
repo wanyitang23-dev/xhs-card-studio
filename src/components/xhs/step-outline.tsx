@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useRef } from "react";
+import { ArrowDown, ArrowRight, ArrowUp, ImagePlus, Plus, Trash2, X } from "lucide-react";
 import { useTask, useXhs } from "@/lib/xhs/store";
 import { useFlow } from "@/lib/xhs/use-flow";
 import { parseFile } from "@/lib/parsers/file";
@@ -16,8 +17,8 @@ export function StepOutline() {
   const allConfirmed = pages.length > 0 && pages.every((p) => p.confirmed);
 
   return (
-    <div className="mx-auto flex w-full max-w-3xl flex-col gap-4 p-6">
-      <header>
+    <div className="outline-step mx-auto flex w-full max-w-3xl flex-col gap-4 p-6">
+      <header className="step-section-header">
         <h2 className="text-[15px] font-semibold text-[var(--ink)]">
           分页清单 · 共 {pages.length} 页
         </h2>
@@ -32,7 +33,7 @@ export function StepOutline() {
         </p>
         {requestedPages !== null && requestedPages !== pages.length && (
           <p
-            className="mt-2 rounded-xl px-3 py-2 text-[13px]"
+            className="status-note status-warning mt-2 rounded-xl px-3 py-2 text-[13px]"
             style={{ background: "rgba(178,98,0,0.08)", color: "var(--amber)" }}
           >
             你要求 {requestedPages} 页，agent 给了 {pages.length} 页。可以直接用下面的 ＋ / × 增删，或者回上一步重新生成。
@@ -51,10 +52,10 @@ export function StepOutline() {
           type="button"
           disabled={!allConfirmed}
           onClick={() => setStep("cover")}
-          className="rounded-xl px-5 py-2.5 text-[14px] font-semibold text-white transition-opacity disabled:opacity-40"
+          className="primary-button rounded-xl px-5 py-2.5 text-[14px] font-semibold text-white transition-opacity disabled:opacity-40"
           style={{ background: "var(--coral)" }}
         >
-          去挑封面 →
+          去挑封面 <ArrowRight aria-hidden="true" />
         </button>
         <ConfirmAll />
         {!allConfirmed && (
@@ -75,7 +76,7 @@ function ConfirmAll() {
     <button
       type="button"
       onClick={() => setPages(pages.map((p) => ({ ...p, confirmed: !allConfirmed })))}
-      className="text-[13px] text-[var(--ink-mute)] underline underline-offset-2"
+      className="quiet-link text-[13px] text-[var(--ink-mute)] underline underline-offset-2"
     >
       {allConfirmed ? "全部取消确认" : "全部确认"}
     </button>
@@ -119,7 +120,7 @@ function PageCard({ page, index, total }: { page: XhsPage; index: number; total:
 
   return (
     <li
-      className="rounded-xl p-4"
+      className={`content-card page-editor-card rounded-xl p-4${page.confirmed ? " is-confirmed" : ""}`}
       style={{
         background: "var(--surface)",
         border: `1px solid ${page.confirmed ? "var(--green)" : "var(--line-soft)"}`,
@@ -127,31 +128,31 @@ function PageCard({ page, index, total }: { page: XhsPage; index: number; total:
     >
       <div className="mb-3 flex items-center gap-2">
         <span
-          className="rounded-md px-2 py-0.5 text-[11px] font-semibold"
+          className="meta-pill rounded-md px-2 py-0.5 text-[11px] font-semibold"
           style={{ background: "var(--line-faint)", color: "var(--ink-mute)" }}
         >
           {index + 1} / {total} · {KIND_LABEL[page.kind]}
         </span>
         <div className="ml-auto flex items-center gap-1">
           <IconBtn label="上移" disabled={index === 0} onClick={() => movePage(page.id, -1)}>
-            ↑
+            <ArrowUp aria-hidden="true" />
           </IconBtn>
           <IconBtn
             label="下移"
             disabled={index === total - 1}
             onClick={() => movePage(page.id, 1)}
           >
-            ↓
+            <ArrowDown aria-hidden="true" />
           </IconBtn>
           <IconBtn
             label="在后面插入一页"
             disabled={total >= MAX_PAGES}
             onClick={() => addPageAfter(page.id)}
           >
-            ＋
+            <Plus aria-hidden="true" />
           </IconBtn>
           <IconBtn label="删除这一页" disabled={total <= 2} onClick={() => removePage(page.id)}>
-            ×
+            <Trash2 aria-hidden="true" />
           </IconBtn>
         </div>
       </div>
@@ -160,7 +161,7 @@ function PageCard({ page, index, total }: { page: XhsPage; index: number; total:
         value={page.title}
         onChange={(e) => patchPage(page.id, { title: e.target.value, confirmed: false })}
         placeholder="卡片大标题"
-        className="w-full bg-transparent text-[16px] font-semibold text-[var(--ink)] outline-none"
+        className="bare-field w-full bg-transparent text-[16px] font-semibold text-[var(--ink)] outline-none"
       />
       <textarea
         value={page.body}
@@ -170,7 +171,7 @@ function PageCard({ page, index, total }: { page: XhsPage; index: number; total:
            one. A long source now yields 120-220 characters across a few lines;
            two rows turned that into a scrollbar the user had to fight to edit. */
         rows={5}
-        className="mt-2 w-full resize-y bg-transparent text-[13px] leading-relaxed text-[var(--ink-mute)] outline-none"
+        className="bare-field mt-2 w-full resize-y bg-transparent text-[13px] leading-relaxed text-[var(--ink-mute)] outline-none"
       />
 
       {page.imageAssetIds.length > 0 && (
@@ -182,7 +183,7 @@ function PageCard({ page, index, total }: { page: XhsPage; index: number; total:
                 <img
                   src={assets[a]}
                   alt="配图"
-                  className="h-16 w-16 rounded-lg object-cover"
+                  className="asset-thumb h-16 w-16 rounded-lg object-cover"
                   style={{ border: "1px solid var(--line-soft)" }}
                 />
               ) : (
@@ -191,7 +192,7 @@ function PageCard({ page, index, total }: { page: XhsPage; index: number; total:
                    letting it surface as a broken tag in the finished card. */
                 <span
                   title="这张配图的数据已丢失，请重新上传"
-                  className="grid h-16 w-16 place-items-center rounded-lg text-center text-[10px] leading-tight"
+                  className="missing-asset status-warning grid h-16 w-16 place-items-center rounded-lg text-center text-[10px] leading-tight"
                   style={{
                     border: "1px dashed var(--line-soft)",
                     color: "var(--amber)",
@@ -212,10 +213,10 @@ function PageCard({ page, index, total }: { page: XhsPage; index: number; total:
                     confirmed: false,
                   })
                 }
-                className="absolute -right-1.5 -top-1.5 grid h-5 w-5 place-items-center rounded-full text-[11px] text-white"
+                className="asset-remove-button absolute -right-1.5 -top-1.5 grid h-5 w-5 place-items-center rounded-full text-[11px] text-white"
                 style={{ background: "var(--ink)" }}
               >
-                ×
+                <X aria-hidden="true" />
               </button>
             </span>
           ))}
@@ -226,8 +227,9 @@ function PageCard({ page, index, total }: { page: XhsPage; index: number; total:
         <button
           type="button"
           onClick={() => fileRef.current?.click()}
-          className="text-[12px] text-[var(--ink-mute)] underline underline-offset-2"
+          className="quiet-link inline-flex items-center gap-1.5 text-[12px] text-[var(--ink-mute)] underline underline-offset-2"
         >
+          <ImagePlus aria-hidden="true" />
           + 传配图
         </button>
         <input
@@ -241,7 +243,7 @@ function PageCard({ page, index, total }: { page: XhsPage; index: number; total:
             e.target.value = "";
           }}
         />
-        <label className="ml-auto flex cursor-pointer items-center gap-1.5 text-[13px] text-[var(--ink-mute)]">
+        <label className="check-control ml-auto flex cursor-pointer items-center gap-1.5 text-[13px] text-[var(--ink-mute)]">
           <input
             type="checkbox"
             checked={page.confirmed}
@@ -272,7 +274,7 @@ function IconBtn({
       title={label}
       onClick={onClick}
       disabled={disabled}
-      className="grid h-6 w-6 place-items-center rounded-md text-[13px] text-[var(--ink-mute)] transition-colors hover:bg-[var(--line-faint)] disabled:opacity-25"
+      className="icon-control grid h-6 w-6 place-items-center rounded-md text-[13px] text-[var(--ink-mute)] transition-colors hover:bg-[var(--line-faint)] disabled:opacity-25"
     >
       {children}
     </button>

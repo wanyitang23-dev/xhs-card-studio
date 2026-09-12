@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useState } from "react";
+import { Check, Copy, RefreshCw } from "lucide-react";
 import { useTask, useXhs } from "@/lib/xhs/store";
 import { useFlow } from "@/lib/xhs/use-flow";
 
@@ -26,7 +27,7 @@ export function CaptionPane() {
 
   return (
     <aside
-      className="flex h-full min-h-0 w-[340px] shrink-0 flex-col gap-3 overflow-auto p-4"
+      className="caption-inspector flex h-full min-h-0 w-[340px] shrink-0 flex-col gap-3 overflow-auto p-4"
       style={{ borderLeft: "1px solid var(--line-faint)" }}
     >
       <header className="flex items-center gap-2">
@@ -35,16 +36,17 @@ export function CaptionPane() {
           type="button"
           onClick={() => void runCaption()}
           disabled={running}
-          className="ml-auto rounded-lg px-2.5 py-1 text-[12px] disabled:opacity-40"
+          className="glass-control compact-control ml-auto rounded-lg px-2.5 py-1 text-[12px] disabled:opacity-40"
           style={{ background: "var(--surface)", border: "1px solid var(--line-soft)" }}
         >
+          {!running && <RefreshCw aria-hidden="true" />}
           {running ? "生成中…" : caption ? "重写" : "生成"}
         </button>
       </header>
 
       {error && (
         <p
-          className="rounded-lg p-2.5 text-[12px]"
+          className="status-note status-error rounded-lg p-2.5 text-[12px]"
           style={{ background: "rgba(156,42,37,0.08)", color: "var(--red)" }}
         >
           {error}
@@ -94,7 +96,7 @@ export function CaptionPane() {
           />
           <CopyButton
             text={allText}
-            className="mt-1 w-full rounded-xl px-4 py-2.5 text-[13px] font-semibold text-white"
+            className="primary-button mt-1 w-full rounded-xl px-4 py-2.5 text-[13px] font-semibold text-white"
             style={{ background: "var(--coral)" }}
             label="复制全部"
           />
@@ -120,7 +122,7 @@ function Field({
   onChange: (v: string) => void;
 }) {
   return (
-    <div className="flex flex-col gap-1.5">
+    <div className="caption-field flex flex-col gap-1.5">
       <div className="flex items-baseline gap-2">
         <span className="text-[12.5px] font-medium text-[var(--ink)]">{label}</span>
         <span
@@ -131,7 +133,7 @@ function Field({
         </span>
         <CopyButton
           text={value}
-          className="ml-auto rounded-md px-2 py-0.5 text-[11px] text-[var(--ink-mute)]"
+          className="glass-control compact-control ml-auto rounded-md px-2 py-0.5 text-[11px] text-[var(--ink-mute)]"
           style={{ border: "1px solid var(--line-soft)" }}
           label="复制"
         />
@@ -140,7 +142,7 @@ function Field({
         value={value}
         rows={rows}
         onChange={(e) => onChange(e.target.value)}
-        className="w-full resize-y rounded-lg px-3 py-2 text-[12.5px] leading-relaxed text-[var(--ink)] outline-none"
+        className="milky-input w-full resize-y rounded-lg px-3 py-2 text-[12.5px] leading-relaxed text-[var(--ink)] outline-none"
         style={{ background: "var(--surface)", border: "1px solid var(--line-soft)" }}
       />
     </div>
@@ -184,7 +186,8 @@ function CopyButton({
 
   return (
     <button type="button" onClick={() => void copy()} className={className} style={style}>
-      {done ? "已复制 ✓" : label}
+      {done ? <Check aria-hidden="true" /> : <Copy aria-hidden="true" />}
+      {done ? "已复制" : label}
     </button>
   );
 }

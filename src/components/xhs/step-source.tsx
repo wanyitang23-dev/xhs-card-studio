@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useRef } from "react";
+import { ArrowRight } from "lucide-react";
 import { useTask, useXhs } from "@/lib/xhs/store";
 import { useFlow } from "@/lib/xhs/use-flow";
 import { detectFormat } from "@/lib/parsers/auto";
@@ -57,8 +58,8 @@ export function StepSource() {
   const chars = sourceText.trim().length;
 
   return (
-    <div className="mx-auto flex w-full max-w-3xl flex-col gap-6 p-6">
-      <section>
+    <div className="source-step mx-auto flex w-full max-w-3xl flex-col gap-6 p-6">
+      <section className="content-card">
         <h2 className="mb-1 text-[15px] font-semibold text-[var(--ink)]">你的文章</h2>
         <p className="mb-3 text-[13px] text-[var(--ink-faint)]">
           支持 Markdown / 纯文本 / CSV / JSON。也可以直接拖文件进来。
@@ -73,7 +74,7 @@ export function StepSource() {
           onDragOver={(e) => e.preventDefault()}
           placeholder="把文章粘贴到这里…"
           spellCheck={false}
-          className="h-64 w-full resize-y rounded-xl p-4 text-[14px] leading-relaxed text-[var(--ink)] outline-none"
+          className="milky-input h-64 w-full resize-y rounded-xl p-4 text-[14px] leading-relaxed text-[var(--ink)] outline-none"
           style={{ background: "var(--surface)", border: "1px solid var(--line-soft)" }}
         />
         <div className="mt-2 flex items-center justify-between text-[12px] text-[var(--ink-faint)]">
@@ -81,7 +82,7 @@ export function StepSource() {
           <button
             type="button"
             onClick={() => fileRef.current?.click()}
-            className="underline underline-offset-2 hover:text-[var(--ink)]"
+            className="quiet-link underline underline-offset-2 hover:text-[var(--ink)]"
           >
             选择文件…
           </button>
@@ -98,7 +99,7 @@ export function StepSource() {
         </div>
       </section>
 
-      <section>
+      <section className="content-card">
         <h2 className="mb-1 text-[15px] font-semibold text-[var(--ink)]">出几张图</h2>
         <p className="mb-3 text-[13px] text-[var(--ink-faint)]">
           封面和结尾都算在内。选「自动」时，如果你的文案里写了张数（比如「4 张图讲清楚…」），会按你写的来。
@@ -108,7 +109,7 @@ export function StepSource() {
             type="button"
             onClick={() => setPageCount("auto")}
             aria-pressed={pageCount === "auto"}
-            className="rounded-full px-4 py-1.5 text-[13px] transition-colors"
+            className="choice-pill rounded-full px-4 py-1.5 text-[13px] transition-colors"
             style={{
               background: pageCount === "auto" ? "var(--coral)" : "var(--surface)",
               color: pageCount === "auto" ? "#fff" : "var(--ink)",
@@ -123,7 +124,7 @@ export function StepSource() {
               type="button"
               onClick={() => setPageCount(n)}
               aria-pressed={pageCount === n}
-              className="rounded-full px-4 py-1.5 text-[13px] transition-colors"
+              className="choice-pill rounded-full px-4 py-1.5 text-[13px] transition-colors"
               style={{
                 background: pageCount === n ? "var(--coral)" : "var(--surface)",
                 color: pageCount === n ? "#fff" : "var(--ink)",
@@ -145,7 +146,7 @@ export function StepSource() {
                 const v = e.target.value.trim();
                 setPageCount(v === "" ? "auto" : clampPageCount(Number(v)));
               }}
-              className="w-16 rounded-lg px-2 py-1 text-[13px] outline-none"
+              className="milky-input w-16 rounded-lg px-2 py-1 text-[13px] outline-none"
               style={{ background: "var(--surface)", border: "1px solid var(--line-soft)" }}
             />
             张
@@ -153,13 +154,13 @@ export function StepSource() {
         </div>
       </section>
 
-      <section>
+      <section className="content-card">
         <h2 className="mb-1 text-[15px] font-semibold text-[var(--ink)]">你的小红书号</h2>
         <p className="mb-3 text-[13px] text-[var(--ink-faint)]">
           会印在每张卡的页脚水印上，原样使用。留空也不会瞎编一个 —— 那个位置改放内容关键词。
         </p>
         <div
-          className="flex w-full max-w-sm items-center rounded-xl px-3 py-2"
+          className="milky-input-group flex w-full max-w-sm items-center rounded-xl px-3 py-2"
           style={{ background: "var(--surface)", border: "1px solid var(--line-soft)" }}
         >
           <span className="select-none pr-0.5 text-[14px] text-[var(--ink-faint)]">@</span>
@@ -175,7 +176,7 @@ export function StepSource() {
         </div>
       </section>
 
-      <section>
+      <section className="content-card">
         <h2 className="mb-1 text-[15px] font-semibold text-[var(--ink)]">视觉模板</h2>
         <p className="mb-3 text-[13px] text-[var(--ink-faint)]">
           缩略图就是这套模板的真实效果。选中后右边会完整展开，也可以点「看大图」看全屏。
@@ -185,7 +186,7 @@ export function StepSource() {
 
       {error && (
         <p
-          className="rounded-xl p-3 text-[13px]"
+          className="status-note status-error rounded-xl p-3 text-[13px]"
           style={{ background: "rgba(156,42,37,0.08)", color: "var(--red)" }}
         >
           {error}
@@ -197,16 +198,16 @@ export function StepSource() {
           type="button"
           disabled={!chars || running}
           onClick={() => (running ? cancel() : void runOutline())}
-          className="rounded-xl px-5 py-2.5 text-[14px] font-semibold text-white transition-opacity disabled:opacity-40"
+          className="primary-button rounded-xl px-5 py-2.5 text-[14px] font-semibold text-white transition-opacity disabled:opacity-40"
           style={{ background: "var(--coral)" }}
         >
-          {running ? "正在拆页…" : "拆成分页 →"}
+          {running ? "正在拆页…" : <>拆成分页 <ArrowRight aria-hidden="true" /></>}
         </button>
         {running && (
           <button
             type="button"
             onClick={() => cancel()}
-            className="text-[13px] text-[var(--ink-faint)] underline underline-offset-2"
+            className="quiet-link text-[13px] text-[var(--ink-faint)] underline underline-offset-2"
           >
             取消
           </button>

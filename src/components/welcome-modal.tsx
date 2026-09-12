@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { ScanSearch } from "lucide-react";
 import { useStore, type AgentInfo } from "@/lib/store";
 import { useT, type DictKey } from "@/lib/i18n";
 
@@ -12,77 +13,59 @@ const PROTOCOL_KEY: Record<AgentInfo["protocol"], { key: DictKey; tone: "ok" | "
   "pi-rpc": { key: "protocol.piRpc", tone: "warn" },
 };
 
-const VENDOR_HINT: Record<string, { gradient: string; install: string }> = {
+const VENDOR_HINT: Record<string, { install: string }> = {
   Anthropic: {
-    gradient: "from-[#c96442] to-[#e9b94a]",
     install: "npm i -g @anthropic-ai/claude-code  ·  claude /login",
   },
   OpenAI: {
-    gradient: "from-[#10a37f] to-[#1f7a3a]",
     install: "npm i -g @openai/codex",
   },
   Cursor: {
-    gradient: "from-[#5b6cf2] to-[#a1a8f5]",
     install: "curl https://cursor.com/install -fsS | bash",
   },
   Google: {
-    gradient: "from-[#4285f4] to-[#34a853]",
     install: "npm i -g @google/gemini-cli",
   },
   GitHub: {
-    gradient: "from-[#24292e] to-[#444c56]",
     install: "gh extension install github/gh-copilot",
   },
   Open: {
-    gradient: "from-[#6e7448] to-[#b26200]",
     install: "npm i -g @opencode-ai/cli",
   },
   Alibaba: {
-    gradient: "from-[#ff7a00] to-[#ed6f5c]",
     install: "npm i -g @alibabacloud/qwen-code",
   },
   Aider: {
-    gradient: "from-[#6c3aa6] to-[#9c2a25]",
     install: "pip install aider-install && aider-install",
   },
   DeepSeek: {
-    gradient: "from-[#2563eb] to-[#7c3aed]",
     install: "npm install -g deepseek-tui  ·  deepseek-tui auth",
   },
   CodeWhale: {
-    gradient: "from-[#2563eb] to-[#7c3aed]",
     install: "cargo install codewhale  ·  codewhale auth",
   },
   Cognition: {
-    gradient: "from-[#0f172a] to-[#475569]",
     install: "curl -fsSL https://cli.devin.ai/install.sh | bash",
   },
   Mature: {
-    gradient: "from-[#7c2d12] to-[#b45309]",
     install: "npm i -g @mature/hermes-cli  ·  hermes login",
   },
   Moonshot: {
-    gradient: "from-[#0ea5e9] to-[#1e3a8a]",
     install: "npm i -g @moonshot-ai/kimi-cli  ·  kimi login",
   },
   Inflection: {
-    gradient: "from-[#a855f7] to-[#ec4899]",
     install: "curl -fsSL https://pi.ai/install.sh | bash  ·  pi login",
   },
   AWS: {
-    gradient: "from-[#ff9900] to-[#232f3e]",
     install: "brew install kiro  ·  kiro-cli login",
   },
   Kilo: {
-    gradient: "from-[#16a34a] to-[#0d9488]",
     install: "npm i -g kilo  ·  kilo login",
   },
   Mistral: {
-    gradient: "from-[#fb923c] to-[#ef4444]",
     install: "npm i -g @mistralai/vibe-cli  ·  vibe login",
   },
   Qoder: {
-    gradient: "from-[#0891b2] to-[#7c3aed]",
     install: "brew tap qoder/cli && brew install qodercli  ·  qodercli login",
   },
 };
@@ -140,14 +123,14 @@ export function WelcomeModal({ onClose }: Props) {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center od-backdrop"
+      className="modal-backdrop fixed inset-0 z-50 flex items-center justify-center od-backdrop"
       style={{ background: "rgba(21, 20, 15, 0.45)", backdropFilter: "blur(6px)" }}
       onClick={(e) => {
         if (e.target === e.currentTarget && canEnter) confirm();
       }}
     >
       <div
-        className="relative w-[640px] max-w-[92vw] max-h-[88vh] flex flex-col overflow-hidden od-fade-in"
+        className="modal-shell welcome-modal relative w-[640px] max-w-[92vw] max-h-[88vh] flex flex-col overflow-hidden od-fade-in"
         style={{
           background: "var(--surface)",
           borderRadius: 24,
@@ -156,13 +139,13 @@ export function WelcomeModal({ onClose }: Props) {
         }}
       >
         {/* Header */}
-        <div className="px-8 pt-8 pb-5 border-b" style={{ borderColor: "var(--line-faint)" }}>
+        <div className="modal-header px-8 pt-8 pb-5 border-b" style={{ borderColor: "var(--line-faint)" }}>
           <div className="flex items-center justify-between">
             <span className="eyebrow">{t("welcome.eyebrow")}</span>
             <button
               onClick={load}
               disabled={loading}
-              className="text-xs text-[var(--ink-faint)] hover:text-[var(--ink)] disabled:opacity-50 transition-colors"
+              className="quiet-link text-xs text-[var(--ink-faint)] hover:text-[var(--ink)] disabled:opacity-50 transition-colors"
               title={t("welcome.rescanTitle")}
             >
               {loading ? t("welcome.scanning") : t("welcome.rescan")}
@@ -177,9 +160,9 @@ export function WelcomeModal({ onClose }: Props) {
         </div>
 
         {/* Agent grid */}
-        <div className="flex-1 overflow-y-auto px-8 py-6">
+        <div className="modal-body flex-1 overflow-y-auto px-8 py-6">
           {err && (
-            <div className="mb-4 rounded-xl px-4 py-3 text-sm" style={{ background: "var(--coral-soft)", color: "var(--coral)" }}>
+            <div className="status-note status-error mb-4 rounded-xl px-4 py-3 text-sm" style={{ background: "var(--coral-soft)", color: "var(--coral)" }}>
               {t("welcome.detectionFailed")}: {err}
             </div>
           )}
@@ -216,8 +199,8 @@ export function WelcomeModal({ onClose }: Props) {
           )}
 
           {!loading && installed.length === 0 && (
-            <div className="rounded-2xl border-2 border-dashed py-10 px-6 text-center" style={{ borderColor: "var(--line)" }}>
-              <div className="text-3xl mb-2">🪞</div>
+            <div className="empty-state rounded-2xl border-2 border-dashed py-10 px-6 text-center" style={{ borderColor: "var(--line)" }}>
+              <ScanSearch aria-hidden="true" className="empty-state-icon mx-auto mb-2" />
               <p className="text-sm font-medium text-[var(--ink-soft)]">{t("welcome.noAgentsTitle")}</p>
               <p className="mt-2 text-xs text-[var(--ink-mute)]">{t("welcome.noAgentsBody")}</p>
             </div>
@@ -234,7 +217,7 @@ export function WelcomeModal({ onClose }: Props) {
 
         {/* Attribution — this tool is a fork; say so once, quietly. */}
         <div
-          className="px-8 py-3 text-center text-[11.5px] text-[var(--ink-mute)]"
+          className="modal-attribution px-8 py-3 text-center text-[11.5px] text-[var(--ink-mute)]"
           style={{ borderTop: "1px solid var(--line-faint)" }}
         >
           {t("welcome.forkedFrom.prefix")}{" "}
@@ -251,7 +234,7 @@ export function WelcomeModal({ onClose }: Props) {
 
         {/* Footer */}
         <div
-          className="px-8 py-5 flex items-center justify-between gap-4"
+          className="modal-footer px-8 py-5 flex items-center justify-between gap-4"
           style={{ borderTop: "1px solid var(--line-faint)", background: "var(--paper)" }}
         >
           <div className="text-xs text-[var(--ink-mute)] truncate">
@@ -315,15 +298,13 @@ function AgentCard({
   return (
     <button
       onClick={onClick}
-      className={`group relative flex items-start gap-3 rounded-2xl p-4 text-left transition-all ${
-        selected ? "ring-2 ring-[var(--coral)]" : "ring-1 ring-[var(--line-soft)] hover:ring-[var(--ink)]/30"
+      className={`select-card agent-card group relative flex items-start gap-3 rounded-2xl p-4 text-left transition-all ${
+        selected ? "is-selected ring-2 ring-[var(--coral)]" : "ring-1 ring-[var(--line-soft)] hover:ring-[var(--ink)]/30"
       }`}
       style={{ background: "var(--surface)" }}
     >
       <div
-        className={`shrink-0 grid h-9 w-9 place-items-center rounded-xl text-white shadow-sm bg-gradient-to-br ${
-          hint?.gradient ?? "from-[var(--ink)] to-[var(--ink-soft)]"
-        }`}
+        className="vendor-avatar shrink-0 grid h-9 w-9 place-items-center rounded-xl"
       >
         <span className="font-semibold text-[15px]">{agent.label.charAt(0)}</span>
       </div>
@@ -368,7 +349,7 @@ function ModelPicker({
   const [before, after = ""] = t("model.label", { agent: MARK }).split(MARK);
   return (
     <div
-      className="mt-6 rounded-2xl p-4"
+      className="subtle-card mt-6 rounded-2xl p-4"
       style={{ background: "var(--paper)", border: "1px solid var(--line-faint)" }}
     >
       <div className="flex items-center justify-between gap-3 mb-3">
@@ -393,9 +374,9 @@ function ModelPicker({
             <button
               key={m.id}
               onClick={() => onPick(m.id)}
-              className={`rounded-full px-3 py-1.5 text-[12px] transition-all ${
+              className={`choice-pill rounded-full px-3 py-1.5 text-[12px] transition-all ${
                 active
-                  ? "bg-[var(--ink)] text-[var(--paper)] font-medium"
+                  ? "is-selected bg-[var(--ink)] text-[var(--paper)] font-medium"
                   : "bg-[var(--surface)] text-[var(--ink-soft)] border border-[var(--line-soft)] hover:border-[var(--ink)]/40"
               }`}
               title={m.id}
@@ -414,13 +395,11 @@ function MissingCard({ agent }: { agent: AgentInfo }) {
   const hint = VENDOR_HINT[agent.vendor];
   return (
     <div
-      className="flex items-center gap-3 rounded-xl p-3 opacity-70"
+      className="subtle-card is-muted flex items-center gap-3 rounded-xl p-3 opacity-70"
       style={{ background: "var(--paper)", border: "1px solid var(--line-faint)" }}
     >
       <div
-        className={`shrink-0 grid h-8 w-8 place-items-center rounded-lg text-white text-[13px] font-semibold bg-gradient-to-br ${
-          hint?.gradient ?? "from-[var(--ink-faint)] to-[var(--ink-mute)]"
-        }`}
+        className="vendor-avatar shrink-0 grid h-8 w-8 place-items-center rounded-lg text-[13px] font-semibold"
       >
         {agent.label.charAt(0)}
       </div>
