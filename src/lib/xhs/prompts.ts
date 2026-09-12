@@ -8,8 +8,14 @@
  */
 
 import { exampleReferenceBlock } from "./example-ref";
-import type { PageCountSetting, XhsPage } from "./types";
-import { MAX_PAGES, MIN_PAGES, RECOMMENDED_MAX_PAGES } from "./types";
+import type { OutlineMode, PageCountSetting, XhsPage } from "./types";
+import {
+  estimateVerbatimPages,
+  MAX_PAGES,
+  MIN_PAGES,
+  RECOMMENDED_MAX_PAGES,
+  VERBATIM_PAGE_CHARS,
+} from "./types";
 
 /**
  * The design directives for a fixed-size card, trimmed from the inherited
@@ -210,6 +216,34 @@ const KEEP_SOURCE_WORDS = `【尽量用原文自己的句子】
   而不是只知道"这段在讲什么"。如果你写出来的是后者, 把这一页重写。`;
 
 /**
+ * Verbatim paging.
+ *
+ * The user asked for a mode that only decides where the page breaks go. That
+ * makes the constraint set different, not just softer: with the words fixed,
+ * the agent can no longer make a page fit by writing less, so the budget below
+ * is a hard ceiling on where it may cut rather than a target length, and a
+ * fixed page count becomes unsatisfiable (see buildOutlinePrompt).
+ *
+ * The one place some authoring is unavoidable is the card title, since most
+ * prose has no headings. It is held to a fragment that appears in that page's
+ * own text, so nothing on the card is a sentence the user did not write.
+ */
+function verbatimVoice(contentChars: number): string {
+  const pages = estimateVerbatimPages(contentChars);
+  return `【表达方式 — 原文模式: 你只负责分页, 不负责改写】
+- **body 必须是原文里连续的一段, 一个字都不许改。** 不许概括、不许换词、不许调整语序、
+  不许补充连接词、不许把两个不相邻的句子拼到一起。
+- 允许你做的只有三件事: ① 决定在哪里断页 ② 删掉纯过渡性的空行 ③ 保留原文的换行。
+- **每页 ${VERBATIM_PAGE_CHARS} 字以内** —— 这是一张卡装得下的量, 不是建议。
+  超过就必须断页, 优先在**段落**边界断, 段落太长就在**句号**处断, 不要在句子中间断。
+- 页与页之间不许有遗漏: 把所有 body 首尾相接拼起来, 应该还原出原文。
+- **title 只能从这一页的正文里摘一个片段** (12 字以内, 原话, 不要新写一句话)。
+  这一页里实在挑不出合适的短句时, title 留空, 也不要自己造一句。
+- 结尾页用原文本来的结尾, **不要额外编一句行动号召**。
+- 参考: 这篇原文约 ${contentChars} 字, 按上面的规则大概会分成 ${pages} 页左右。`;
+}
+
+/**
  * How the cards should read.
  *
  * The old "数字、对比、步骤优先做成可视化结构" line used to live here. It was
@@ -243,6 +277,17 @@ const AUTO_PAGE_RULE = `- 页数由你判断, 但必须先看这两条:
   2. **内容短就少分页, 不要硬凑。** 一句话能讲完的不要拆成两页; 联系紧密的两个点合成一页。
      ${RECOMMENDED_MAX_PAGES} 页是上限参考, 不是目标 — 短文案做成 3-5 页很正常。
 - 只有当一页确实塞不下时才新开一页, 而不是每有一个句号就翻一页。`;
+
+/**
+ * Paging guidance in verbatim mode.
+ *
+ * Deliberately silent about a target count: the count is whatever the text
+ * divides into, and saying anything else would compete with "keep every word".
+ */
+const VERBATIM_PAGE_RULE = `- **页数由原文长度决定**, 不要为了凑一个数字去合并或拆分。
+  界面上设置的固定张数在原文模式下不适用, 忽略它。
+- 内容真的超过 ${MAX_PAGES} 页装不下时: **不要删内容**, 就输出 ${MAX_PAGES} 页,
+  由用户自己决定是删原文还是换成精简模式。`;
 
 /** Paging guidance when the user has fixed an exact count in the UI. */
 function exactPageRule(n: number): string {
@@ -288,9 +333,18 @@ export function buildOutlinePrompt(args: {
   format: string;
   skillBody: string;
   pageCount: PageCountSetting;
+  /** Defaults to "condense" — the behaviour every caller had before the split. */
+  mode?: OutlineMode;
 }): string {
-  const pageRule =
-    args.pageCount === "auto" ? AUTO_PAGE_RULE : exactPageRule(args.pageCount);
+  const verbatim = args.mode === "verbatim";
+  // A fixed count and "change nothing" cannot both hold: the only lever for
+  // hitting a count is writing more or less. The count is dropped rather than
+  // half-honoured, and the UI says so before the run starts.
+  const pageRule = verbatim
+    ? VERBATIM_PAGE_RULE
+    : args.pageCount === "auto"
+      ? AUTO_PAGE_RULE
+      : exactPageRule(args.pageCount);
   return `你正在把一篇内容拆解成**小红书图文卡片的分页大纲**。这一步**只输出 JSON**, 不要输出 HTML。
 
 【硬性规则】
@@ -317,7 +371,7 @@ ${pageRule}
   如果内容多到装不下, 优先合并最次要的要点, 而不是删掉它们。
 - title 是卡片上的大字, 要短 (建议 12 字以内); body 是这一页的正文, 长度见下面【表达方式】。
 
-${cardVoice(args.content.length)}
+${verbatim ? verbatimVoice(args.content.length) : cardVoice(args.content.length)}
 
 【这套卡片将使用的视觉模板 — 仅供你判断分页粒度, 这一步不要写任何 HTML】
 ${args.skillBody.trim()}

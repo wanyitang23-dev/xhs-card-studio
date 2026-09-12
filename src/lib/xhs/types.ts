@@ -71,6 +71,45 @@ export function clampPageCount(n: number): number {
   return Math.max(MIN_PAGES, Math.min(MAX_PAGES, Math.round(n)));
 }
 
+/**
+ * What the paging step is allowed to do to the user's words.
+ *
+ * `"condense"` is the default and the original behaviour: read the article,
+ * rewrite it into card-length copy. It suits a draft that was never written for
+ * cards.
+ *
+ * `"verbatim"` narrows the job to one act — choosing where the page breaks go.
+ * The text on each card is a contiguous run of the source, unedited. It suits
+ * copy the user already wrote deliberately (a finished post, a quote, a passage
+ * where the exact wording matters), where any rewrite is a loss.
+ *
+ * A `mode` field existed in v0 and was dropped; this is not that feature coming
+ * back by default, it is the choice being handed to the user.
+ */
+export type OutlineMode = "condense" | "verbatim";
+
+/**
+ * How many characters of unedited text one card can hold.
+ *
+ * Measured, not guessed: at the body sizes the bundled templates set (29-32px
+ * over a 1080x1440 card), the text column takes about 390 characters before it
+ * overflows the card. 350 leaves room for the title and footer that share the
+ * card, and for a template with a larger body face.
+ */
+export const VERBATIM_PAGE_CHARS = 350;
+
+/**
+ * Cards a verbatim split of `chars` characters needs, cover and ending included.
+ *
+ * In condense mode the agent can always make the text fit by writing less. In
+ * verbatim mode it cannot, so whether the article fits at all is arithmetic,
+ * and arithmetic belongs in code: the UI uses this to warn *before* a run that
+ * a source is too long for one post.
+ */
+export function estimateVerbatimPages(chars: number): number {
+  return Math.max(MIN_PAGES, Math.ceil(chars / VERBATIM_PAGE_CHARS) + 2);
+}
+
 /** The text that goes in the caption box when the cards are uploaded. */
 export type Caption = {
   title: string;

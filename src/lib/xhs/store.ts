@@ -5,6 +5,7 @@ import { createJSONStorage, persist, type StateStorage } from "zustand/middlewar
 import type {
   Caption,
   CoverCandidate,
+  OutlineMode,
   PageCountSetting,
   PageKind,
   XhsPage,
@@ -53,6 +54,12 @@ export type XhsTask = {
   sourceText: string;
   format: string;
   pageCount: PageCountSetting;
+  /**
+   * Whether the paging step may rewrite the user's words or only split them.
+   * Optional on the type so a task persisted before the setting existed still
+   * loads; `makeTask` fills in the default.
+   */
+  outlineMode: OutlineMode;
   templateId: string;
   /**
    * The account name stamped into each card's footer, without the leading `@`.
@@ -104,6 +111,9 @@ export function makeTask(name: string, seedFrom?: Partial<XhsTask>): XhsTask {
     sourceText: "",
     format: "text",
     pageCount: seedFrom?.pageCount ?? "auto",
+    // Carried into new tasks: someone who wants their own words kept usually
+    // wants that for the next article too.
+    outlineMode: seedFrom?.outlineMode ?? "condense",
     templateId: seedFrom?.templateId ?? DEFAULT_TEMPLATE,
     // Carried into new tasks: one person's handle does not change per article.
     handle: seedFrom?.handle ?? "",
@@ -152,6 +162,7 @@ type State = {
   setSourceText: (t: string) => void;
   setFormat: (f: string) => void;
   setPageCount: (n: PageCountSetting) => void;
+  setOutlineMode: (m: OutlineMode) => void;
   setTemplateId: (id: string) => void;
   setHandle: (handle: string) => void;
 
@@ -229,6 +240,7 @@ export const useXhs = create<State>()(
           })),
         setFormat: (format) => patchActive({ format }),
         setPageCount: (pageCount) => patchActive({ pageCount }),
+        setOutlineMode: (outlineMode) => patchActive({ outlineMode }),
         setTemplateId: (templateId) => patchActive({ templateId }),
         setHandle: (handle: string) => patchActive({ handle }),
 
@@ -307,6 +319,7 @@ export const useXhs = create<State>()(
           sourceText: t.sourceText,
           format: t.format,
           pageCount: t.pageCount,
+          outlineMode: t.outlineMode,
           templateId: t.templateId,
           handle: t.handle,
           pages: t.pages,

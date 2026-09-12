@@ -7,6 +7,7 @@ import {
   clampPageCount,
   MAX_PAGES,
   MIN_PAGES,
+  type OutlineMode,
   type OutlineResponse,
   type PageCountSetting,
   type PageKind,
@@ -23,6 +24,8 @@ type Body = {
   format?: string;
   /** `"auto"`, or an exact card count the user set in the UI. */
   pageCount?: PageCountSetting;
+  /** `"verbatim"` splits the source without rewriting it; default `"condense"`. */
+  outlineMode?: OutlineMode;
   model?: string;
   binOverride?: string;
 };
@@ -67,6 +70,7 @@ export async function POST(req: NextRequest) {
     content,
     format = "text",
     pageCount: rawPageCount = "auto",
+    outlineMode: rawMode,
     model,
     binOverride,
   } = body;
@@ -80,7 +84,9 @@ export async function POST(req: NextRequest) {
     typeof rawPageCount === "number" && Number.isFinite(rawPageCount)
       ? clampPageCount(rawPageCount)
       : "auto";
-  const prompt = buildOutlinePrompt({ content, format, pageCount, skillBody: skill.body });
+  // Anything other than the one known opt-in value falls back to the default.
+  const mode: OutlineMode = rawMode === "verbatim" ? "verbatim" : "condense";
+  const prompt = buildOutlinePrompt({ content, format, pageCount, mode, skillBody: skill.body });
   const abortCtl = abortOn(req.signal);
   const source = invokeAgent({ agent, prompt, model, binOverride, signal: abortCtl.signal });
 
