@@ -15,8 +15,8 @@
   --bone: #f5efe5;
   --surface: rgba(255, 255, 255, 0.94);
   --glass: rgba(249, 251, 255, 0.52);
-  --panel-glass: rgba(249, 251, 255, 0.64);
-  --card-milk: rgba(255, 255, 255, 0.9);
+  --panel-glass: rgba(249, 251, 255, 0.61);
+  --card-milk: rgba(255, 255, 255, 0.88);
   --ink: #172033;
   --ink-soft: #2b3850;
   --ink-mute: #4f5f76;
@@ -41,10 +41,11 @@
   --red: #a64d5e;
 
   --glass-border: rgba(255, 255, 255, 0.76);
-  --aurora-blue: rgba(186, 220, 255, 0.44);
-  --aurora-mint: rgba(194, 240, 222, 0.38);
-  --aurora-lilac: rgba(218, 205, 255, 0.4);
-  --aurora-blush: rgba(255, 211, 229, 0.34);
+  --aurora-blue: rgba(176, 204, 231, 0.48);
+  --aurora-mint: rgba(184, 220, 203, 0.44);
+  --aurora-lilac: rgba(209, 198, 230, 0.46);
+  --aurora-blush: rgba(235, 203, 218, 0.36);
+  --aurora-cream: rgba(236, 216, 187, 0.42);
   --shadow-soft: 0 18px 46px rgba(75, 91, 122, 0.11);
   --shadow-card: 0 10px 26px rgba(75, 91, 122, 0.075);
   --focus: #6579c7;
@@ -338,34 +339,33 @@ body::before {
 
 .app-header {
   background:
-    radial-gradient(circle at 10% -85%, var(--aurora-blue), transparent 43%),
-    radial-gradient(circle at 88% -110%, var(--aurora-lilac), transparent 39%),
+    radial-gradient(circle at 10% -28%, var(--aurora-blue), transparent 46%),
+    radial-gradient(circle at 88% -44%, rgba(209, 198, 230, 0.34), transparent 43%),
     var(--panel-glass) !important;
 }
 
 .app-stepbar {
   background:
-    radial-gradient(circle at 34% -120%, rgba(207, 224, 255, 0.34), transparent 43%),
-    radial-gradient(circle at 75% -115%, rgba(225, 212, 255, 0.3), transparent 39%),
+    radial-gradient(circle at 54% -82%, rgba(209, 198, 230, 0.28), transparent 54%),
     var(--panel-glass) !important;
 }
 
 .task-rail {
   background:
-    radial-gradient(circle at -35% 16%, var(--aurora-mint), transparent 46%),
+    radial-gradient(circle at -8% 18%, var(--aurora-mint), transparent 49%),
     var(--panel-glass) !important;
 }
 
 .template-preview-panel,
 .preview-collapsed {
   background:
-    radial-gradient(circle at 118% 12%, var(--aurora-lilac), transparent 43%),
+    radial-gradient(circle at 104% 18%, var(--aurora-lilac), transparent 48%),
     var(--panel-glass) !important;
 }
 
 .caption-inspector {
   background:
-    radial-gradient(circle at 92% 92%, rgba(215, 242, 231, 0.28), transparent 39%),
+    radial-gradient(circle at 102% 88%, var(--aurora-blush), transparent 51%),
     var(--panel-glass) !important;
 }
 
@@ -524,13 +524,34 @@ body::before {
 
 .workflow-step.is-active {
   border-color: rgba(255, 255, 255, 0.9) !important;
-  background:
-    radial-gradient(circle at 12% 0, rgba(209, 224, 255, 0.58), transparent 52%),
-    radial-gradient(circle at 90% 110%, rgba(229, 218, 255, 0.38), transparent 48%),
-    rgba(255, 255, 255, 0.76) !important;
+  background: rgba(255, 255, 255, 0.78) !important;
   box-shadow:
     0 7px 20px rgba(75, 91, 121, 0.075),
     inset 0 1px 0 #fff;
+}
+
+.workflow-step:nth-child(1).is-active {
+  background:
+    radial-gradient(circle at 12% 0, rgba(176, 204, 231, 0.5), transparent 58%),
+    rgba(255, 255, 255, 0.78) !important;
+}
+
+.workflow-step:nth-child(2).is-active {
+  background:
+    radial-gradient(circle at 12% 0, rgba(209, 198, 230, 0.46), transparent 58%),
+    rgba(255, 255, 255, 0.78) !important;
+}
+
+.workflow-step:nth-child(3).is-active {
+  background:
+    radial-gradient(circle at 12% 0, rgba(236, 216, 187, 0.48), transparent 58%),
+    rgba(255, 255, 255, 0.78) !important;
+}
+
+.workflow-step:nth-child(4).is-active {
+  background:
+    radial-gradient(circle at 12% 0, rgba(184, 220, 203, 0.46), transparent 58%),
+    rgba(255, 255, 255, 0.78) !important;
 }
 
 .workflow-step-number {
@@ -544,6 +565,22 @@ body::before {
   border-color: rgba(37, 50, 76, 0.9);
   color: #fff !important;
   background: var(--primary) !important;
+}
+
+.workflow-step:nth-child(1).is-active .workflow-step-number {
+  background: #496b86 !important;
+}
+
+.workflow-step:nth-child(2).is-active .workflow-step-number {
+  background: #665a7e !important;
+}
+
+.workflow-step:nth-child(3).is-active .workflow-step-number {
+  background: #786147 !important;
+}
+
+.workflow-step:nth-child(4).is-active .workflow-step-number {
+  background: #4d7062 !important;
 }
 
 .workflow-step.is-done .workflow-step-number {
@@ -583,7 +620,9 @@ body::before {
   position: relative;
   background:
     radial-gradient(circle at 16% 4%, rgba(204, 229, 255, 0.3), transparent 36%),
+    radial-gradient(circle at 91% 14%, rgba(209, 198, 230, 0.17), transparent 34%),
     radial-gradient(circle at 80% 94%, rgba(210, 243, 229, 0.24), transparent 40%),
+    radial-gradient(circle at 10% 96%, rgba(235, 203, 218, 0.13), transparent 32%),
     rgba(247, 249, 253, 0.4);
 }
 
@@ -614,8 +653,7 @@ body::before {
 .task-row.is-active {
   border-color: rgba(255, 255, 255, 0.86) !important;
   background:
-    radial-gradient(circle at 0 0, rgba(203, 230, 255, 0.52), transparent 56%),
-    radial-gradient(circle at 100% 100%, rgba(211, 241, 228, 0.34), transparent 50%),
+    radial-gradient(circle at 0 0, rgba(184, 220, 203, 0.5), transparent 60%),
     rgba(255, 255, 255, 0.76) !important;
   box-shadow:
     0 7px 18px rgba(75, 91, 122, 0.065),
@@ -630,7 +668,7 @@ body::before {
   left: -1px;
   width: 3px;
   border-radius: 999px;
-  background: #7b88c4;
+  background: #4f7667;
 }
 
 .task-status-dot {
@@ -865,7 +903,13 @@ body::before {
 
 .page-editor-card {
   background:
-    radial-gradient(circle at 100% 0, rgba(204, 225, 250, 0.22), transparent 34%),
+    radial-gradient(circle at 100% 0, rgba(209, 198, 230, 0.34), transparent 39%),
+    var(--card-milk) !important;
+}
+
+.page-editor-card.is-confirmed {
+  background:
+    radial-gradient(circle at 100% 0, rgba(184, 220, 203, 0.38), transparent 40%),
     var(--card-milk) !important;
 }
 
@@ -940,19 +984,19 @@ body::before {
 
 .cover-tile:nth-child(1)::before {
   background:
-    radial-gradient(circle at 0 0, rgba(197, 225, 255, 0.38), transparent 35%),
+    radial-gradient(circle at 0 0, rgba(236, 216, 187, 0.5), transparent 40%),
     rgba(255, 255, 255, 0.88);
 }
 
 .cover-tile:nth-child(2)::before {
   background:
-    radial-gradient(circle at 50% 0, rgba(226, 212, 255, 0.34), transparent 36%),
+    radial-gradient(circle at 50% 0, var(--aurora-cream), transparent 41%),
     rgba(255, 255, 255, 0.88);
 }
 
 .cover-tile:nth-child(3)::before {
   background:
-    radial-gradient(circle at 100% 0, rgba(197, 225, 255, 0.32), transparent 35%),
+    radial-gradient(circle at 100% 0, rgba(236, 216, 187, 0.38), transparent 40%),
     rgba(255, 255, 255, 0.88);
 }
 
@@ -1017,13 +1061,17 @@ body::before {
   position: relative;
   z-index: 4;
   border-bottom: 1px solid rgba(255, 255, 255, 0.74);
+  background:
+    radial-gradient(circle at 28% -90%, rgba(176, 204, 231, 0.3), transparent 48%),
+    radial-gradient(circle at 78% -110%, rgba(209, 198, 230, 0.2), transparent 44%),
+    var(--panel-glass) !important;
 }
 
 .render-stage {
   background:
-    radial-gradient(circle at 16% 10%, rgba(216, 233, 255, 0.24), transparent 35%),
-    radial-gradient(circle at 90% 88%, rgba(218, 242, 232, 0.2), transparent 40%),
-    rgba(248, 250, 253, 0.5);
+    radial-gradient(circle at 16% 10%, rgba(176, 204, 231, 0.32), transparent 37%),
+    radial-gradient(circle at 90% 88%, rgba(184, 220, 203, 0.27), transparent 42%),
+    rgba(248, 250, 253, 0.46);
 }
 
 .render-document,
@@ -1038,7 +1086,10 @@ body::before {
 
 .render-empty {
   border-color: rgba(255, 255, 255, 0.86) !important;
-  background: rgba(255, 255, 255, 0.74) !important;
+  background:
+    radial-gradient(circle at 28% 16%, rgba(176, 204, 231, 0.18), transparent 35%),
+    radial-gradient(circle at 82% 88%, rgba(209, 198, 230, 0.13), transparent 38%),
+    rgba(255, 255, 255, 0.76) !important;
   box-shadow: inset 0 1px 0 #fff;
 }
 
@@ -1102,13 +1153,13 @@ body::before {
 
 .caption-field:nth-of-type(odd)::before {
   background:
-    radial-gradient(circle at 0 0, rgba(202, 229, 255, 0.3), transparent 42%),
+    radial-gradient(circle at 0 0, rgba(235, 203, 218, 0.36), transparent 44%),
     rgba(255, 255, 255, 0.62);
 }
 
 .caption-field:nth-of-type(even)::before {
   background:
-    radial-gradient(circle at 100% 0, rgba(224, 214, 255, 0.25), transparent 40%),
+    radial-gradient(circle at 100% 0, rgba(235, 203, 218, 0.3), transparent 43%),
     rgba(255, 255, 255, 0.62);
 }
 
@@ -1178,8 +1229,9 @@ body::before {
 .template-preview-stage,
 .preview-stage {
   background:
-    radial-gradient(circle at 18% 8%, rgba(208, 230, 255, 0.24), transparent 38%),
-    rgba(240, 244, 251, 0.78);
+    radial-gradient(circle at 18% 8%, rgba(176, 204, 231, 0.28), transparent 40%),
+    radial-gradient(circle at 88% 92%, rgba(209, 198, 230, 0.26), transparent 42%),
+    rgba(240, 244, 251, 0.76);
 }
 
 .preview-collapsed {
@@ -1240,7 +1292,10 @@ body::before {
 }
 
 .modal-body {
-  background: rgba(247, 250, 255, 0.24);
+  background:
+    radial-gradient(circle at 12% 8%, rgba(176, 204, 231, 0.18), transparent 34%),
+    radial-gradient(circle at 88% 92%, rgba(209, 198, 230, 0.14), transparent 38%),
+    rgba(247, 250, 255, 0.3);
 }
 
 .modal-sidebar {
@@ -1265,7 +1320,9 @@ body::before {
 
 .modal-nav-item.is-active {
   border-color: rgba(255, 255, 255, 0.9) !important;
-  background: rgba(255, 255, 255, 0.82) !important;
+  background:
+    radial-gradient(circle at 0 0, rgba(176, 204, 231, 0.38), transparent 62%),
+    rgba(255, 255, 255, 0.82) !important;
   box-shadow:
     0 7px 18px rgba(73, 89, 120, 0.07),
     inset 0 1px 0 #fff;
@@ -1409,6 +1466,10 @@ body::before {
 }
 
 @media (prefers-reduced-transparency: reduce) {
+  body {
+    background: #f2f6fb !important;
+  }
+
   body::before {
     display: none;
   }
@@ -1451,6 +1512,19 @@ body::before {
     background: #fbfcff !important;
     backdrop-filter: none !important;
     -webkit-backdrop-filter: none !important;
+  }
+
+  .app-canvas,
+  .workflow-nav .workflow-step.is-active,
+  .task-row.is-active,
+  .page-editor-card.is-confirmed,
+  .render-stage,
+  .render-empty,
+  .template-preview-stage,
+  .preview-stage,
+  .modal-body,
+  .modal-nav-item.is-active {
+    background: #fbfcff !important;
   }
 
   .overlay-chip,
