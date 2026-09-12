@@ -12,6 +12,7 @@ import { StepRender } from "@/components/xhs/step-render";
 import { TemplateUpload } from "@/components/xhs/template-upload";
 import { TaskSidebar } from "@/components/xhs/task-sidebar";
 import { TemplatePreviewPane } from "@/components/xhs/template-preview-pane";
+import { TemplateGenerationStatus } from "@/components/xhs/template-generation-status";
 import { useStore, type AgentInfo } from "@/lib/store";
 import { useTask, useXhs } from "@/lib/xhs/store";
 
@@ -132,6 +133,7 @@ export default function Home() {
       {welcomeOpen && <WelcomeModal onClose={() => setWelcomeOpen(false)} />}
       {settingsOpen && <SettingsModal onClose={() => setSettingsOpen(false)} />}
       {uploadOpen && <TemplateUpload onClose={() => setUploadOpen(false)} />}
+      <TemplateGenerationStatus />
     </main>
   );
 }

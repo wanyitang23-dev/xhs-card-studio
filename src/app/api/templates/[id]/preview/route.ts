@@ -20,10 +20,10 @@ export async function GET(_req: Request, ctx: Ctx) {
   return new Response(skill.exampleHtml, {
     headers: {
       "Content-Type": "text/html; charset=utf-8",
-      // Aggressive caching is fine — contributors editing a preview can
-      // hard-refresh; the response key (skill id) doesn't get reused for
-      // different content.
-      "Cache-Control": "public, max-age=300",
+      // Local template files are edited frequently during development. Do not
+      // leave an old preview cached under the same skill id while iterating.
+      "Cache-Control":
+        process.env.NODE_ENV === "development" ? "no-store" : "public, max-age=300",
     },
   });
 }

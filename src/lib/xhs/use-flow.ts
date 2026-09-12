@@ -115,12 +115,8 @@ export function useFlow() {
               pages: list.map((p) => makePage(p.kind, p.title, p.body)),
               // Record what was asked for so step ② can flag a count the agent
               // did not honour, rather than silently reshaping the outline.
-              // Verbatim mode ignores a fixed count by design, so recording it
-              // here would make step ② flag a mismatch that is not a fault.
               requestedPages:
-                task.outlineMode !== "verbatim" && typeof task.pageCount === "number"
-                  ? task.pageCount
-                  : null,
+                typeof task.pageCount === "number" ? task.pageCount : null,
             });
             got = true;
           },

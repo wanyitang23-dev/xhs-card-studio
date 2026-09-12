@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef } from "react";
+import { useCallback, useEffect, useMemo, useRef } from "react";
 import { ArrowLeft, RefreshCw } from "lucide-react";
 import { ScaledDocument } from "./scaled-document";
 import { useTask, useXhs } from "@/lib/xhs/store";
@@ -56,6 +56,53 @@ export function StepRender() {
     return parseViewport(hint).width;
   }, [templates, templateId]);
 
+  // Keep navigation inside the authored HTML. This adds mouse/trackpad
+  // gestures without drawing controls over the card or changing its layout.
+  const enableDeckGestures = useCallback((event: React.SyntheticEvent<HTMLIFrameElement>) => {
+    const doc = event.currentTarget.contentDocument;
+    if (!doc || doc.documentElement.dataset.deckGestures === "on") return;
+
+    const previous = doc.getElementById("prevPage");
+    const next = doc.getElementById("nextPage");
+    if (!previous || !next) return;
+
+    doc.documentElement.dataset.deckGestures = "on";
+    let dragStartX: number | null = null;
+    let wheelDistance = 0;
+    let wheelLockedUntil = 0;
+
+    doc.addEventListener("pointerdown", (pointerEvent) => {
+      if (pointerEvent.pointerType === "mouse" && pointerEvent.button === 0) {
+        dragStartX = pointerEvent.clientX;
+      }
+    });
+    doc.addEventListener("pointerup", (pointerEvent) => {
+      if (pointerEvent.pointerType !== "mouse" || dragStartX === null) return;
+      const distance = pointerEvent.clientX - dragStartX;
+      dragStartX = null;
+      if (Math.abs(distance) < 60) return;
+      (distance > 0 ? previous : next).click();
+    });
+    doc.addEventListener("pointercancel", () => {
+      dragStartX = null;
+    });
+    doc.addEventListener(
+      "wheel",
+      (wheelEvent) => {
+        const horizontal = Math.abs(wheelEvent.deltaX) > Math.abs(wheelEvent.deltaY);
+        if (!horizontal) return;
+        wheelEvent.preventDefault();
+        if (Date.now() < wheelLockedUntil) return;
+        wheelDistance += wheelEvent.deltaX;
+        if (Math.abs(wheelDistance) < 45) return;
+        (wheelDistance < 0 ? previous : next).click();
+        wheelDistance = 0;
+        wheelLockedUntil = Date.now() + 450;
+      },
+      { passive: false },
+    );
+  }, []);
+
   return (
     <div className="render-step flex h-full min-h-0 flex-col">
       <header className="render-toolbar flex items-center gap-3 px-6 py-3">
@@ -102,12 +149,12 @@ export function StepRender() {
           {html ? (
             <ScaledDocument
               iframeRef={iframeRef}
+              onLoad={enableDeckGestures}
               srcDoc={display}
               authoredWidth={authoredWidth}
               scale={zoom}
               title="成品预览"
-              className="render-document h-full w-full rounded-2xl"
-              style={{ background: "#fff", border: "1px solid var(--line-soft)" }}
+              className="render-document h-full w-full"
             />
           ) : (
             <div

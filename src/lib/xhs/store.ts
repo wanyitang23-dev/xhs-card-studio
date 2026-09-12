@@ -99,7 +99,7 @@ export type XhsTask = {
   log: Array<{ ts: number; kind: string; text: string }>;
 };
 
-const DEFAULT_TEMPLATE = "card-xiaohongshu";
+export const DEFAULT_TEMPLATE = "card-xiaohongshu";
 
 export function makeTask(name: string, seedFrom?: Partial<XhsTask>): XhsTask {
   return {
@@ -164,6 +164,8 @@ type State = {
   setPageCount: (n: PageCountSetting) => void;
   setOutlineMode: (m: OutlineMode) => void;
   setTemplateId: (id: string) => void;
+  /** Replace a removed template everywhere it is still referenced. */
+  replaceTemplateId: (fromId: string, toId: string) => void;
   setHandle: (handle: string) => void;
 
   setPages: (p: XhsPage[]) => void;
@@ -242,6 +244,14 @@ export const useXhs = create<State>()(
         setPageCount: (pageCount) => patchActive({ pageCount }),
         setOutlineMode: (outlineMode) => patchActive({ outlineMode }),
         setTemplateId: (templateId) => patchActive({ templateId }),
+        replaceTemplateId: (fromId, toId) =>
+          set((s) => ({
+            tasks: s.tasks.map((t) =>
+              t.templateId === fromId
+                ? { ...t, templateId: toId, updatedAt: Date.now() }
+                : t,
+            ),
+          })),
         setHandle: (handle: string) => patchActive({ handle }),
 
         setPages: (pages) => patchActive({ pages }),

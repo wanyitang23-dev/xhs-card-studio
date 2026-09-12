@@ -1,0 +1,268 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>深空蓝图 · 小红书图文模板</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Condensed:wght@200;300;400;500&family=Noto+Sans+SC:wght@300;400;500&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --black: #030506;
+    --black-soft: #071014;
+    --white: #f1f7f7;
+    --muted: rgba(224, 239, 241, .64);
+    --line: rgba(226, 246, 247, .42);
+    --cyan: #19d7d1;
+    --blue: #0755dc;
+    --deep-blue: #071f62;
+    --sans: "IBM Plex Sans Condensed", "Noto Sans SC", "PingFang SC", sans-serif;
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; background: #111; color: var(--white); }
+  body { width: max-content; margin-inline: auto; font-family: var(--sans); }
+
+  .deck {
+    width: max-content;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+  }
+
+  .card {
+    position: relative;
+    width: 1080px;
+    height: 1440px;
+    overflow: hidden;
+    padding: 76px 80px 68px;
+    background:
+      radial-gradient(ellipse 90% 58% at 50% 52%, rgba(5, 88, 219, .96) 0%, rgba(8, 82, 196, .92) 23%, rgba(12, 191, 199, .76) 49%, rgba(8, 60, 69, .38) 65%, rgba(3, 5, 6, 0) 78%),
+      radial-gradient(ellipse 72% 20% at 46% 30%, rgba(25, 215, 209, .38), transparent 72%),
+      var(--black);
+  }
+
+  .card::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    opacity: .34;
+    background-image:
+      radial-gradient(circle at 14% 9%, rgba(255,255,255,.8) 0 1px, transparent 2px),
+      radial-gradient(circle at 72% 18%, rgba(255,255,255,.55) 0 1px, transparent 1.7px),
+      radial-gradient(circle at 38% 74%, rgba(255,255,255,.4) 0 1px, transparent 2px),
+      radial-gradient(circle at 88% 61%, rgba(255,255,255,.65) 0 1px, transparent 1.5px),
+      repeating-linear-gradient(102deg, transparent 0 33px, rgba(255,255,255,.025) 34px, transparent 35px 79px);
+    background-size: 173px 197px, 241px 223px, 311px 283px, 199px 257px, auto;
+    mix-blend-mode: screen;
+    pointer-events: none;
+  }
+
+  .card::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    box-shadow: inset 0 0 190px 85px rgba(0,0,0,.76);
+    pointer-events: none;
+  }
+
+  .card:nth-child(2) { background-position: 0 0, 70px -90px, 0 0; }
+  .card:nth-child(3) { background-position: 80px 110px, -90px 40px, 0 0; }
+  .card:nth-child(4) { background-position: -40px -70px, 130px 120px, 0 0; }
+  .card:nth-child(5) { background-position: 100px -20px, -150px 140px, 0 0; }
+  .card:nth-child(6) { background-position: -80px 90px, 100px -80px, 0 0; }
+
+  .inner { position: relative; z-index: 2; height: 100%; display: flex; flex-direction: column; }
+  .topbar, .footer { display: flex; align-items: center; justify-content: space-between; }
+  .topbar { font-size: 18px; font-weight: 300; letter-spacing: .24em; text-transform: uppercase; }
+  .footer { margin-top: auto; padding-top: 18px; border-top: 1px solid var(--line); color: var(--muted); font-size: 17px; letter-spacing: .16em; }
+  .page { display: flex; align-items: center; gap: 12px; }
+  .page::before { content: ""; width: 52px; height: 1px; background: currentColor; }
+
+  .cross { position: absolute; width: 28px; height: 28px; opacity: .88; }
+  .cross::before, .cross::after { content: ""; position: absolute; background: var(--white); }
+  .cross::before { width: 1px; height: 28px; left: 13px; top: 0; }
+  .cross::after { height: 1px; width: 28px; left: 0; top: 13px; }
+  .cross-a { top: 236px; left: 118px; }
+  .cross-b { top: 340px; right: 185px; }
+  .cross-c { bottom: 360px; left: 420px; }
+
+  h1, h2, h3, p { margin-top: 0; text-wrap: pretty; }
+  .kicker { margin: 0 0 24px; color: var(--muted); font-size: 19px; letter-spacing: .28em; text-transform: uppercase; }
+  .display { margin: 0; font-size: 114px; font-weight: 200; line-height: .98; letter-spacing: .07em; }
+  .title { margin: 0; font-size: 76px; font-weight: 300; line-height: 1.12; letter-spacing: .035em; }
+  .lead { margin: 30px 0 0; max-width: 790px; font-size: 31px; font-weight: 300; line-height: 1.68; letter-spacing: .035em; }
+  .micro { color: var(--muted); font-size: 16px; font-weight: 300; line-height: 1.55; letter-spacing: .13em; text-transform: uppercase; }
+  .rule { width: 100%; height: 1px; background: var(--line); }
+
+  /* 01 · 封面 */
+  .cover-main { margin: 430px 0 0; }
+  .cover .display { max-width: 860px; }
+  .cover .subtitle { margin: 40px 0 0; font-size: 34px; font-weight: 300; letter-spacing: .04em; }
+  .cover-data { width: 560px; margin-top: 52px; display: grid; grid-template-columns: 1fr auto; row-gap: 7px; font-size: 20px; font-weight: 300; letter-spacing: .06em; }
+  .cover-data span:nth-child(even) { color: var(--muted); }
+
+  /* 02 · 核心观点 */
+  .statement-main { margin: auto 0; }
+  .statement-index { color: var(--muted); font-size: 22px; letter-spacing: .2em; }
+  .statement .title { max-width: 850px; margin-top: 28px; font-size: 88px; }
+  .statement .lead { margin-top: 52px; padding-left: 34px; border-left: 1px solid var(--white); }
+  .coordinates { margin-top: 68px; display: flex; align-items: center; gap: 18px; color: var(--muted); font-size: 16px; letter-spacing: .16em; }
+  .coordinates .line { width: 210px; height: 1px; background: var(--line); }
+
+  /* 03 · 三步结构 */
+  .steps-main { margin-top: 126px; }
+  .steps-list { margin-top: 72px; border-top: 1px solid var(--line); }
+  .step-row { min-height: 220px; display: grid; grid-template-columns: 110px 260px 1fr; align-items: center; gap: 26px; border-bottom: 1px solid var(--line); }
+  .step-row .n { color: var(--cyan); font-size: 21px; letter-spacing: .18em; }
+  .step-row h3 { margin: 0; font-size: 39px; font-weight: 300; letter-spacing: .05em; }
+  .step-row p { margin: 0; color: rgba(241,247,247,.76); font-size: 26px; font-weight: 300; line-height: 1.6; }
+
+  /* 04 · 对比 */
+  .compare-main { margin-top: 124px; }
+  .compare-grid { margin-top: 76px; display: grid; grid-template-columns: 1fr 1fr; gap: 54px; }
+  .compare-col { min-height: 650px; padding-top: 28px; border-top: 1px solid var(--white); }
+  .compare-col .tag { color: var(--muted); font-size: 17px; letter-spacing: .22em; }
+  .compare-col h3 { margin: 38px 0 28px; font-size: 48px; font-weight: 300; line-height: 1.2; }
+  .compare-col p { color: rgba(241,247,247,.74); font-size: 27px; font-weight: 300; line-height: 1.62; }
+  .compare-col ul { margin: 46px 0 0; padding: 0; list-style: none; }
+  .compare-col li { padding: 19px 0; border-bottom: 1px solid rgba(241,247,247,.24); font-size: 23px; font-weight: 300; }
+  .compare-col.good { color: var(--white); }
+  .compare-col.good .tag, .compare-col.good h3 { color: #75fff5; }
+
+  /* 05 · 检查清单 */
+  .check-main { margin-top: 108px; }
+  .check-list { margin-top: 62px; display: flex; flex-direction: column; }
+  .check-row { min-height: 132px; display: grid; grid-template-columns: 70px 1fr auto; align-items: center; gap: 24px; border-top: 1px solid var(--line); }
+  .check-row:last-child { border-bottom: 1px solid var(--line); }
+  .check-row .box { width: 23px; height: 23px; border: 1px solid var(--white); }
+  .check-row h3 { margin: 0; font-size: 31px; font-weight: 300; letter-spacing: .045em; }
+  .check-row span:last-child { color: var(--muted); font-size: 15px; letter-spacing: .18em; }
+
+  /* 06 · 结尾 */
+  .closing-main { margin: auto 0; }
+  .closing .display { font-size: 104px; }
+  .closing-note { width: 780px; margin-top: 58px; padding-top: 34px; border-top: 1px solid var(--white); font-size: 32px; font-weight: 300; line-height: 1.66; }
+  .closing-code { margin-top: 70px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 28px; }
+  .code-cell { padding-top: 18px; border-top: 1px solid var(--line); }
+  .code-cell b { display: block; color: var(--cyan); font-size: 17px; font-weight: 400; letter-spacing: .2em; }
+  .code-cell span { display: block; margin-top: 14px; color: var(--muted); font-size: 22px; font-weight: 300; line-height: 1.5; }
+</style>
+</head>
+<body>
+<main class="deck">
+  <section class="card cover">
+    <div class="cross cross-a" aria-hidden="true"></div>
+    <div class="cross cross-b" aria-hidden="true"></div>
+    <div class="inner">
+      <header class="topbar"><span>DEEP WORK / 2026</span><span>FIELD NOTE 01</span></header>
+      <div class="cover-main">
+        <p class="kicker">A SYSTEM FOR BETTER CREATIVE WORK</p>
+        <h1 class="display">让 AI 真正<br />理解你的<br />工作方式</h1>
+        <p class="subtitle">从一次性提示词，到可以反复调用的创作系统</p>
+        <div class="cover-data">
+          <span>FORMAT</span><span>1080 × 1440</span>
+          <span>SYSTEM</span><span>REUSABLE</span>
+          <span>STATUS</span><span>READY</span>
+        </div>
+      </div>
+      <footer class="footer"><span>@你的账号</span><span class="page">01 / 06</span></footer>
+    </div>
+  </section>
+
+  <section class="card statement">
+    <div class="cross cross-c" aria-hidden="true"></div>
+    <div class="inner">
+      <header class="topbar"><span>CORE PRINCIPLE</span><span>FIELD NOTE 02</span></header>
+      <div class="statement-main">
+        <span class="statement-index">01 — THE SHIFT</span>
+        <h2 class="title">真正省时间的，<br />不是让 AI 写得更快。</h2>
+        <p class="lead">而是把已经验证过的判断、结构和视觉语言保存下来，让下一次创作不必再从零开始。</p>
+        <div class="coordinates"><span>INPUT</span><span class="line"></span><span>RULES</span><span class="line"></span><span>OUTPUT</span></div>
+      </div>
+      <footer class="footer"><span>#AI 工作流</span><span class="page">02 / 06</span></footer>
+    </div>
+  </section>
+
+  <section class="card steps">
+    <div class="inner">
+      <header class="topbar"><span>METHOD / THREE LAYERS</span><span>FIELD NOTE 03</span></header>
+      <div class="steps-main">
+        <p class="kicker">BUILD THE SYSTEM</p>
+        <h2 class="title">把经验拆成三层</h2>
+        <div class="steps-list">
+          <article class="step-row"><span class="n">01</span><h3>内容规则</h3><p>明确保留什么、删掉什么，以及每一页只解决哪个问题。</p></article>
+          <article class="step-row"><span class="n">02</span><h3>视觉规则</h3><p>记录配色、字体、间距、组件和版式节奏，而不只是一张参考图。</p></article>
+          <article class="step-row"><span class="n">03</span><h3>修改规则</h3><p>基于已有 HTML 发送局部 diff，保留已经做对的设计。</p></article>
+        </div>
+      </div>
+      <footer class="footer"><span>SYSTEM ARCHITECTURE</span><span class="page">03 / 06</span></footer>
+    </div>
+  </section>
+
+  <section class="card compare">
+    <div class="inner">
+      <header class="topbar"><span>REGENERATE / REFINE</span><span>FIELD NOTE 04</span></header>
+      <div class="compare-main">
+        <p class="kicker">TWO DIFFERENT LOOPS</p>
+        <h2 class="title">重做，还是微调？</h2>
+        <div class="compare-grid">
+          <article class="compare-col">
+            <span class="tag">RESTART / 00</span>
+            <h3>每次重新生成</h3>
+            <p>上下文、结构和样式都要重新描述，输出容易漂移。</p>
+            <ul><li>重复消耗 token</li><li>设计风格不稳定</li><li>旧成果无法积累</li></ul>
+          </article>
+          <article class="compare-col good">
+            <span class="tag">REFINE / 01</span>
+            <h3>只修改 diff</h3>
+            <p>让 AI 在已有 HTML 上精确调整，其他部分保持不动。</p>
+            <ul><li>保留视觉资产</li><li>修改范围可控</li><li>模板越用越成熟</li></ul>
+          </article>
+        </div>
+      </div>
+      <footer class="footer"><span>CONTROL THE CHANGE</span><span class="page">04 / 06</span></footer>
+    </div>
+  </section>
+
+  <section class="card checklist">
+    <div class="inner">
+      <header class="topbar"><span>QUALITY CONTROL</span><span>FIELD NOTE 05</span></header>
+      <div class="check-main">
+        <p class="kicker">BEFORE YOU EXPORT</p>
+        <h2 class="title">发布前检查清单</h2>
+        <p class="lead">一套好模板，不只是好看。它还要能容纳真实内容，并在每一页维持同样的阅读节奏。</p>
+        <div class="check-list">
+          <article class="check-row"><span class="box"></span><h3>标题是否一眼能读懂？</h3><span>CHECK 01</span></article>
+          <article class="check-row"><span class="box"></span><h3>每页是否只有一个重点？</h3><span>CHECK 02</span></article>
+          <article class="check-row"><span class="box"></span><h3>正文是否留出足够呼吸感？</h3><span>CHECK 03</span></article>
+          <article class="check-row"><span class="box"></span><h3>页码与作者名是否统一？</h3><span>CHECK 04</span></article>
+          <article class="check-row"><span class="box"></span><h3>导出尺寸是否为 1080 × 1440？</h3><span>CHECK 05</span></article>
+        </div>
+      </div>
+      <footer class="footer"><span>OUTPUT VALIDATION</span><span class="page">05 / 06</span></footer>
+    </div>
+  </section>
+
+  <section class="card closing">
+    <div class="cross cross-a" aria-hidden="true"></div>
+    <div class="cross cross-b" aria-hidden="true"></div>
+    <div class="inner">
+      <header class="topbar"><span>SAVE WHAT WORKS</span><span>FIELD NOTE 06</span></header>
+      <div class="closing-main">
+        <p class="kicker">THE COMPOUND EFFECT</p>
+        <h2 class="display">别让好设计<br />只出现一次。</h2>
+        <p class="closing-note">保存模板，也保存你做判断的方法。下一次打开，它应该已经知道从哪里继续。</p>
+        <div class="closing-code">
+          <div class="code-cell"><b>01 / EXTRACT</b><span>提取视觉规则</span></div>
+          <div class="code-cell"><b>02 / PRESERVE</b><span>保留有效结构</span></div>
+          <div class="code-cell"><b>03 / REFINE</b><span>持续局部微调</span></div>
+        </div>
+      </div>
+      <footer class="footer"><span>KEEP BUILDING</span><span class="page">06 / 06</span></footer>
+    </div>
+  </section>
+</main>
+</body>
+</html>

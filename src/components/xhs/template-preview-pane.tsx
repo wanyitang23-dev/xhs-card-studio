@@ -1,8 +1,13 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { LayoutTemplate, PanelRightClose, PanelRightOpen } from "lucide-react";
 import { useTemplates } from "@/lib/templates";
-import { parseViewport, aspectBadge, parsePageCount } from "@/lib/xhs/aspect";
+import { parseViewport } from "@/lib/xhs/aspect";
+import {
+  readTemplateTitleAliases,
+  subscribeTemplateTitleAliases,
+} from "@/lib/xhs/template-title-aliases";
 import { ScaledDocument } from "./scaled-document";
 
 /**
@@ -14,8 +19,12 @@ import { ScaledDocument } from "./scaled-document";
  * otherwise reload and flash white on every step change.
  *
  * The document is rendered at its authored width and scaled to fit, the same
- * way the zoom modal does it, so a 1080px card is legible in a ~420px column
+ * way the zoom modal does it, so a 1080px card is legible in a ~300px column
  * without being re-laid-out at the wrong width.
+ *
+ * Kept deliberately narrow: this pane only has to answer "is this the look I
+ * want", which it does at a quarter scale, while the width it gives back goes
+ * to the article textarea in step ①. 「看大图」 is there for a close read.
  */
 export function TemplatePreviewPane({
   templateId,
@@ -28,6 +37,15 @@ export function TemplatePreviewPane({
 }) {
   const templates = useTemplates();
   const tpl = templates?.find((t) => t.id === templateId);
+  const [titleAliases, setTitleAliases] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    const sync = () => setTitleAliases(readTemplateTitleAliases());
+    sync();
+    return subscribeTemplateTitleAliases(sync);
+  }, []);
+
+  const displayName = tpl ? titleAliases[tpl.id] || tpl.zhName : "模板预览";
 
   if (collapsed) {
     return (
@@ -46,7 +64,7 @@ export function TemplatePreviewPane({
 
   return (
     <aside
-      className="template-preview-panel hidden min-h-0 w-[38%] min-w-[340px] max-w-[560px] shrink-0 flex-col lg:flex"
+      className="template-preview-panel hidden min-h-0 w-[26%] min-w-[300px] max-w-[420px] shrink-0 flex-col lg:flex"
       style={{ borderLeft: "1px solid var(--line-faint)", background: "var(--surface)" }}
     >
       <header
@@ -56,13 +74,11 @@ export function TemplatePreviewPane({
         <div className="min-w-0">
           <p className="flex items-center gap-1.5 truncate text-[13px] font-semibold text-[var(--ink)]">
             <LayoutTemplate aria-hidden="true" className="h-3.5 w-3.5 shrink-0 text-[var(--ink-faint)]" />
-            {tpl ? tpl.zhName : "模板预览"}
+            {displayName}
           </p>
           <p className="truncate text-[11.5px] text-[var(--ink-faint)]">
             {tpl
-              ? `${aspectBadge(tpl.aspectHint)}${
-                  parsePageCount(tpl.aspectHint) ? ` · ${parsePageCount(tpl.aspectHint)} 页` : ""
-                } · 示例效果，你的内容会套用同一套视觉`
+              ? "示例效果，你的内容会套用同一套视觉"
               : "在左边选一个模板"}
           </p>
         </div>
@@ -85,7 +101,7 @@ export function TemplatePreviewPane({
             key={tpl.id}
             authoredWidth={parseViewport(tpl.aspectHint).width}
             src={`/api/templates/${encodeURIComponent(tpl.id)}/preview`}
-            title={`${tpl.zhName} 预览`}
+            title={`${displayName} 预览`}
             className="template-preview-document min-h-0 w-full flex-1 rounded-xl"
             style={{ background: "#fff", border: "1px solid var(--line-faint)" }}
           />

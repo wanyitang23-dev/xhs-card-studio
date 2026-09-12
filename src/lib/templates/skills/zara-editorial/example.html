@@ -1,0 +1,314 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Editorial Cards</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Noto+Serif+SC:wght@400;500;600;700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,500;8..60,600&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --green: #2e4a2a;
+    --green-deep: #243a21;
+    --green-lite: #3a5a36;
+    --pink: #e89cb1;
+    --pink-deep: #d27e96;
+    --cream: #efe7d4;
+    --cream-2: #e6dcc4;
+    --ink: #1a1a17;
+    --serif: "Noto Serif SC", "Source Serif 4", Georgia, serif;
+    --mono: "JetBrains Mono", ui-monospace, Menlo, monospace;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; background: #e7dfcf; color: var(--ink); line-height: 1.5; }
+  body { font-family: var(--serif); }
+  .deck {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    width: max-content;
+    margin-inline: auto;
+  }
+  .card {
+    width: 1080px;
+    height: 1440px;
+    margin-inline: auto;
+    overflow: hidden;
+    position: relative;
+    padding: 78px 82px 72px;
+    display: flex;
+    flex-direction: column;
+    background: var(--cream);
+  }
+  .topbar, .footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 30px;
+    position: relative;
+    z-index: 2;
+  }
+  .label, .page, .footer {
+    font-family: var(--mono);
+    font-size: 21px;
+    line-height: 1.3;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    font-weight: 500;
+  }
+  .footer { margin-top: auto; padding-top: 30px; border-top: 2px solid currentColor; }
+  .page-ring {
+    width: 92px;
+    height: 92px;
+    border: 2px solid currentColor;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    font-family: var(--mono);
+    font-size: 22px;
+    letter-spacing: .08em;
+  }
+  .display {
+    margin: 0;
+    font-size: 132px;
+    line-height: .98;
+    letter-spacing: 0;
+    font-weight: 600;
+  }
+  .section-title {
+    margin: 0;
+    color: var(--green);
+    font-size: 78px;
+    line-height: 1.08;
+    letter-spacing: 0;
+    font-weight: 600;
+  }
+  .body-copy { margin: 0; font-size: 34px; line-height: 1.62; font-weight: 400; }
+
+  /* 01 — cover */
+  .cover { background: var(--green); color: var(--pink); padding: 82px 88px 72px; }
+  .cover-main { margin: auto 0; position: relative; z-index: 1; }
+  .cover .kicker { font-family: var(--mono); font-size: 22px; letter-spacing: .18em; margin-bottom: 42px; }
+  .cover .display { max-width: 900px; }
+  .cover .sub {
+    width: 700px;
+    margin: 54px 0 0;
+    padding-top: 28px;
+    border-top: 2px solid var(--pink);
+    color: var(--cream);
+    font-size: 34px;
+    line-height: 1.55;
+  }
+  .cover-orbit {
+    position: absolute;
+    width: 530px;
+    height: 530px;
+    right: -245px;
+    bottom: 145px;
+    border: 2px solid rgba(232,156,177,.45);
+    border-radius: 50%;
+  }
+
+  /* 02 — mobile-first editorial rows */
+  .agenda { gap: 36px; }
+  .agenda-head { display: flex; justify-content: space-between; align-items: flex-end; gap: 40px; }
+  .agenda-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    flex: 1;
+  }
+  .topic {
+    flex: 1;
+    padding: 34px 36px;
+    border: 2px solid var(--green);
+    border-radius: 6px;
+    display: grid;
+    grid-template-columns: 76px 1fr;
+    grid-template-rows: auto 1fr;
+    column-gap: 28px;
+    align-items: start;
+    min-height: 0;
+  }
+  .topic:first-child { background: var(--green); color: var(--pink); }
+  .topic:nth-child(2) { background: var(--pink); color: var(--green-deep); border-color: var(--pink-deep); }
+  .topic:nth-child(3) { background: var(--cream-2); color: var(--green); }
+  .topic-num { grid-row: 1 / 3; font-family: var(--mono); font-size: 21px; letter-spacing: .14em; padding-top: 8px; }
+  .topic h3 { margin: 0 0 16px; font-size: 48px; line-height: 1.2; font-weight: 600; }
+  .topic p { margin: 0; font-size: 28px; line-height: 1.55; align-self: end; }
+
+  /* 03 — statement */
+  .statement { background: var(--pink); color: var(--green-deep); }
+  .statement-main { margin: auto 0; }
+  .statement blockquote {
+    margin: 34px 0 0;
+    font-size: 80px;
+    line-height: 1.22;
+    letter-spacing: 0;
+    font-weight: 600;
+  }
+  .statement .rule { width: 180px; height: 3px; background: var(--green-deep); margin: 44px 0; }
+  .statement .support { max-width: 800px; font-size: 34px; line-height: 1.62; }
+  .principle-list { margin-top: 42px; border-top: 2px solid var(--green-deep); }
+  .principle-row { display: grid; grid-template-columns: 210px 1fr; gap: 28px; padding: 24px 0; border-bottom: 1px solid rgba(36,58,33,.35); }
+  .principle-row b { font-family: var(--mono); font-size: 18px; letter-spacing: .12em; }
+  .principle-row span { font-size: 28px; line-height: 1.5; }
+
+  /* 04 — vertical practice list */
+  .practice { gap: 34px; }
+  .practice-intro { padding: 30px 0 34px; border-bottom: 2px solid var(--green); }
+  .practice-intro .body-copy { max-width: 850px; margin-top: 28px; }
+  .practice-list { display: flex; flex-direction: column; flex: 1; }
+  .practice-row { display: grid; grid-template-columns: 86px 235px 1fr; gap: 26px; align-items: baseline; padding: 30px 0; border-bottom: 1px solid rgba(46,74,42,.38); }
+  .practice-row .n { font-family: var(--mono); color: var(--pink-deep); font-size: 20px; letter-spacing: .12em; }
+  .practice-row h3 { margin: 0; color: var(--green); font-size: 39px; line-height: 1.25; font-weight: 600; }
+  .practice-row p { margin: 0; font-size: 27px; line-height: 1.5; }
+
+  /* 05 — stacked evidence */
+  .data { background: var(--green); color: var(--cream); gap: 40px; }
+  .data .section-title { color: var(--cream); }
+  .data .label, .data .page { color: var(--pink); }
+  .evidence-list { display: flex; flex-direction: column; margin-top: 24px; border-top: 2px solid var(--pink); }
+  .evidence { display: grid; grid-template-columns: 230px 1fr; gap: 34px; align-items: center; padding: 42px 0; border-bottom: 1px solid rgba(239,231,212,.34); }
+  .evidence strong { color: var(--pink); font-size: 104px; line-height: 1; font-weight: 500; letter-spacing: 0; }
+  .evidence-text small { font-family: var(--mono); font-size: 18px; letter-spacing: .13em; color: var(--pink); }
+  .evidence-text p { margin: 14px 0 0; font-size: 29px; line-height: 1.52; color: var(--cream); }
+  .data-note { margin-top: auto; padding: 28px 32px; border: 2px solid var(--pink); color: var(--pink); font-size: 29px; line-height: 1.5; }
+
+  /* 06 — closing */
+  .closing { background: var(--green-deep); color: var(--cream); }
+  .closing .topbar { color: var(--pink); }
+  .closing-main { margin: auto 0; }
+  .closing .display { color: var(--pink); font-size: 118px; }
+  .takeaways { display: flex; flex-direction: column; gap: 0; margin-top: 62px; border-top: 2px solid var(--pink); }
+  .takeaway { display: grid; grid-template-columns: 180px 1fr; gap: 28px; align-items: baseline; padding: 28px 0; border-bottom: 1px solid rgba(232,156,177,.45); }
+  .takeaways b { color: var(--pink); font-family: var(--mono); font-size: 19px; letter-spacing: .14em; }
+  .takeaways p { margin: 0; font-size: 30px; line-height: 1.5; }
+</style>
+</head>
+<body>
+<main class="deck">
+  <section class="card cover">
+    <header class="topbar">
+      <span class="label">Focus / 2026</span>
+      <span class="page-ring">01</span>
+    </header>
+    <div class="cover-main">
+      <div class="kicker">A NOTE ON CREATIVE FOCUS</div>
+      <h1 class="display">少做一点，<br />做深一点。</h1>
+      <p class="sub">真正的辨识度，不来自每天追逐十个热点，而来自长期回答同一个重要问题。</p>
+    </div>
+    <div class="cover-orbit" aria-hidden="true"></div>
+    <footer class="footer"><span>#内容策略</span><span>01 / 06</span></footer>
+  </section>
+
+  <section class="card agenda">
+    <header class="agenda-head">
+      <div><span class="label">THE SHIFT</span><h2 class="section-title">三个转变</h2></div>
+      <span class="page">02 / 06</span>
+    </header>
+    <div class="agenda-grid">
+      <article class="topic">
+        <span class="topic-num">01</span>
+        <h3>从数量，转向判断标准</h3>
+        <p>不是做得更多，而是更清楚什么值得做。</p>
+      </article>
+      <article class="topic">
+        <span class="topic-num">02</span>
+        <h3>从模仿爆款，转向表达资产</h3>
+        <p>保留自己的语言，让每次输出都能继续积累。</p>
+      </article>
+      <article class="topic">
+        <span class="topic-num">03</span>
+        <h3>从短期曝光，转向长期关系</h3>
+        <p>让读者愿意回来，而不只是偶然刷到一次。</p>
+      </article>
+    </div>
+    <footer class="footer"><span>#创作方法</span><span>Editorial note</span></footer>
+  </section>
+
+  <section class="card statement">
+    <header class="topbar"><span class="label">A PRINCIPLE</span><span class="page">03 / 06</span></header>
+    <div class="statement-main">
+      <span class="label">选择，不是缩小可能</span>
+      <blockquote>而是把有限的注意力，留给真正重要的事。</blockquote>
+      <div class="rule"></div>
+      <p class="support">当主题稳定、观点清楚、表达持续，读者会开始认出你，而不只是偶然刷到你。</p>
+      <div class="principle-list">
+        <div class="principle-row"><b>选择什么</b><span>值得长期回答的问题</span></div>
+        <div class="principle-row"><b>放弃什么</b><span>只带来短期噪声的热点</span></div>
+      </div>
+    </div>
+    <footer class="footer"><span>#长期主义</span><span>Keep the signal</span></footer>
+  </section>
+
+  <section class="card practice">
+    <header class="topbar"><span class="label">BUILD THE SYSTEM</span><span class="page">04 / 06</span></header>
+    <div class="practice-intro">
+      <h2 class="section-title">围绕一个问题，<br />持续增加深度。</h2>
+      <p class="body-copy">新的案例、新的证据和新的观察，会让同一个主题越来越完整。</p>
+    </div>
+    <div class="practice-list">
+      <div class="practice-row">
+        <span class="n">01</span>
+        <h3>主题稳定</h3>
+        <p>不必每次寻找全新的方向。</p>
+      </div>
+      <div class="practice-row">
+        <span class="n">02</span>
+        <h3>视角更新</h3>
+        <p>用新证据推进同一个问题。</p>
+      </div>
+      <div class="practice-row">
+        <span class="n">03</span>
+        <h3>语言统一</h3>
+        <p>逐渐形成可辨认的表达方式。</p>
+      </div>
+      <div class="practice-row">
+        <span class="n">04</span>
+        <h3>节奏持续</h3>
+        <p>让每一篇都成为下一篇的基础。</p>
+      </div>
+    </div>
+    <footer class="footer"><span>#表达系统</span><span>Depth over noise</span></footer>
+  </section>
+
+  <section class="card data">
+    <header class="topbar"><span class="label">A BETTER SCORECARD</span><span class="page">05 / 06</span></header>
+    <h2 class="section-title">别只计算发布次数，<br />也计算内容留下了什么。</h2>
+    <div class="evidence-list">
+      <article class="evidence">
+        <strong>2×</strong>
+        <div class="evidence-text">
+          <small>RETURN / 再次打开</small>
+          <p>值得被读者再次打开的内容，比一次性的曝光更有复利。</p>
+        </div>
+      </article>
+      <article class="evidence">
+        <strong>1 句</strong>
+        <div class="evidence-text">
+          <small>MEMORY / 被记住</small>
+          <p>让每篇内容至少留下一句能被记住、能被复述的话。</p>
+        </div>
+      </article>
+    </div>
+    <div class="data-note">好的衡量标准，不只记录你发布了多少，也记录读者最后带走了什么。</div>
+    <footer class="footer"><span>#内容复利</span><span>Measure what remains</span></footer>
+  </section>
+
+  <section class="card closing">
+    <header class="topbar"><span class="label">IN SUMMARY</span><span class="page-ring">06</span></header>
+    <div class="closing-main">
+      <h2 class="display">清楚地选择，<br />耐心地重复。</h2>
+      <div class="takeaways">
+        <div class="takeaway"><b>01 / 主题</b><p>找到一个值得长期回答的问题。</p></div>
+        <div class="takeaway"><b>02 / 标准</b><p>建立属于自己的取舍尺度。</p></div>
+        <div class="takeaway"><b>03 / 积累</b><p>让每次表达都成为下一次的基础。</p></div>
+      </div>
+    </div>
+    <footer class="footer"><span>#创作长期主义</span><span>Save for later</span></footer>
+  </section>
+</main>
+</body>
+</html>

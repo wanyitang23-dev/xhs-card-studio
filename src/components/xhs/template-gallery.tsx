@@ -1,11 +1,18 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Check, LayoutTemplate, Maximize2, X } from "lucide-react";
+import { Check, LayoutTemplate, LoaderCircle, Maximize2, Trash2, X } from "lucide-react";
 import { useElementSize } from "@/lib/xhs/use-element-size";
 import { ScaledDocument } from "./scaled-document";
-import { useTemplates, type TemplateDef } from "@/lib/templates";
-import { aspectBadge, parsePageCount, parseViewport } from "@/lib/xhs/aspect";
+import { refreshTemplates, useTemplates, type TemplateDef } from "@/lib/templates";
+import { parseViewport } from "@/lib/xhs/aspect";
+import { localTemplateSlugFromSkillId } from "@/lib/templates/local-id";
+import { DEFAULT_TEMPLATE, useXhs } from "@/lib/xhs/store";
+import {
+  readTemplateTitleAliases,
+  subscribeTemplateTitleAliases,
+  writeTemplateTitleAliases,
+} from "@/lib/xhs/template-title-aliases";
 
 /**
  * Visual template picker: every template renders its own `example.html` as a
@@ -26,11 +33,63 @@ export function TemplateGallery({
 }) {
   const templates = useTemplates();
   const [zoomed, setZoomed] = useState<TemplateDef | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [deleteError, setDeleteError] = useState("");
+  const [titleAliases, setTitleAliases] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    const sync = () => setTitleAliases(readTemplateTitleAliases());
+    sync();
+    return subscribeTemplateTitleAliases(sync);
+  }, []);
+
+  const renameTemplate = useCallback((id: string, canonicalName: string, nextName: string) => {
+    const clean = nextName.trim();
+    const next = { ...readTemplateTitleAliases() };
+    if (!clean || clean === canonicalName) delete next[id];
+    else next[id] = clean;
+    writeTemplateTitleAliases(next);
+  }, []);
+
+  const deleteTemplate = useCallback(
+    async (tpl: TemplateDef, displayName: string) => {
+      if (!localTemplateSlugFromSkillId(tpl.id) || deletingId) return;
+      if (!window.confirm(`确定删除上传的模板“${displayName}”吗？此操作无法撤销。`)) return;
+
+      setDeletingId(tpl.id);
+      setDeleteError("");
+      try {
+        const res = await fetch(`/api/templates/upload?id=${encodeURIComponent(tpl.id)}`, {
+          method: "DELETE",
+        });
+        if (!res.ok) {
+          const body = (await res.json().catch(() => null)) as { message?: string } | null;
+          throw new Error(body?.message || `删除失败（${res.status}）`);
+        }
+
+        const fresh = await refreshTemplates();
+        const fallback = fresh.some((item) => item.id === DEFAULT_TEMPLATE)
+          ? DEFAULT_TEMPLATE
+          : fresh[0]?.id;
+        if (fallback) {
+          useXhs.getState().replaceTemplateId(tpl.id, fallback);
+          if (value === tpl.id) onChange(fallback);
+        }
+        if (zoomed?.id === tpl.id) setZoomed(null);
+        renameTemplate(tpl.id, tpl.zhName, "");
+      } catch (err) {
+        setDeleteError(err instanceof Error ? err.message : "删除模板失败，请重试");
+      } finally {
+        setDeletingId(null);
+      }
+    },
+    [deletingId, onChange, renameTemplate, value, zoomed?.id],
+  );
 
   if (templates === undefined) {
     return (
       <div className="@container">
-        <div className="grid gap-3 @[26rem]:grid-cols-2 @[46rem]:grid-cols-3">
+        <div className="grid gap-3 @[17rem]:grid-cols-2">
           {[0, 1, 2].map((i) => (
             <div
               key={i}
@@ -54,19 +113,39 @@ export function TemplateGallery({
   return (
     <>
       {/* Column count follows this pane's width, not the viewport's — the
-          picker now shares the window with a permanent preview column. */}
+          picker shares the window with both the form column and a permanent
+          preview column, so the viewport says little about the room here.
+          Two is the cap, and the threshold is low on purpose: the picker sits
+          in a deliberately narrow column (~20rem, so the article text gets the
+          width), and two per row is what it still has to manage there. */}
       <div className="@container">
-        <div className="grid gap-3 @[26rem]:grid-cols-2 @[46rem]:grid-cols-3">
-          {templates.map((t) => (
-            <TemplateTile
-              key={t.id}
-              tpl={t}
-              selected={t.id === value}
-              onSelect={() => onChange(t.id)}
-              onZoom={() => setZoomed(t)}
-            />
-          ))}
+        <div className="grid gap-3 @[17rem]:grid-cols-2">
+          {templates.map((t) => {
+            const displayName = titleAliases[t.id] || t.zhName;
+            return (
+              <TemplateTile
+                key={t.id}
+                tpl={t}
+                displayName={displayName}
+                selected={t.id === value}
+                onSelect={() => onChange(t.id)}
+                onZoom={() => setZoomed({ ...t, zhName: displayName })}
+                onRename={(nextName) => renameTemplate(t.id, t.zhName, nextName)}
+                onDelete={
+                  localTemplateSlugFromSkillId(t.id)
+                    ? () => void deleteTemplate(t, displayName)
+                    : undefined
+                }
+                deleting={deletingId === t.id}
+              />
+            );
+          })}
         </div>
+        {deleteError && (
+          <p role="alert" className="mt-3 text-[12px] text-red-600">
+            {deleteError}
+          </p>
+        )}
       </div>
       {zoomed && <ZoomModal tpl={zoomed} onClose={() => setZoomed(null)} />}
     </>
@@ -75,19 +154,26 @@ export function TemplateGallery({
 
 function TemplateTile({
   tpl,
+  displayName,
   selected,
   onSelect,
   onZoom,
+  onRename,
+  onDelete,
+  deleting,
 }: {
   tpl: TemplateDef;
+  displayName: string;
   selected: boolean;
   onSelect: () => void;
   onZoom: () => void;
+  onRename: (name: string) => void;
+  onDelete?: () => void;
+  deleting: boolean;
 }) {
   const hasPreview = !!tpl.example?.hasHtml;
   const ref = useRef<HTMLDivElement | null>(null);
   const visible = useNearViewport(ref);
-  const pages = parsePageCount(tpl.aspectHint);
 
   return (
     <div ref={ref} className="flex flex-col gap-2">
@@ -95,7 +181,7 @@ function TemplateTile({
         type="button"
         onClick={onSelect}
         aria-pressed={selected}
-        aria-label={`选择模板 ${tpl.zhName}`}
+        aria-label={`选择模板 ${displayName}`}
         className={`select-card template-tile group relative block w-full overflow-hidden rounded-2xl transition-shadow${selected ? " is-selected" : ""}`}
         style={{
           aspectRatio: "3 / 4",
@@ -105,20 +191,12 @@ function TemplateTile({
         }}
       >
         {hasPreview && visible ? (
-          <ScaledPreview id={tpl.id} name={tpl.zhName} hint={tpl.aspectHint} />
+          <ScaledPreview id={tpl.id} name={displayName} hint={tpl.aspectHint} />
         ) : (
           <span className="empty-state grid h-full place-items-center">
             <LayoutTemplate aria-hidden="true" className="h-7 w-7" />
           </span>
         )}
-
-        <span
-          className="overlay-chip absolute left-2 top-2 rounded-md px-1.5 py-0.5 text-[10px] font-semibold"
-          style={{ background: "rgba(21,20,15,0.6)", color: "#fff" }}
-        >
-          {aspectBadge(tpl.aspectHint)}
-          {pages ? ` · ${pages} 页` : ""}
-        </span>
 
         {selected && (
           <span
@@ -154,15 +232,102 @@ function TemplateTile({
       </button>
 
       <div className="min-w-0">
-        <p className="flex items-center gap-1.5 truncate text-[13px] font-semibold text-[var(--ink)]">
-          <LayoutTemplate aria-hidden="true" className="h-3.5 w-3.5 shrink-0 text-[var(--ink-faint)]" />
-          {tpl.zhName}
-        </p>
-        <p className="mt-0.5 line-clamp-2 text-[11.5px] leading-snug text-[var(--ink-faint)]">
-          {tpl.description}
-        </p>
+        <div className="flex items-center gap-2">
+          <EditableTemplateTitle value={displayName} onSave={onRename} />
+          {onDelete && (
+            <button
+              type="button"
+              disabled={deleting}
+              onClick={onDelete}
+              aria-label={`删除上传的模板 ${displayName}`}
+              className="flex shrink-0 items-center gap-1 rounded-md px-1.5 py-1 text-[11px] font-medium text-red-600 transition-colors hover:bg-red-50 disabled:cursor-wait disabled:opacity-60"
+            >
+              {deleting ? (
+                <LoaderCircle aria-hidden="true" className="h-3 w-3 animate-spin" />
+              ) : (
+                <Trash2 aria-hidden="true" className="h-3 w-3" />
+              )}
+              {deleting ? "删除中" : "删除"}
+            </button>
+          )}
+        </div>
       </div>
     </div>
+  );
+}
+
+function EditableTemplateTitle({ value, onSave }: { value: string; onSave: (name: string) => void }) {
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(value);
+  const inputRef = useRef<HTMLInputElement | null>(null);
+  const cancelRef = useRef(false);
+
+  useEffect(() => {
+    if (!editing) setDraft(value);
+  }, [editing, value]);
+
+  useEffect(() => {
+    if (!editing) return;
+    inputRef.current?.focus();
+    inputRef.current?.select();
+  }, [editing]);
+
+  const commit = () => {
+    onSave(draft);
+    setEditing(false);
+  };
+
+  const cancel = () => {
+    cancelRef.current = true;
+    setDraft(value);
+    setEditing(false);
+  };
+
+  if (editing) {
+    return (
+      <label className="flex min-w-0 flex-1 items-center gap-1.5">
+        <LayoutTemplate aria-hidden="true" className="h-3.5 w-3.5 shrink-0 text-[var(--ink-faint)]" />
+        <span className="sr-only">模板标题</span>
+        <input
+          ref={inputRef}
+          value={draft}
+          maxLength={40}
+          onChange={(event) => setDraft(event.target.value)}
+          onBlur={() => {
+            if (cancelRef.current) {
+              cancelRef.current = false;
+              return;
+            }
+            commit();
+          }}
+          onKeyDown={(event) => {
+            if (event.key === "Enter") commit();
+            if (event.key === "Escape") {
+              event.preventDefault();
+              cancel();
+            }
+          }}
+          className="min-w-0 flex-1 rounded-md px-1.5 py-0.5 text-[13px] font-semibold outline-none"
+          style={{ background: "var(--surface)", border: "1px solid var(--coral)" }}
+        />
+      </label>
+    );
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={() => {
+        cancelRef.current = false;
+        setEditing(true);
+      }}
+      title="点击修改模板标题"
+      aria-label={`修改模板标题 ${value}`}
+      className="flex min-w-0 flex-1 items-center gap-1.5 text-left text-[13px] font-semibold text-[var(--ink)]"
+    >
+      <LayoutTemplate aria-hidden="true" className="h-3.5 w-3.5 shrink-0 text-[var(--ink-faint)]" />
+      <span className="truncate underline-offset-2 hover:underline">{value}</span>
+    </button>
   );
 }
 
@@ -235,7 +400,7 @@ function ZoomModal({ tpl, onClose }: { tpl: TemplateDef; onClose: () => void }) 
               {tpl.zhName}
             </p>
             <p className="truncate text-[12px] text-[var(--ink-faint)]">
-              {tpl.aspectHint} · 这是模板的示例效果，你的内容会套用同一套视觉
+              这是模板的示例效果，你的内容会套用同一套视觉
             </p>
           </div>
           <button

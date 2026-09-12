@@ -1,6 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { makeSkillId, packageId, userSkillsDir } from "./paths";
+import { REFERENCE_IMAGE_TOKEN } from "@/lib/templates/reference-image";
 
 /**
  * Write a user-uploaded template to the same on-disk layout the GitHub
@@ -54,6 +55,11 @@ export type LocalTemplateInput = {
   skillBody: string;
   /** The reference page the rules were derived from. Shown as the preview. */
   exampleHtml: string;
+  /** Optional source image retained with image-derived templates. */
+  referenceImage?: {
+    bytes: Uint8Array;
+    extension: "png" | "jpg" | "webp";
+  };
   emoji?: string;
   description?: string;
 };
@@ -97,10 +103,24 @@ export function installLocalTemplate(input: LocalTemplateInput): LocalInstallRes
   const pkgId = packageId(LOCAL_OWNER, slug);
   const pkgDir = path.join(userSkillsDir(), pkgId);
   const skillDir = path.join(pkgDir, "skills", slug);
+  const skillId = makeSkillId(pkgId, slug);
+
+  let skillBody = input.skillBody;
+  let exampleHtml = input.exampleHtml;
+  const assetsDir = path.join(skillDir, "assets");
+  fs.rmSync(assetsDir, { recursive: true, force: true });
+  if (input.referenceImage) {
+    const filename = `reference.${input.referenceImage.extension}`;
+    const assetUrl = `/api/templates/${encodeURIComponent(skillId)}/assets/${filename}`;
+    skillBody = skillBody.replaceAll(REFERENCE_IMAGE_TOKEN, assetUrl);
+    exampleHtml = exampleHtml.replaceAll(REFERENCE_IMAGE_TOKEN, assetUrl);
+    fs.mkdirSync(assetsDir, { recursive: true });
+    fs.writeFileSync(path.join(assetsDir, filename), input.referenceImage.bytes);
+  }
 
   fs.mkdirSync(skillDir, { recursive: true });
-  fs.writeFileSync(path.join(skillDir, "SKILL.md"), buildSkillMd(slug, input), "utf8");
-  fs.writeFileSync(path.join(skillDir, "example.html"), input.exampleHtml, "utf8");
+  fs.writeFileSync(path.join(skillDir, "SKILL.md"), buildSkillMd(slug, { ...input, skillBody }), "utf8");
+  fs.writeFileSync(path.join(skillDir, "example.html"), exampleHtml, "utf8");
   fs.writeFileSync(
     path.join(pkgDir, "package.json"),
     JSON.stringify(
@@ -117,7 +137,7 @@ export function installLocalTemplate(input: LocalTemplateInput): LocalInstallRes
     "utf8",
   );
 
-  return { skillId: makeSkillId(pkgId, slug), packageId: pkgId, dir: skillDir };
+  return { skillId, packageId: pkgId, dir: skillDir };
 }
 
 /** Remove a locally uploaded template. No-op if it isn't there. */

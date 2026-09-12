@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { installLocalTemplate, LocalInstallError, uninstallLocalTemplate } from "@/lib/skills/local-install";
 import { invalidateSkillsCache } from "@/lib/templates/loader";
 import { hostRejectedResponse, isHostAllowed } from "../../marketplace/_lib/host-guard";
+import { decodeReferenceImageDataUrl, ReferenceImageError } from "@/lib/templates/reference-image";
+import { localTemplateSlugFromSkillId } from "@/lib/templates/local-id";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -16,6 +18,7 @@ type Body = {
   exampleHtml?: unknown;
   emoji?: unknown;
   description?: unknown;
+  referenceImageDataUrl?: unknown;
 };
 
 export async function POST(req: Request) {
@@ -38,17 +41,20 @@ export async function POST(req: Request) {
   }
 
   try {
+    const imageDataUrl = str(body.referenceImageDataUrl);
+    const referenceImage = imageDataUrl ? decodeReferenceImageDataUrl(imageDataUrl) : undefined;
     const result = installLocalTemplate({
       name: str(body.name),
       skillBody,
       exampleHtml,
       emoji: str(body.emoji) || undefined,
       description: str(body.description) || undefined,
+      referenceImage,
     });
     invalidateSkillsCache();
     return NextResponse.json(result);
   } catch (err) {
-    if (err instanceof LocalInstallError) {
+    if (err instanceof LocalInstallError || err instanceof ReferenceImageError) {
       return NextResponse.json({ error: err.code, message: err.message }, { status: 400 });
     }
     return NextResponse.json(
@@ -60,8 +66,12 @@ export async function POST(req: Request) {
 
 export async function DELETE(req: Request) {
   if (!isHostAllowed(req)) return hostRejectedResponse();
-  const slug = new URL(req.url).searchParams.get("slug");
-  if (!slug) return NextResponse.json({ error: "missing_slug" }, { status: 400 });
+  const params = new URL(req.url).searchParams;
+  // `id` is preferred because the server can prove it belongs to a local
+  // upload. Keep `slug` for compatibility with the original private endpoint.
+  const id = params.get("id");
+  const slug = id ? localTemplateSlugFromSkillId(id) : params.get("slug");
+  if (!slug) return NextResponse.json({ error: "invalid_local_template" }, { status: 400 });
   try {
     uninstallLocalTemplate(slug);
     invalidateSkillsCache();

@@ -1,0 +1,356 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>冰蓝玻璃卡 · AI 编辑习惯</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:opsz,wght@6..96,400;6..96,500&family=Noto+Sans+SC:wght@400;500;600&family=Noto+Serif+SC:wght@500;600&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --ice: #d9edf9;
+    --mist: rgba(248, 252, 255, .76);
+    --mist-strong: rgba(248, 252, 255, .88);
+    --blue: #2879c8;
+    --deep: #23657f;
+    --line: rgba(63, 139, 180, .55);
+    --line-soft: rgba(255, 255, 255, .78);
+    --serif: "Bodoni Moda", "Noto Serif SC", Didot, serif;
+    --sans: "Noto Sans SC", Arial, sans-serif;
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; background: var(--ice); color: var(--deep); }
+  body { width: max-content; margin-inline: auto; font-family: var(--sans); }
+
+  .deck {
+    width: max-content;
+    margin-inline: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+  }
+
+  .card {
+    position: relative;
+    width: 1080px;
+    height: 1440px;
+    margin-inline: auto;
+    overflow: hidden;
+    padding: 72px 90px 64px;
+    background: linear-gradient(160deg, #eef8fd 0%, #d9edf9 52%, #c7e4f5 100%);
+  }
+
+  .card::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(ellipse 42% 30% at 12% 9%, rgba(255,255,255,.94), rgba(255,255,255,0) 72%),
+      radial-gradient(ellipse 34% 26% at 91% 18%, rgba(255,255,255,.72), rgba(255,255,255,0) 74%),
+      radial-gradient(circle at 14% 82%, rgba(91,174,221,.28), rgba(91,174,221,0) 32%),
+      radial-gradient(circle at 88% 88%, rgba(70,145,204,.2), rgba(70,145,204,0) 34%),
+      linear-gradient(155deg, rgba(255,255,255,.38), rgba(202,231,247,.08) 44%, rgba(119,190,229,.2));
+    filter: saturate(.92);
+  }
+
+  .card::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, rgba(255,255,255,.03), rgba(224,243,253,.13));
+    pointer-events: none;
+  }
+
+  .card:nth-child(even)::before { transform: scaleX(-1); filter: saturate(.88) brightness(1.025); }
+  .card:nth-child(3n)::before { filter: hue-rotate(-4deg) brightness(1.02); }
+
+  .content {
+    position: relative;
+    z-index: 1;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .topbar, .footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 28px;
+    font-size: 17px;
+    font-weight: 600;
+    letter-spacing: .18em;
+    text-transform: uppercase;
+  }
+
+  .micro-pill {
+    padding: 10px 24px 11px;
+    border-radius: 999px;
+    color: #f8fcff;
+    background: var(--blue);
+    box-shadow: 0 8px 22px rgba(42, 119, 184, .18);
+  }
+
+  .page-ring {
+    width: 58px;
+    height: 58px;
+    display: grid;
+    place-items: center;
+    border: 1.5px solid var(--line);
+    border-radius: 50%;
+    background: rgba(255, 255, 255, .3);
+    letter-spacing: .06em;
+  }
+
+  .footer {
+    margin-top: auto;
+    padding-top: 20px;
+    border-top: 1px solid rgba(61, 135, 173, .4);
+    color: rgba(35, 101, 127, .76);
+    font-size: 15px;
+  }
+
+  .footer em {
+    color: var(--blue);
+    font-family: var(--serif);
+    font-size: 20px;
+    font-style: italic;
+    font-weight: 500;
+    letter-spacing: .02em;
+    text-transform: none;
+  }
+
+  .eyebrow {
+    margin: 0 0 20px;
+    font-family: var(--serif);
+    font-size: 30px;
+    line-height: 1;
+    letter-spacing: .12em;
+  }
+
+  h1, h2, h3, p { text-wrap: pretty; }
+  h1, h2, h3 { font-family: "Noto Serif SC", var(--serif); }
+
+  .display {
+    margin: 0;
+    color: var(--blue);
+    font-size: 104px;
+    font-weight: 500;
+    line-height: 1.04;
+    letter-spacing: -.045em;
+    text-shadow: 0 10px 28px rgba(41, 112, 181, .1);
+  }
+
+  .title {
+    margin: 0;
+    color: var(--blue);
+    font-size: 76px;
+    font-weight: 600;
+    line-height: 1.14;
+    letter-spacing: -.025em;
+  }
+
+  .lead {
+    margin: 30px 0 0;
+    font-size: 31px;
+    line-height: 1.68;
+  }
+
+  .glass {
+    border: 1.5px solid var(--line);
+    border-top-color: var(--line-soft);
+    border-radius: 38px;
+    background: var(--mist);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.82), 0 14px 38px rgba(45,118,164,.08);
+    backdrop-filter: blur(16px) saturate(112%);
+  }
+
+  .cover-main { width: 790px; margin: 154px auto 0; text-align: center; }
+  .cover .display { font-size: 112px; }
+  .cover .lead { max-width: 690px; margin-inline: auto; }
+  .cover-note {
+    width: 760px;
+    margin: 66px auto 0;
+    padding: 28px 38px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 38px;
+    font-size: 20px;
+    line-height: 1.65;
+    text-align: left;
+  }
+
+  .statement-main { margin: auto 0; }
+  .big-num {
+    color: var(--blue);
+    font-family: var(--serif);
+    font-size: 132px;
+    line-height: 1;
+  }
+  .statement-main .title { max-width: 790px; margin-top: 26px; font-size: 86px; }
+  .statement-panel { margin-top: 50px; padding: 42px 48px; }
+  .statement-panel p { margin: 0; font-size: 31px; line-height: 1.7; }
+
+  .list-main { margin: 82px 0 0; }
+  .list-main .lead { max-width: 790px; }
+  .rows { margin-top: 56px; display: flex; flex-direction: column; gap: 18px; }
+  .row {
+    min-height: 150px;
+    padding: 28px 34px;
+    display: grid;
+    grid-template-columns: 122px 1fr;
+    gap: 28px;
+    align-items: center;
+  }
+  .row-num { height: 100%; padding-right: 24px; border-right: 1px solid rgba(63,139,180,.28); display: flex; flex-direction: column; justify-content: center; }
+  .row-num b { color: var(--blue); font-family: var(--serif); font-size: 38px; font-weight: 500; line-height: 1; }
+  .row-num span { margin-top: 9px; font-size: 13px; font-weight: 600; letter-spacing: .16em; text-transform: uppercase; }
+  .row h3 { margin: 0 0 8px; font-size: 31px; line-height: 1.25; }
+  .row p { margin: 0; font-size: 24px; line-height: 1.55; }
+
+  .template-main { margin: 76px 0 0; }
+  .template-grid { margin-top: 48px; display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+  .template-item { min-height: 230px; padding: 34px 36px; }
+  .template-item.wide { grid-column: 1 / -1; min-height: 190px; display: grid; grid-template-columns: 180px 1fr; gap: 30px; align-items: center; }
+  .template-item b { color: var(--blue); font-family: var(--serif); font-size: 58px; font-weight: 500; line-height: 1; }
+  .template-item h3 { margin: 24px 0 10px; font-size: 34px; }
+  .template-item.wide h3 { margin-top: 0; }
+  .template-item p { margin: 0; font-size: 24px; line-height: 1.58; }
+
+  .diff-main { margin: 70px 0 0; }
+  .diff-grid { margin-top: 48px; display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  .diff-card { min-height: 330px; padding: 38px; }
+  .diff-card small { font-size: 15px; font-weight: 600; letter-spacing: .18em; }
+  .diff-card h3 { margin: 24px 0 18px; color: var(--blue); font-size: 44px; line-height: 1.25; }
+  .diff-card p { margin: 0; font-size: 25px; line-height: 1.62; }
+  .saving { margin-top: 20px; padding: 34px 42px; display: flex; align-items: baseline; justify-content: space-between; gap: 30px; }
+  .saving strong { color: var(--blue); font-family: var(--serif); font-size: 92px; font-weight: 500; line-height: 1; }
+  .saving span { max-width: 450px; font-size: 27px; line-height: 1.55; }
+
+  .session-main { margin: auto 0; }
+  .session-number { width: 520px; height: 360px; margin: 42px auto; display: grid; place-items: center; text-align: center; }
+  .session-number strong { color: var(--blue); font-family: var(--serif); font-size: 178px; font-weight: 500; line-height: .9; }
+  .session-number span { display: block; margin-top: 16px; font-size: 20px; font-weight: 600; letter-spacing: .14em; text-transform: uppercase; }
+  .session-main .lead { max-width: 780px; margin-inline: auto; text-align: center; }
+
+  .end-main { margin: 88px 0 0; }
+  .end .display { font-size: 96px; }
+  .takeaways { margin-top: 58px; display: flex; flex-direction: column; gap: 16px; }
+  .takeaway { padding: 25px 32px; display: grid; grid-template-columns: 150px 1fr; gap: 28px; align-items: center; }
+  .takeaway b { color: var(--blue); font-family: var(--serif); font-size: 30px; font-weight: 500; }
+  .takeaway p { margin: 0; font-size: 25px; line-height: 1.55; }
+  .cta { margin-top: 34px; color: var(--blue); font-family: "Noto Serif SC", serif; font-size: 30px; font-weight: 600; letter-spacing: .06em; text-align: center; }
+</style>
+</head>
+<body>
+<main class="deck">
+  <section class="card cover">
+    <div class="content">
+      <header class="topbar"><span class="micro-pill">AI notes</span><span>Better workflow</span><span class="page-ring">01</span></header>
+      <div class="cover-main">
+        <p class="eyebrow">MAKE AI FEEL EASIER</p>
+        <h1 class="display">5 个让你的<br />AI 编辑更顺手<br />的小习惯</h1>
+        <p class="lead">不用追求一次完美。把好方法留在流程里，下一次会越来越轻松。</p>
+        <div class="cover-note glass"><span>从 prompt 到模板，减少每次从零开始的重复劳动。</span><span>从整页重写到局部修改，留下已经做对的部分。</span></div>
+      </div>
+      <footer class="footer"><span>#AI 工作流</span><em>Swipe to begin.</em></footer>
+    </div>
+  </section>
+
+  <section class="card statement">
+    <div class="content">
+      <header class="topbar"><span class="micro-pill">Habit one</span><span>Prompt as dialogue</span><span class="page-ring">02</span></header>
+      <div class="statement-main">
+        <div class="big-num">01</div>
+        <h2 class="title">放弃<br />完美 prompt</h2>
+        <div class="statement-panel glass"><p>你写的 prompt 不可能一次完美。把它当作一段逐步校准的对话，而不是必须一次执行成功的 SQL。</p></div>
+      </div>
+      <footer class="footer"><span>#先开始再校准</span><em>Talk, test, refine.</em></footer>
+    </div>
+  </section>
+
+  <section class="card list-page">
+    <div class="content">
+      <header class="topbar"><span class="micro-pill">Habit two</span><span>Show the format</span><span class="page-ring">03</span></header>
+      <div class="list-main">
+        <p class="eyebrow">A CONCRETE REFERENCE WINS</p>
+        <h2 class="title">让 AI 看见<br />你想要的格式</h2>
+        <p class="lead">贴 Markdown 或 CSV 之前，先告诉它你希望输出像什么。</p>
+        <div class="rows">
+          <article class="row glass"><div class="row-num"><b>01</b><span>Format</span></div><div><h3>先说交付格式</h3><p>明确要卡片、表格、列表还是完整 HTML。</p></div></article>
+          <article class="row glass"><div class="row-num"><b>02</b><span>Example</span></div><div><h3>再给一个具体参考</h3><p>一个真实范例，通常比 50 个抽象形容词更有效。</p></div></article>
+          <article class="row glass"><div class="row-num"><b>03</b><span>Check</span></div><div><h3>最后说明不能改变什么</h3><p>锁定事实、原文和视觉规则，减少返工。</p></div></article>
+        </div>
+      </div>
+      <footer class="footer"><span>#格式先于修辞</span><em>Make it visible.</em></footer>
+    </div>
+  </section>
+
+  <section class="card template-page">
+    <div class="content">
+      <header class="topbar"><span class="micro-pill">Habit three</span><span>Reuse the system</span><span class="page-ring">04</span></header>
+      <div class="template-main">
+        <p class="eyebrow">DON'T REWRITE THE GOOD PARTS</p>
+        <h2 class="title">用模板，<br />别每次重写</h2>
+        <p class="lead">把好用的提示词和视觉规则存成模板，让每次生成都从成熟的起点开始。</p>
+        <div class="template-grid">
+          <article class="template-item glass"><b>A</b><h3>固定骨架</h3><p>保留层级、版式和组件，不重新发明结构。</p></article>
+          <article class="template-item glass"><b>B</b><h3>固定视觉</h3><p>保留配色、字体、间距和装饰语言。</p></article>
+          <article class="template-item wide glass"><b>C</b><div><h3>内容决定页数</h3><p>模板提供版式池，不把真实内容硬塞进固定张数。</p></div></article>
+        </div>
+      </div>
+      <footer class="footer"><span>#复用设计系统</span><em>Keep what works.</em></footer>
+    </div>
+  </section>
+
+  <section class="card diff-page">
+    <div class="content">
+      <header class="topbar"><span class="micro-pill">Habit four</span><span>Patch, don't restart</span><span class="page-ring">05</span></header>
+      <div class="diff-main">
+        <p class="eyebrow">SMALL CHANGE, SMALL PATCH</p>
+        <h2 class="title">二次编辑<br />只跑 diff</h2>
+        <p class="lead">重新生成不是从 0 开始。让 AI 在已有 HTML 上微调，只修改真正变化的部分。</p>
+        <div class="diff-grid">
+          <article class="diff-card glass"><small>BEFORE</small><h3>整页重新生成</h3><p>文案、结构和样式一起漂移，已经满意的细节也会丢失。</p></article>
+          <article class="diff-card glass"><small>AFTER</small><h3>只提交差异</h3><p>保留现有 HTML，只更新指定内容和受影响的局部样式。</p></article>
+        </div>
+        <div class="saving glass"><strong>80%</strong><span>减少无谓 token 消耗，同时保持已经确认的设计风格。</span></div>
+      </div>
+      <footer class="footer"><span>#局部更新</span><em>Preserve the style.</em></footer>
+    </div>
+  </section>
+
+  <section class="card session-page">
+    <div class="content">
+      <header class="topbar"><span class="micro-pill">Habit five</span><span>Local session</span><span class="page-ring">06</span></header>
+      <div class="session-main">
+        <p class="eyebrow" style="text-align:center">KEEP THE CONTEXT CLOSE</p>
+        <h2 class="title" style="text-align:center">复用本地 session</h2>
+        <div class="session-number glass"><div><strong>0</strong><span>marginal cost</span></div></div>
+        <p class="lead">不用 API Key，让本地 Claude、Cursor 或 Codex 延续同一份上下文。边际成本更低，迭代也更直接。</p>
+      </div>
+      <footer class="footer"><span>#本地工作流</span><em>Continue the context.</em></footer>
+    </div>
+  </section>
+
+  <section class="card end">
+    <div class="content">
+      <header class="topbar"><span class="micro-pill">In summary</span><span>A smoother system</span><span class="page-ring">07</span></header>
+      <div class="end-main">
+        <p class="eyebrow">TOOLS ARE NOT THE POINT</p>
+        <h2 class="display">工具不是<br />越多越好，<br />流程顺才是真的好用。</h2>
+        <div class="takeaways">
+          <article class="takeaway glass"><b>01 / 对话</b><p>先开始，再通过反馈逐步校准。</p></article>
+          <article class="takeaway glass"><b>02 / 模板</b><p>把有效的结构和视觉沉淀下来。</p></article>
+          <article class="takeaway glass"><b>03 / Diff</b><p>只改变需要改变的部分。</p></article>
+        </div>
+        <p class="cta">觉得有用的话，收藏下来慢慢试。</p>
+      </div>
+      <footer class="footer"><span>#AI 编辑习惯</span><em>Always with your ideas.</em></footer>
+    </div>
+  </section>
+</main>
+</body>
+</html>

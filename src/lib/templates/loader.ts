@@ -86,6 +86,11 @@ export type LoadedSkill = SkillMeta & {
   exampleHtml?: string;
 };
 
+export type SkillAsset = {
+  data: Uint8Array;
+  contentType: string;
+};
+
 // ─── frontmatter parser ──────────────────────────────────────────────
 // Tiny, dependency-free. Handles the flat schema written by
 // `scripts/migrate-skills.mts`: strings (optionally quoted), integers, and
@@ -289,4 +294,45 @@ export function skillHasPreview(id: string): boolean {
     return fs.existsSync(path.join(entry.dir, "example.html"));
   }
   return fs.existsSync(path.join(SKILLS_DIR, id, "example.html"));
+}
+
+/** Read a static asset shipped beside a template, without allowing path traversal. */
+export function readSkillAsset(id: string, assetPath: string[]): SkillAsset | null {
+  if (!isValidSkillId(id) || assetPath.length === 0) return null;
+  if (assetPath.some((part) => !part || part === "." || part === ".." || part.includes("\0"))) {
+    return null;
+  }
+
+  const skillDir = id.includes("--")
+    ? findUserSkill(id)?.dir
+    : path.join(SKILLS_DIR, id);
+  if (!skillDir) return null;
+
+  const assetsDir = path.resolve(skillDir, "assets");
+  const candidate = path.resolve(assetsDir, ...assetPath);
+  if (candidate !== assetsDir && !candidate.startsWith(`${assetsDir}${path.sep}`)) return null;
+
+  try {
+    const realAssetsDir = fs.realpathSync(assetsDir);
+    const realCandidate = fs.realpathSync(candidate);
+    if (!realCandidate.startsWith(`${realAssetsDir}${path.sep}`)) return null;
+    if (!fs.statSync(realCandidate).isFile()) return null;
+
+    const ext = path.extname(realCandidate).toLowerCase();
+    const contentType =
+      ({
+        ".png": "image/png",
+        ".jpg": "image/jpeg",
+        ".jpeg": "image/jpeg",
+        ".webp": "image/webp",
+        ".gif": "image/gif",
+        ".svg": "image/svg+xml; charset=utf-8",
+        ".woff": "font/woff",
+        ".woff2": "font/woff2",
+      } as Record<string, string>)[ext] ?? "application/octet-stream";
+
+    return { data: fs.readFileSync(realCandidate), contentType };
+  } catch {
+    return null;
+  }
 }

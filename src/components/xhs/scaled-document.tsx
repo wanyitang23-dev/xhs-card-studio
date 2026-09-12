@@ -22,6 +22,7 @@ export function ScaledDocument({
   srcDoc,
   title,
   iframeRef,
+  onLoad,
   className,
   style,
 }: {
@@ -37,6 +38,7 @@ export function ScaledDocument({
   srcDoc?: string;
   title: string;
   iframeRef?: React.MutableRefObject<HTMLIFrameElement | null>;
+  onLoad?: React.ReactEventHandler<HTMLIFrameElement>;
   className?: string;
   style?: React.CSSProperties;
 }) {
@@ -51,6 +53,7 @@ export function ScaledDocument({
       {scale > 0 && size && (
         <iframe
           ref={iframeRef}
+          onLoad={onLoad}
           title={title}
           {...(src ? { src } : {})}
           {...(srcDoc ? { srcDoc } : {})}

@@ -32,3 +32,17 @@ next-env.d.ts
 # exported cards land in the project root when downloaded from the browser
 /xhs-card-*.html
 /xhs-card-*.png
+
+# local visual experiments and one-off template comparisons
+/design-experiments/
+/example.html
+/网页生成版本.html
+
+# local design review notes and screenshots (not runtime dependencies)
+/design-language.md
+/design-qa.md
+/design-qa-evidence/
+
+# keep local regression sources out of runtime-only commits
+**/__tests__/*.test.ts
+**/__tests__/*.test.tsx
