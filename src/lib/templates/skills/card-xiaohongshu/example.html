@@ -3,14 +3,16 @@
 <head>
 <meta charset="UTF-8" />
 <title>5 个让你的 AI 编辑用得更顺手的小习惯</title>
-<script src="https://cdn.tailwindcss.com"></script>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;600;700;900&family=Inter:wght@500;600;700&display=swap" rel="stylesheet">
 <style>
   /* Without this, `padding` is added on top of the box, so a 1080-wide card
      measures 1208 and `aspect-ratio` computes a 1600px height — 0.755, not
      the 0.750 Xiaohongshu expects. */
   * { box-sizing:border-box; }
-  body { margin:0; background:#f3eee5; font-family:'Noto Sans SC',sans-serif; padding:36px 0; -webkit-font-smoothing:antialiased; }
+  /* line-height was inherited from Tailwind's Preflight until the CDN tag was
+     dropped; it is declared here so this file no longer depends on it, and so
+     the example renders exactly as a generated card does (see BASE_RESET). */
+  body { margin:0; background:#f3eee5; font-family:'Noto Sans SC',sans-serif; padding:36px 0; line-height:1.5; -webkit-font-smoothing:antialiased; }
   .deck { display:flex; flex-direction:column; align-items:center; gap:24px; }
   .card { width:1080px; height:1440px; flex:0 0 auto; border-radius:32px; overflow:hidden; position:relative; padding:80px 64px; display:flex; flex-direction:column; box-shadow:0 24px 60px -20px rgba(0,0,0,0.18); }
   .c1 { background:linear-gradient(160deg,#f7d2c2 0%,#f3a98a 100%); color:#3a1d10; }
