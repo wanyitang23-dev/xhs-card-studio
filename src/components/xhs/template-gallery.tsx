@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { Check, LayoutTemplate, Maximize2, X } from "lucide-react";
 import { useElementSize } from "@/lib/xhs/use-element-size";
 import { ScaledDocument } from "./scaled-document";
 import { useTemplates, type TemplateDef } from "@/lib/templates";
@@ -33,7 +34,7 @@ export function TemplateGallery({
           {[0, 1, 2].map((i) => (
             <div
               key={i}
-              className="animate-pulse rounded-2xl"
+              className="skeleton-card animate-pulse rounded-2xl"
               style={{ aspectRatio: "3 / 4", background: "var(--line-faint)" }}
             />
           ))}
@@ -95,7 +96,7 @@ function TemplateTile({
         onClick={onSelect}
         aria-pressed={selected}
         aria-label={`选择模板 ${tpl.zhName}`}
-        className="group relative block w-full overflow-hidden rounded-2xl transition-shadow"
+        className={`select-card template-tile group relative block w-full overflow-hidden rounded-2xl transition-shadow${selected ? " is-selected" : ""}`}
         style={{
           aspectRatio: "3 / 4",
           background: "var(--surface)",
@@ -106,11 +107,13 @@ function TemplateTile({
         {hasPreview && visible ? (
           <ScaledPreview id={tpl.id} name={tpl.zhName} hint={tpl.aspectHint} />
         ) : (
-          <span className="grid h-full place-items-center text-[28px]">{tpl.emoji}</span>
+          <span className="empty-state grid h-full place-items-center">
+            <LayoutTemplate aria-hidden="true" className="h-7 w-7" />
+          </span>
         )}
 
         <span
-          className="absolute left-2 top-2 rounded-md px-1.5 py-0.5 text-[10px] font-semibold"
+          className="overlay-chip absolute left-2 top-2 rounded-md px-1.5 py-0.5 text-[10px] font-semibold"
           style={{ background: "rgba(21,20,15,0.6)", color: "#fff" }}
         >
           {aspectBadge(tpl.aspectHint)}
@@ -119,10 +122,10 @@ function TemplateTile({
 
         {selected && (
           <span
-            className="absolute right-2 top-2 grid h-6 w-6 place-items-center rounded-full text-[13px] text-white"
+            className="selection-mark absolute right-2 top-2 grid h-6 w-6 place-items-center rounded-full text-[13px] text-white"
             style={{ background: "var(--coral)" }}
           >
-            ✓
+            <Check aria-hidden="true" />
           </span>
         )}
 
@@ -141,17 +144,19 @@ function TemplateTile({
                 onZoom();
               }
             }}
-            className="absolute bottom-2 right-2 rounded-lg px-2 py-1 text-[11px] font-medium opacity-0 transition-opacity focus:opacity-100 group-hover:opacity-100"
+            className="overlay-action absolute bottom-2 right-2 rounded-lg px-2 py-1 text-[11px] font-medium opacity-0 transition-opacity focus:opacity-100 group-hover:opacity-100"
             style={{ background: "rgba(21,20,15,0.75)", color: "#fff" }}
           >
+            <Maximize2 aria-hidden="true" />
             看大图
           </span>
         )}
       </button>
 
       <div className="min-w-0">
-        <p className="truncate text-[13px] font-semibold text-[var(--ink)]">
-          {tpl.emoji} {tpl.zhName}
+        <p className="flex items-center gap-1.5 truncate text-[13px] font-semibold text-[var(--ink)]">
+          <LayoutTemplate aria-hidden="true" className="h-3.5 w-3.5 shrink-0 text-[var(--ink-faint)]" />
+          {tpl.zhName}
         </p>
         <p className="mt-0.5 line-clamp-2 text-[11.5px] leading-snug text-[var(--ink-faint)]">
           {tpl.description}
@@ -211,22 +216,23 @@ function ZoomModal({ tpl, onClose }: { tpl: TemplateDef; onClose: () => void }) 
 
   return (
     <div
-      className="fixed inset-0 z-50 flex flex-col p-6"
+      className="modal-backdrop fixed inset-0 z-50 flex flex-col p-6"
       style={{ background: "rgba(21,20,15,0.55)" }}
       onClick={onClose}
     >
       <div
-        className="mx-auto flex h-full w-full max-w-3xl flex-col overflow-hidden rounded-2xl"
+        className="modal-shell template-modal mx-auto flex h-full w-full max-w-3xl flex-col overflow-hidden rounded-2xl"
         style={{ background: "var(--paper)" }}
         onClick={(e) => e.stopPropagation()}
       >
         <header
-          className="flex items-center gap-3 px-4 py-3"
+          className="modal-header flex items-center gap-3 px-4 py-3"
           style={{ borderBottom: "1px solid var(--line-faint)" }}
         >
           <div className="min-w-0">
-            <p className="truncate text-[14px] font-semibold text-[var(--ink)]">
-              {tpl.emoji} {tpl.zhName}
+            <p className="flex items-center gap-1.5 truncate text-[14px] font-semibold text-[var(--ink)]">
+              <LayoutTemplate aria-hidden="true" className="h-4 w-4 shrink-0 text-[var(--ink-faint)]" />
+              {tpl.zhName}
             </p>
             <p className="truncate text-[12px] text-[var(--ink-faint)]">
               {tpl.aspectHint} · 这是模板的示例效果，你的内容会套用同一套视觉
@@ -236,16 +242,16 @@ function ZoomModal({ tpl, onClose }: { tpl: TemplateDef; onClose: () => void }) 
             type="button"
             onClick={onClose}
             aria-label="关闭"
-            className="ml-auto text-[18px] text-[var(--ink-faint)]"
+            className="icon-control ml-auto text-[18px] text-[var(--ink-faint)]"
           >
-            ×
+            <X aria-hidden="true" />
           </button>
         </header>
         <ScaledDocument
           authoredWidth={parseViewport(tpl.aspectHint).width}
           src={`/api/templates/${encodeURIComponent(tpl.id)}/preview`}
           title={`${tpl.zhName} 完整预览`}
-          className="min-h-0 flex-1"
+          className="preview-frame min-h-0 flex-1"
           style={{ background: "#fff" }}
         />
       </div>

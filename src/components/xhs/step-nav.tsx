@@ -1,5 +1,6 @@
 "use client";
 
+import { Check } from "lucide-react";
 import { STEP_ORDER, useTask, useXhs, type Step } from "@/lib/xhs/store";
 
 const LABELS: Record<Step, { n: string; title: string; hint: string }> = {
@@ -26,7 +27,7 @@ export function StepNav() {
   const activeIdx = STEP_ORDER.indexOf(step);
 
   return (
-    <nav className="flex items-stretch gap-1 px-4 py-3" aria-label="流程步骤">
+    <nav className="workflow-nav flex items-stretch gap-1 px-4 py-3" aria-label="流程步骤">
       {STEP_ORDER.map((s, i) => {
         const meta = LABELS[s];
         const active = s === step;
@@ -39,26 +40,26 @@ export function StepNav() {
             onClick={() => can && setStep(s)}
             disabled={!can}
             aria-current={active ? "step" : undefined}
-            className="group flex flex-1 items-center gap-3 rounded-xl px-3 py-2 text-left transition-colors disabled:cursor-not-allowed disabled:opacity-40"
+            className={`workflow-step group flex flex-1 items-center gap-3 rounded-xl px-3 py-2 text-left transition-colors disabled:cursor-not-allowed disabled:opacity-40${active ? " is-active" : ""}${done ? " is-done" : ""}`}
             style={{
               background: active ? "var(--coral-soft)" : "transparent",
               border: `1px solid ${active ? "var(--coral)" : "var(--line-faint)"}`,
             }}
           >
             <span
-              className="grid h-7 w-7 shrink-0 place-items-center rounded-full text-[13px] font-semibold"
+              className="workflow-step-number grid h-7 w-7 shrink-0 place-items-center rounded-full text-[13px] font-semibold"
               style={{
                 background: active || done ? "var(--coral)" : "var(--line-faint)",
                 color: active || done ? "#fff" : "var(--ink-faint)",
               }}
             >
-              {done ? "✓" : meta.n}
+              {done ? <Check aria-hidden="true" /> : meta.n}
             </span>
-            <span className="min-w-0">
-              <span className="block truncate text-[14px] font-semibold text-[var(--ink)]">
+            <span className="workflow-step-copy min-w-0">
+              <span className="workflow-step-title block truncate text-[14px] font-semibold text-[var(--ink)]">
                 {meta.title}
               </span>
-              <span className="block truncate text-[12px] text-[var(--ink-faint)]">
+              <span className="workflow-step-hint block truncate text-[12px] text-[var(--ink-faint)]">
                 {meta.hint}
               </span>
             </span>

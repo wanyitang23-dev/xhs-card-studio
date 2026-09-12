@@ -1,6 +1,22 @@
 "use client";
 
-import { useMemo, useState, useRef, useEffect } from "react";
+import { useMemo, useState, useRef, useEffect, type ReactNode } from "react";
+import {
+  AlignLeft,
+  Bird,
+  BookOpenText,
+  CheckCircle2,
+  ChevronDown,
+  Code2,
+  Download,
+  FileImage,
+  FileText,
+  Images,
+  MessageCircle,
+  Presentation,
+  Share2,
+  XCircle,
+} from "lucide-react";
 import { useStore, selectActiveTask } from "@/lib/store";
 import { useT } from "@/lib/i18n";
 import { copyToWechat } from "@/lib/export/wechat";
@@ -34,13 +50,17 @@ type ExportMenuProps = {
   assets?: Record<string, string>;
 };
 
+type Toast = { message: string; tone: "success" | "error" };
+type ExportAction = { id: string; label: string; icon: ReactNode; fn: () => Promise<void> };
+
 export function ExportMenu({ iframeRef, html: htmlProp, assets }: ExportMenuProps) {
   const storeHtml = useStore((s) => selectActiveTask(s)?.html ?? "");
   const html = htmlProp ?? storeHtml;
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
-  const [toast, setToast] = useState<string | null>(null);
+  const [toast, setToast] = useState<Toast | null>(null);
   const ref = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
   const t = useT();
 
   useEffect(() => {
@@ -49,12 +69,22 @@ export function ExportMenu({ iframeRef, html: htmlProp, assets }: ExportMenuProp
         setOpen(false);
       }
     };
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (open && e.key === "Escape") {
+        setOpen(false);
+        triggerRef.current?.focus();
+      }
+    };
     document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
+    document.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.removeEventListener("mousedown", handler);
+      document.removeEventListener("keydown", onKeyDown);
+    };
   }, [open]);
 
-  const showToast = (msg: string) => {
-    setToast(msg);
+  const showToast = (message: string, tone: Toast["tone"]) => {
+    setToast({ message, tone });
     setTimeout(() => setToast(null), 2200);
   };
 
@@ -64,12 +94,13 @@ export function ExportMenu({ iframeRef, html: htmlProp, assets }: ExportMenuProp
       setBusy(true);
       try {
         await fn();
-        showToast(`✓ ${label}`);
+        showToast(label, "success");
       } catch (e) {
-        showToast(`✗ ${e instanceof Error ? e.message : t("export.error.generic")}`);
+        showToast(e instanceof Error ? e.message : t("export.error.generic"), "error");
       } finally {
         setBusy(false);
         setOpen(false);
+        requestAnimationFrame(() => triggerRef.current?.focus());
       }
     };
 
@@ -80,14 +111,14 @@ export function ExportMenu({ iframeRef, html: htmlProp, assets }: ExportMenuProp
 
   const sections: Array<{
     title: string;
-    actions: Array<{ id: string; label: string; emoji: string; fn: () => Promise<void> }>;
+    actions: ExportAction[];
   }> = [
     {
       title: t("export.section.platform"),
       actions: [
-        { id: "wechat", label: t("export.action.wechat"), emoji: "💬", fn: wrap(t("export.toast.wechat"), async () => { await copyToWechat(cleanHtml()); }) },
-        { id: "zhihu",  label: t("export.action.zhihu"),  emoji: "🦓", fn: wrap(t("export.toast.zhihu"), async () => { await copyToZhihu(cleanHtml()); }) },
-        { id: "twitter-img", label: t("export.action.twitterImg"), emoji: "🐦", fn: wrap(t("export.toast.image"), async () => {
+        { id: "wechat", label: t("export.action.wechat"), icon: <MessageCircle aria-hidden="true" />, fn: wrap(t("export.toast.wechat"), async () => { await copyToWechat(cleanHtml()); }) },
+        { id: "zhihu",  label: t("export.action.zhihu"),  icon: <BookOpenText aria-hidden="true" />, fn: wrap(t("export.toast.zhihu"), async () => { await copyToZhihu(cleanHtml()); }) },
+        { id: "twitter-img", label: t("export.action.twitterImg"), icon: <Bird aria-hidden="true" />, fn: wrap(t("export.toast.image"), async () => {
           if (!iframeRef.current) throw new Error(t("export.error.previewNotReady")); await copyIframeToClipboard(iframeRef.current);
         }) },
       ],
@@ -95,8 +126,8 @@ export function ExportMenu({ iframeRef, html: htmlProp, assets }: ExportMenuProp
     {
       title: t("export.section.raw"),
       actions: [
-        { id: "html", label: t("export.action.html"), emoji: "</>", fn: wrap(t("export.toast.html"), async () => { await copyHtml(cleanHtml()); }) },
-        { id: "text", label: t("export.action.text"), emoji: "📝",  fn: wrap(t("export.toast.text"), async () => {
+        { id: "html", label: t("export.action.html"), icon: <Code2 aria-hidden="true" />, fn: wrap(t("export.toast.html"), async () => { await copyHtml(cleanHtml()); }) },
+        { id: "text", label: t("export.action.text"), icon: <AlignLeft aria-hidden="true" />,  fn: wrap(t("export.toast.text"), async () => {
           const tmp = document.createElement("div"); tmp.innerHTML = cleanHtml(); await copyText(tmp.textContent ?? "");
         }) },
       ],
@@ -104,8 +135,8 @@ export function ExportMenu({ iframeRef, html: htmlProp, assets }: ExportMenuProp
     {
       title: t("export.section.download"),
       actions: [
-        { id: "download-html", label: t("export.action.downloadHtml"), emoji: "💾", fn: wrap(t("export.toast.htmlSaved"), async () => { downloadHtml(cleanHtml()); }) },
-        { id: "download-png",  label: t("export.action.downloadPng"),  emoji: "🖼️", fn: wrap(t("export.toast.imgSaved"), async () => {
+        { id: "download-html", label: t("export.action.downloadHtml"), icon: <Download aria-hidden="true" />, fn: wrap(t("export.toast.htmlSaved"), async () => { downloadHtml(cleanHtml()); }) },
+        { id: "download-png",  label: t("export.action.downloadPng"),  icon: <FileImage aria-hidden="true" />, fn: wrap(t("export.toast.imgSaved"), async () => {
           if (!iframeRef.current) throw new Error(t("export.error.previewNotReady")); await downloadIframeAsImage(iframeRef.current);
         }) },
       ],
@@ -118,7 +149,7 @@ export function ExportMenu({ iframeRef, html: htmlProp, assets }: ExportMenuProp
               {
                 id: "deck-pdf",
                 label: t("export.action.deckPdf"),
-                emoji: "📄",
+                icon: <FileText aria-hidden="true" />,
                 fn: wrap(t("export.toast.deckPdf"), async () => {
                   exportDeckPrint(deck.slides, deck.title);
                 }),
@@ -126,7 +157,7 @@ export function ExportMenu({ iframeRef, html: htmlProp, assets }: ExportMenuProp
               {
                 id: "deck-png-zip",
                 label: t("export.action.deckPngZip"),
-                emoji: "🗂️",
+                icon: <Images aria-hidden="true" />,
                 fn: wrap(t("export.toast.deckPngZip"), async () => {
                   await exportDeckPngZip(deck.slides, deck.title);
                 }),
@@ -134,7 +165,7 @@ export function ExportMenu({ iframeRef, html: htmlProp, assets }: ExportMenuProp
               {
                 id: "deck-pptx",
                 label: t("export.action.deckPptx"),
-                emoji: "🎬",
+                icon: <Presentation aria-hidden="true" />,
                 fn: wrap(t("export.toast.deckPptx"), async () => {
                   await exportDeckPptx(deck.slides, deck.title);
                 }),
@@ -148,14 +179,24 @@ export function ExportMenu({ iframeRef, html: htmlProp, assets }: ExportMenuProp
   const disabled = !html || busy;
 
   return (
-    <div className="relative" ref={ref}>
-      <button onClick={() => setOpen((o) => !o)} disabled={disabled} className="btn-ink">
+    <div className="export-menu relative" ref={ref}>
+      <button
+        ref={triggerRef}
+        onClick={() => setOpen((o) => !o)}
+        disabled={disabled}
+        className="primary-button export-trigger btn-ink"
+        aria-expanded={open}
+        aria-controls="export-actions"
+      >
+        <Share2 aria-hidden="true" />
         {t("export.button")}
+        <ChevronDown aria-hidden="true" />
       </button>
       {open && (
         <div
           data-testid="export-menu"
-          className="absolute right-0 z-30 mt-2 w-72 od-fade-in overflow-hidden rounded-2xl"
+          id="export-actions"
+          className="menu-popover absolute right-0 z-30 mt-2 w-72 od-fade-in overflow-hidden rounded-2xl"
           style={{
             background: "var(--surface)",
             border: "1px solid var(--line-soft)",
@@ -164,7 +205,7 @@ export function ExportMenu({ iframeRef, html: htmlProp, assets }: ExportMenuProp
         >
           {sections.map((sec, sIdx) => (
             <div key={sec.title} style={sIdx ? { borderTop: "1px solid var(--line-faint)" } : undefined}>
-              <div className="px-4 pt-3 pb-1.5 text-[10px] uppercase tracking-[0.18em] text-[var(--ink-faint)]">
+              <div className="menu-label px-4 pt-3 pb-1.5 text-[10px] uppercase tracking-[0.18em] text-[var(--ink-faint)]">
                 {sec.title}
               </div>
               <div className="px-1 pb-1">
@@ -172,9 +213,9 @@ export function ExportMenu({ iframeRef, html: htmlProp, assets }: ExportMenuProp
                   <button
                     key={a.id}
                     onClick={a.fn}
-                    className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left text-[13px] hover:bg-[var(--paper)]"
+                    className="menu-item flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left text-[13px] hover:bg-[var(--paper)]"
                   >
-                    <span className="w-6 text-center">{a.emoji}</span>
+                    <span className="menu-icon grid w-6 place-items-center">{a.icon}</span>
                     <span className="text-[var(--ink-soft)]">{a.label}</span>
                   </button>
                 ))}
@@ -185,10 +226,13 @@ export function ExportMenu({ iframeRef, html: htmlProp, assets }: ExportMenuProp
       )}
       {toast && (
         <div
-          className="fixed bottom-6 left-1/2 z-50 -translate-x-1/2 rounded-full px-4 py-2 text-sm shadow-lg od-fade-in"
+          className={`status-toast fixed bottom-6 left-1/2 z-50 -translate-x-1/2 rounded-full px-4 py-2 text-sm shadow-lg od-fade-in ${toast.tone === "error" ? "is-error" : "is-success"}`}
           style={{ background: "var(--ink)", color: "var(--paper)" }}
+          role={toast.tone === "error" ? "alert" : "status"}
+          aria-live={toast.tone === "error" ? "assertive" : "polite"}
         >
-          {toast}
+          {toast.tone === "error" ? <XCircle aria-hidden="true" /> : <CheckCircle2 aria-hidden="true" />}
+          {toast.message}
         </div>
       )}
     </div>

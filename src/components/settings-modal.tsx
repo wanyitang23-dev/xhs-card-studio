@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { PackageSearch, ScanSearch, X } from "lucide-react";
 import {
   LOCALES,
   LOCALE_LABEL,
@@ -33,27 +34,6 @@ const PROTOCOL_KEY: Record<AgentInfo["protocol"], { key: DictKey; tone: "ok" | "
   "pi-rpc": { key: "protocol.piRpc", tone: "warn" },
 };
 
-const VENDOR_GRADIENT: Record<string, string> = {
-  Anthropic: "from-[#c96442] to-[#e9b94a]",
-  OpenAI: "from-[#10a37f] to-[#1f7a3a]",
-  Cursor: "from-[#5b6cf2] to-[#a1a8f5]",
-  Google: "from-[#4285f4] to-[#34a853]",
-  GitHub: "from-[#24292e] to-[#444c56]",
-  Open: "from-[#6e7448] to-[#b26200]",
-  Alibaba: "from-[#ff7a00] to-[#ed6f5c]",
-  Aider: "from-[#6c3aa6] to-[#9c2a25]",
-  DeepSeek: "from-[#2563eb] to-[#7c3aed]",
-  CodeWhale: "from-[#2563eb] to-[#7c3aed]",
-  Cognition: "from-[#0f172a] to-[#475569]",
-  Mature: "from-[#7c2d12] to-[#b45309]",
-  Moonshot: "from-[#0ea5e9] to-[#1e3a8a]",
-  Inflection: "from-[#a855f7] to-[#ec4899]",
-  AWS: "from-[#ff9900] to-[#232f3e]",
-  Kilo: "from-[#16a34a] to-[#0d9488]",
-  Mistral: "from-[#fb923c] to-[#ef4444]",
-  Qoder: "from-[#0891b2] to-[#7c3aed]",
-};
-
 export function SettingsModal({ onClose, initialSection = "agent" }: Props) {
   const [section, setSection] = useState<SectionId>(initialSection);
   const t = useT();
@@ -68,14 +48,14 @@ export function SettingsModal({ onClose, initialSection = "agent" }: Props) {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center od-backdrop"
+      className="modal-backdrop fixed inset-0 z-50 flex items-center justify-center od-backdrop"
       style={{ background: "rgba(21, 20, 15, 0.45)", backdropFilter: "blur(6px)" }}
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}
     >
       <div
-        className="relative w-[860px] max-w-[94vw] h-[600px] max-h-[88vh] flex flex-col overflow-hidden od-fade-in"
+        className="modal-shell settings-modal relative w-[860px] max-w-[94vw] h-[600px] max-h-[88vh] flex flex-col overflow-hidden od-fade-in"
         style={{
           background: "var(--surface)",
           borderRadius: 24,
@@ -84,7 +64,7 @@ export function SettingsModal({ onClose, initialSection = "agent" }: Props) {
         }}
       >
         <div
-          className="flex items-center justify-between px-6 py-4"
+          className="modal-header flex items-center justify-between px-6 py-4"
           style={{ borderBottom: "1px solid var(--line-faint)" }}
         >
           <div>
@@ -95,16 +75,17 @@ export function SettingsModal({ onClose, initialSection = "agent" }: Props) {
           </div>
           <button
             onClick={onClose}
-            className="grid h-8 w-8 place-items-center rounded-full text-[var(--ink-mute)] hover:bg-[var(--line-faint)] hover:text-[var(--ink)] transition-colors"
+            className="icon-control grid h-8 w-8 place-items-center rounded-full text-[var(--ink-mute)] hover:bg-[var(--line-faint)] hover:text-[var(--ink)] transition-colors"
+            aria-label={t("settings.close")}
             title={t("settings.close")}
           >
-            ✕
+            <X aria-hidden="true" />
           </button>
         </div>
 
         <div className="flex flex-1 min-h-0">
           <nav
-            className="w-[200px] shrink-0 px-3 py-4 overflow-y-auto"
+            className="modal-sidebar w-[200px] shrink-0 px-3 py-4 overflow-y-auto"
             style={{ background: "var(--paper)", borderRight: "1px solid var(--line-faint)" }}
           >
             {SECTIONS.map((s) => {
@@ -113,9 +94,9 @@ export function SettingsModal({ onClose, initialSection = "agent" }: Props) {
                 <button
                   key={s.id}
                   onClick={() => setSection(s.id)}
-                  className={`block w-full rounded-xl px-3 py-2.5 mb-1 text-left transition-all ${
+                  className={`modal-nav-item block w-full rounded-xl px-3 py-2.5 mb-1 text-left transition-all ${
                     active
-                      ? "bg-[var(--surface)] ring-1 ring-[var(--line)]"
+                      ? "is-active bg-[var(--surface)] ring-1 ring-[var(--line)]"
                       : "hover:bg-[var(--surface)]"
                   }`}
                 >
@@ -128,7 +109,7 @@ export function SettingsModal({ onClose, initialSection = "agent" }: Props) {
             })}
           </nav>
 
-          <div className="flex-1 min-w-0 overflow-y-auto px-7 py-6">
+          <div className="modal-body flex-1 min-w-0 overflow-y-auto px-7 py-6">
             {section === "agent" && <AgentSection />}
             {section === "marketplace" && <MarketplaceSection />}
             {section === "language" && <LanguageSection />}
@@ -136,7 +117,7 @@ export function SettingsModal({ onClose, initialSection = "agent" }: Props) {
         </div>
 
         <div
-          className="flex items-center justify-end gap-2 px-6 py-4"
+          className="modal-footer flex items-center justify-end gap-2 px-6 py-4"
           style={{ borderTop: "1px solid var(--line-faint)", background: "var(--paper)" }}
         >
           <button onClick={onClose} className="btn-primary">
@@ -203,7 +184,7 @@ function AgentSection() {
         <button
           onClick={load}
           disabled={loading}
-          className="text-xs text-[var(--ink-faint)] hover:text-[var(--ink)] disabled:opacity-50 transition-colors shrink-0"
+          className="quiet-link text-xs text-[var(--ink-faint)] hover:text-[var(--ink)] disabled:opacity-50 transition-colors shrink-0"
         >
           {loading ? t("welcome.scanning") : t("welcome.rescan")}
         </button>
@@ -211,7 +192,7 @@ function AgentSection() {
 
       {err && (
         <div
-          className="mb-4 rounded-xl px-4 py-3 text-sm"
+          className="status-note status-error mb-4 rounded-xl px-4 py-3 text-sm"
           style={{ background: "var(--coral-soft)", color: "var(--coral)" }}
         >
           {t("welcome.detectionFailed")}: {err}
@@ -267,10 +248,10 @@ function AgentSection() {
 
       {!loading && agents.length === 0 && (
         <div
-          className="rounded-2xl border-2 border-dashed py-10 px-6 text-center"
+          className="empty-state rounded-2xl border-2 border-dashed py-10 px-6 text-center"
           style={{ borderColor: "var(--line)" }}
         >
-          <div className="text-3xl mb-2">🪞</div>
+          <ScanSearch aria-hidden="true" className="empty-state-icon mx-auto mb-2" />
           <p className="text-sm font-medium text-[var(--ink-soft)]">{t("welcome.noAgentsTitle")}</p>
           <p className="mt-2 text-xs text-[var(--ink-mute)]">{t("welcome.noAgentsBody")}</p>
         </div>
@@ -298,9 +279,9 @@ function LanguageSection() {
             <button
               key={code}
               onClick={() => setLocale(code as Locale)}
-              className={`flex items-center justify-between rounded-xl px-4 py-3 text-left transition-all ${
+              className={`select-card settings-choice flex items-center justify-between rounded-xl px-4 py-3 text-left transition-all ${
                 active
-                  ? "ring-2 ring-[var(--coral)] bg-[var(--surface)]"
+                  ? "is-selected ring-2 ring-[var(--coral)] bg-[var(--surface)]"
                   : "ring-1 ring-[var(--line-soft)] hover:ring-[var(--ink)]/30 bg-[var(--surface)]"
               }`}
             >
@@ -326,7 +307,7 @@ function LanguageSection() {
       </div>
 
       <div
-        className="mt-6 rounded-xl px-4 py-3 text-[12px] text-[var(--ink-mute)]"
+        className="subtle-card mt-6 rounded-xl px-4 py-3 text-[12px] text-[var(--ink-mute)]"
         style={{ background: "var(--paper)", border: "1px solid var(--line-faint)" }}
       >
         {t("settings.language.note")}
@@ -346,17 +327,16 @@ function AgentCard({
 }) {
   const t = useT();
   const proto = PROTOCOL_KEY[agent.protocol];
-  const gradient = VENDOR_GRADIENT[agent.vendor] ?? "from-[var(--ink)] to-[var(--ink-soft)]";
   return (
     <button
       onClick={onClick}
-      className={`group relative flex items-start gap-3 rounded-2xl p-4 text-left transition-all ${
-        selected ? "ring-2 ring-[var(--coral)]" : "ring-1 ring-[var(--line-soft)] hover:ring-[var(--ink)]/30"
+      className={`select-card agent-card group relative flex items-start gap-3 rounded-2xl p-4 text-left transition-all ${
+        selected ? "is-selected ring-2 ring-[var(--coral)]" : "ring-1 ring-[var(--line-soft)] hover:ring-[var(--ink)]/30"
       }`}
       style={{ background: "var(--surface)" }}
     >
       <div
-        className={`shrink-0 grid h-9 w-9 place-items-center rounded-xl text-white shadow-sm bg-gradient-to-br ${gradient}`}
+        className="vendor-avatar shrink-0 grid h-9 w-9 place-items-center rounded-xl"
       >
         <span className="font-semibold text-[15px]">{agent.label.charAt(0)}</span>
       </div>
@@ -404,7 +384,7 @@ function ModelPicker({
   const [before, after = ""] = t("model.label", { agent: MARK }).split(MARK);
   return (
     <div
-      className="mt-5 rounded-2xl p-4"
+      className="subtle-card mt-5 rounded-2xl p-4"
       style={{ background: "var(--paper)", border: "1px solid var(--line-faint)" }}
     >
       <div className="flex items-center justify-between gap-3 mb-3">
@@ -431,9 +411,9 @@ function ModelPicker({
             <button
               key={m.id}
               onClick={() => onPick(m.id)}
-              className={`rounded-full px-3 py-1.5 text-[12px] transition-all ${
+              className={`choice-pill rounded-full px-3 py-1.5 text-[12px] transition-all ${
                 active
-                  ? "bg-[var(--ink)] text-[var(--paper)] font-medium"
+                  ? "is-selected bg-[var(--ink)] text-[var(--paper)] font-medium"
                   : "bg-[var(--surface)] text-[var(--ink-soft)] border border-[var(--line-soft)] hover:border-[var(--ink)]/40"
               }`}
               title={m.id}
@@ -473,7 +453,7 @@ function CustomBinPath({
   const dirty = draft.trim() !== value.trim();
   return (
     <div
-      className="mt-3 rounded-2xl p-4"
+      className="subtle-card mt-3 rounded-2xl p-4"
       style={{ background: "var(--paper)", border: "1px solid var(--line-faint)" }}
     >
       <div className="flex items-baseline justify-between gap-3">
@@ -503,7 +483,7 @@ function CustomBinPath({
             if (e.key === "Escape") setDraft(value);
           }}
           placeholder={placeholder}
-          className="min-w-0 flex-1 rounded-lg px-3 py-1.5 font-mono text-[12px] outline-none"
+          className="milky-input min-w-0 flex-1 rounded-lg px-3 py-1.5 font-mono text-[12px] outline-none"
           style={{
             background: "var(--surface)",
             border: "1px solid var(--line)",
@@ -516,7 +496,7 @@ function CustomBinPath({
               setDraft("");
               onChange("");
             }}
-            className="shrink-0 rounded-lg px-2.5 py-1.5 text-[11px] text-[var(--ink-mute)] transition-colors hover:bg-[var(--surface)] hover:text-[var(--coral)]"
+            className="glass-control shrink-0 rounded-lg px-2.5 py-1.5 text-[11px] text-[var(--ink-mute)] transition-colors hover:bg-[var(--surface)] hover:text-[var(--coral)]"
           >
             {t("agent.customBin.clear")}
           </button>
@@ -524,7 +504,7 @@ function CustomBinPath({
         {dirty && (
           <button
             onClick={() => onChange(draft)}
-            className="shrink-0 rounded-lg px-3 py-1.5 text-[11px] font-medium"
+            className="primary-button shrink-0 rounded-lg px-3 py-1.5 text-[11px] font-medium"
             style={{ background: "var(--ink)", color: "var(--paper)" }}
           >
             {t("agent.customBin.save")}
@@ -540,14 +520,13 @@ function CustomBinPath({
 
 function MissingCard({ agent }: { agent: AgentInfo }) {
   const t = useT();
-  const gradient = VENDOR_GRADIENT[agent.vendor] ?? "from-[var(--ink-faint)] to-[var(--ink-mute)]";
   return (
     <div
-      className="flex items-center gap-3 rounded-xl p-3 opacity-70"
+      className="subtle-card is-muted flex items-center gap-3 rounded-xl p-3 opacity-70"
       style={{ background: "var(--paper)", border: "1px solid var(--line-faint)" }}
     >
       <div
-        className={`shrink-0 grid h-8 w-8 place-items-center rounded-lg text-white text-[13px] font-semibold bg-gradient-to-br ${gradient}`}
+        className="vendor-avatar shrink-0 grid h-8 w-8 place-items-center rounded-lg text-[13px] font-semibold"
       >
         {agent.label.charAt(0)}
       </div>
@@ -673,14 +652,14 @@ function MarketplaceSection() {
         <button
           onClick={load}
           disabled={loading}
-          className="text-xs text-[var(--ink-faint)] hover:text-[var(--ink)] disabled:opacity-50 transition-colors shrink-0"
+          className="quiet-link text-xs text-[var(--ink-faint)] hover:text-[var(--ink)] disabled:opacity-50 transition-colors shrink-0"
         >
           {loading ? t("welcome.scanning") : t("welcome.rescan")}
         </button>
       </div>
 
       <div
-        className="mb-5 rounded-2xl p-4"
+        className="subtle-card mb-5 rounded-2xl p-4"
         style={{ background: "var(--paper)", border: "1px solid var(--line-faint)" }}
       >
         <div className="mb-2 text-[11px] uppercase tracking-[0.18em] text-[var(--ink-faint)]">
@@ -695,7 +674,7 @@ function MarketplaceSection() {
             }}
             placeholder={t("marketplace.placeholder")}
             disabled={installing}
-            className="min-w-0 flex-1 rounded-lg px-3 py-2 font-mono text-[12px] outline-none"
+            className="milky-input min-w-0 flex-1 rounded-lg px-3 py-2 font-mono text-[12px] outline-none"
             style={{
               background: "var(--surface)",
               border: "1px solid var(--line)",
@@ -715,7 +694,7 @@ function MarketplaceSection() {
 
       {err && (
         <div
-          className="mb-3 rounded-xl px-4 py-3 text-sm"
+          className="status-note status-error mb-3 rounded-xl px-4 py-3 text-sm"
           style={{ background: "var(--coral-soft)", color: "var(--coral)" }}
         >
           {err}
@@ -723,7 +702,7 @@ function MarketplaceSection() {
       )}
       {info && (
         <div
-          className="mb-3 rounded-xl px-4 py-3 text-sm"
+          className="status-note status-success mb-3 rounded-xl px-4 py-3 text-sm"
           style={{ background: "var(--paper)", color: "var(--ink-soft)", border: "1px solid var(--line-faint)" }}
         >
           {info}
@@ -735,10 +714,10 @@ function MarketplaceSection() {
       </div>
       {packages.length === 0 && !loading && (
         <div
-          className="rounded-2xl border-2 border-dashed py-8 px-6 text-center"
+          className="empty-state rounded-2xl border-2 border-dashed py-8 px-6 text-center"
           style={{ borderColor: "var(--line)" }}
         >
-          <div className="text-3xl mb-2">📦</div>
+          <PackageSearch aria-hidden="true" className="empty-state-icon mx-auto mb-2" />
           <p className="text-sm font-medium text-[var(--ink-soft)]">
             {t("marketplace.empty.title")}
           </p>
@@ -759,7 +738,7 @@ function PackageCard({ pkg, onUninstall }: { pkg: InstalledPackage; onUninstall:
   const repoUrl = `https://github.com/${pkg.source.owner}/${pkg.source.repo}`;
   return (
     <div
-      className="rounded-2xl p-4"
+      className="package-card rounded-2xl p-4"
       style={{ background: "var(--surface)", border: "1px solid var(--line-soft)" }}
     >
       <div className="flex items-start justify-between gap-3">
@@ -768,7 +747,7 @@ function PackageCard({ pkg, onUninstall }: { pkg: InstalledPackage; onUninstall:
             <span className="truncate">
               {pkg.source.owner}/{pkg.source.repo}
             </span>
-            <span className="rounded-full px-2 py-0.5 font-mono text-[10px] text-[var(--ink-faint)]" style={{ background: "var(--paper)" }}>
+            <span className="meta-pill rounded-full px-2 py-0.5 font-mono text-[10px] text-[var(--ink-faint)]" style={{ background: "var(--paper)" }}>
               {pkg.source.ref}
             </span>
           </div>
@@ -791,7 +770,7 @@ function PackageCard({ pkg, onUninstall }: { pkg: InstalledPackage; onUninstall:
               {pkg.skills.map((s) => (
                 <span
                   key={s}
-                  className="rounded-md px-2 py-0.5 font-mono text-[10.5px] text-[var(--ink-soft)]"
+                  className="meta-pill rounded-md px-2 py-0.5 font-mono text-[10.5px] text-[var(--ink-soft)]"
                   style={{ background: "var(--paper)", border: "1px solid var(--line-faint)" }}
                 >
                   {s}
@@ -802,7 +781,7 @@ function PackageCard({ pkg, onUninstall }: { pkg: InstalledPackage; onUninstall:
         </div>
         <button
           onClick={onUninstall}
-          className="shrink-0 rounded-lg px-3 py-1.5 text-[12px] text-[var(--ink-mute)] hover:bg-[var(--paper)] hover:text-[var(--coral)] transition-colors"
+          className="glass-control shrink-0 rounded-lg px-3 py-1.5 text-[12px] text-[var(--ink-mute)] hover:bg-[var(--paper)] hover:text-[var(--coral)] transition-colors"
         >
           {t("marketplace.uninstall")}
         </button>

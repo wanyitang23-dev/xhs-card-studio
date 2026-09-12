@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useState } from "react";
+import { ChevronLeft, PanelLeftOpen, Plus, Trash2 } from "lucide-react";
 import { STEP_ORDER, useXhs, type Step, type XhsTask } from "@/lib/xhs/store";
 
 const STEP_LABEL: Record<Step, string> = {
@@ -37,7 +38,7 @@ export function TaskSidebar() {
   if (collapsed) {
     return (
       <aside
-        className="flex w-11 shrink-0 flex-col items-center gap-2 py-3"
+        className="task-rail is-collapsed flex w-11 shrink-0 flex-col items-center gap-2 py-3"
         style={{ borderRight: "1px solid var(--line-faint)" }}
       >
         <button
@@ -45,9 +46,9 @@ export function TaskSidebar() {
           onClick={() => setCollapsed(false)}
           aria-label="展开任务列表"
           title={`任务列表（${tasks.length}）`}
-          className="grid h-8 w-8 place-items-center rounded-lg text-[15px] text-[var(--ink-mute)] hover:bg-[var(--line-faint)]"
+          className="icon-control grid h-8 w-8 place-items-center rounded-lg text-[15px] text-[var(--ink-mute)] hover:bg-[var(--line-faint)]"
         >
-          ☰
+          <PanelLeftOpen aria-hidden="true" />
         </button>
         {tasks.some(isBusy) && (
           <span className="pulse-dot" title="有任务正在生成" />
@@ -58,34 +59,34 @@ export function TaskSidebar() {
 
   return (
     <aside
-      className="flex w-[220px] shrink-0 flex-col"
+      className="task-rail flex w-[220px] shrink-0 flex-col"
       style={{ borderRight: "1px solid var(--line-faint)" }}
     >
-      <div className="flex items-center gap-1 px-3 py-2.5">
+      <div className="task-rail-header flex items-center gap-1 px-3 py-2.5">
         <span className="text-[12.5px] font-semibold text-[var(--ink)]">
           任务 <span className="text-[var(--ink-faint)]">{tasks.length}</span>
         </span>
         <button
           type="button"
           onClick={() => addTask()}
-          className="ml-auto grid h-6 w-6 place-items-center rounded-md text-[15px] text-[var(--ink-mute)] hover:bg-[var(--line-faint)]"
+          className="icon-control ml-auto grid h-6 w-6 place-items-center rounded-md text-[15px] text-[var(--ink-mute)] hover:bg-[var(--line-faint)]"
           aria-label="新建任务"
           title="新建任务"
         >
-          ＋
+          <Plus aria-hidden="true" />
         </button>
         <button
           type="button"
           onClick={() => setCollapsed(true)}
-          className="grid h-6 w-6 place-items-center rounded-md text-[13px] text-[var(--ink-mute)] hover:bg-[var(--line-faint)]"
+          className="icon-control grid h-6 w-6 place-items-center rounded-md text-[13px] text-[var(--ink-mute)] hover:bg-[var(--line-faint)]"
           aria-label="收起任务列表"
           title="收起"
         >
-          ‹
+          <ChevronLeft aria-hidden="true" />
         </button>
       </div>
 
-      <ul className="flex min-h-0 flex-1 flex-col gap-0.5 overflow-auto px-2 pb-2">
+      <ul className="task-rail-list flex min-h-0 flex-1 flex-col gap-0.5 overflow-auto px-2 pb-2">
         {tasks.map((t) => (
           <TaskRow
             key={t.id}
@@ -129,14 +130,14 @@ function TaskRow({
   return (
     <li>
       <div
-        className="group flex items-center gap-1.5 rounded-lg px-2 py-1.5 transition-colors"
+        className={`task-row group flex items-center gap-1.5 rounded-lg px-2 py-1.5 transition-colors${active ? " is-active" : ""}`}
         style={{
           background: active ? "var(--coral-soft)" : "transparent",
           border: `1px solid ${active ? "var(--coral)" : "transparent"}`,
         }}
       >
         <span
-          className="h-1.5 w-1.5 shrink-0 rounded-full"
+          className="task-status-dot h-1.5 w-1.5 shrink-0 rounded-full"
           style={{
             background: busy ? "var(--coral)" : "var(--line)",
             // Reuse the app's existing keyframes rather than defining new ones.
@@ -152,7 +153,7 @@ function TaskRow({
               if (e.key === "Enter") commit((e.target as HTMLInputElement).value);
               if (e.key === "Escape") setEditing(false);
             }}
-            className="min-w-0 flex-1 rounded bg-white px-1 py-0.5 text-[12.5px] outline-none"
+            className="task-rename-input min-w-0 flex-1 rounded bg-white px-1 py-0.5 text-[12.5px] outline-none"
             style={{ border: "1px solid var(--line-soft)" }}
           />
         ) : (
@@ -161,7 +162,7 @@ function TaskRow({
             onClick={onSelect}
             onDoubleClick={() => setEditing(true)}
             title={`${task.name} · 双击重命名`}
-            className="min-w-0 flex-1 text-left"
+            className="task-row-copy min-w-0 flex-1 text-left"
           >
             <span className="block truncate text-[12.5px] font-medium text-[var(--ink)]">
               {task.name}
@@ -177,9 +178,9 @@ function TaskRow({
           onClick={onRemove}
           aria-label={`删除 ${task.name}`}
           title="删除任务"
-          className="grid h-5 w-5 shrink-0 place-items-center rounded text-[13px] text-[var(--ink-faint)] opacity-0 transition-opacity hover:bg-[var(--line-faint)] hover:text-[var(--ink)] focus:opacity-100 group-hover:opacity-100"
+          className="task-delete-button grid h-5 w-5 shrink-0 place-items-center rounded text-[13px] text-[var(--ink-faint)] opacity-0 transition-opacity hover:bg-[var(--line-faint)] hover:text-[var(--ink)] focus:opacity-100 group-hover:opacity-100"
         >
-          ×
+          <Trash2 aria-hidden="true" />
         </button>
       </div>
     </li>

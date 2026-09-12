@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { ArrowRight, Check, Copy, RefreshCw } from "lucide-react";
 import { useTask, useXhs } from "@/lib/xhs/store";
 import { useFlow } from "@/lib/xhs/use-flow";
 import { previewHtml } from "@/lib/extract-html";
@@ -39,8 +40,8 @@ export function StepCover() {
   }, []);
 
   return (
-    <div className="mx-auto flex w-full max-w-6xl flex-col gap-4 p-6">
-      <header className="flex items-center gap-3">
+    <div className="cover-step mx-auto flex w-full max-w-6xl flex-col gap-4 p-6">
+      <header className="step-section-header flex items-center gap-3">
         <div>
           <h2 className="text-[15px] font-semibold text-[var(--ink)]">三版封面，挑一个</h2>
           <p className="mt-1 text-[13px] text-[var(--ink-faint)]">
@@ -52,7 +53,7 @@ export function StepCover() {
             <button
               type="button"
               onClick={() => cancel()}
-              className="text-[13px] text-[var(--ink-faint)] underline underline-offset-2"
+              className="quiet-link text-[13px] text-[var(--ink-faint)] underline underline-offset-2"
             >
               取消
             </button>
@@ -60,7 +61,7 @@ export function StepCover() {
             <button
               type="button"
               onClick={() => void runCovers(COVER_DIRECTION_IDS)}
-              className="rounded-xl px-4 py-2 text-[13px] font-medium"
+              className="glass-control rounded-xl px-4 py-2 text-[13px] font-medium"
               style={{ background: "var(--surface)", border: "1px solid var(--line-soft)" }}
             >
               全部重新生成
@@ -70,10 +71,10 @@ export function StepCover() {
             type="button"
             disabled={!selectedCoverId}
             onClick={() => setStep("render")}
-            className="rounded-xl px-5 py-2.5 text-[14px] font-semibold text-white transition-opacity disabled:opacity-40"
+            className="primary-button rounded-xl px-5 py-2.5 text-[14px] font-semibold text-white transition-opacity disabled:opacity-40"
             style={{ background: "var(--coral)" }}
           >
-            用这版出成品 →
+            用这版出成品 <ArrowRight aria-hidden="true" />
           </button>
         </div>
       </header>
@@ -114,13 +115,13 @@ function CoverTile({
   const ready = cover.status === "done";
   const busy = cover.status === "running";
   return (
-    <figure className="flex flex-col gap-2">
+    <figure className={`cover-tile flex flex-col gap-2${selected ? " is-selected" : ""}`}>
       <button
         type="button"
         onClick={onSelect}
         disabled={!ready}
         aria-pressed={selected}
-        className="relative block overflow-hidden rounded-2xl transition-all disabled:cursor-default"
+        className="cover-preview relative block overflow-hidden rounded-2xl transition-all disabled:cursor-default"
         style={{
           border: `2px solid ${selected ? "var(--coral)" : "var(--line-soft)"}`,
           boxShadow: selected ? "0 12px 32px -18px var(--coral)" : "none",
@@ -131,23 +132,23 @@ function CoverTile({
         {cover.html ? (
           <ScaledCover html={cover.html} label={cover.label} />
         ) : (
-          <span className="grid h-full place-items-center text-[13px] text-[var(--ink-faint)]">
+          <span className={`empty-state grid h-full place-items-center text-[13px] text-[var(--ink-faint)]${cover.status === "error" ? " status-error" : ""}`}>
             {cover.status === "error" ? "生成失败" : "正在生成…"}
           </span>
         )}
         {selected && (
           <span
-            className="absolute right-2 top-2 grid h-6 w-6 place-items-center rounded-full text-[13px] text-white"
+            className="selection-check absolute right-2 top-2 grid h-6 w-6 place-items-center rounded-full text-[13px] text-white"
             style={{ background: "var(--coral)" }}
           >
-            ✓
+            <Check aria-hidden="true" />
           </span>
         )}
       </button>
       <figcaption className="flex items-center gap-2 text-[13px]">
         <span className="mr-auto shrink-0 font-medium text-[var(--ink)]">{cover.label}</span>
         {cover.status === "error" && (
-          <span className="truncate text-[12px]" style={{ color: "var(--red)" }}>
+          <span className="status-error truncate rounded-md px-1.5 py-0.5 text-[12px]" style={{ color: "var(--red)" }}>
             {cover.error}
           </span>
         )}
@@ -155,9 +156,10 @@ function CoverTile({
         <button
           type="button"
           onClick={busy ? onCancel : onRegenerate}
-          className="shrink-0 rounded-lg px-2.5 py-1 text-[12px] text-[var(--ink-mute)] transition-colors hover:text-[var(--ink)]"
+          className="glass-control compact-control shrink-0 rounded-lg px-2.5 py-1 text-[12px] text-[var(--ink-mute)] transition-colors hover:text-[var(--ink)]"
           style={{ background: "var(--surface)", border: "1px solid var(--line-soft)" }}
         >
+          {!busy && <RefreshCw aria-hidden="true" />}
           {busy ? "取消" : "只重生成这版"}
         </button>
       </figcaption>
@@ -278,9 +280,10 @@ function CopyHtmlButton({ html }: { html: string }) {
       type="button"
       onClick={copy}
       title="复制这版的原始 HTML，排版出问题时可以直接发给别人看"
-      className="shrink-0 rounded-lg px-2.5 py-1 text-[12px] text-[var(--ink-mute)] transition-colors hover:text-[var(--ink)]"
+      className="glass-control compact-control shrink-0 rounded-lg px-2.5 py-1 text-[12px] text-[var(--ink-mute)] transition-colors hover:text-[var(--ink)]"
       style={{ background: "var(--surface)", border: "1px solid var(--line-soft)" }}
     >
+      <Copy aria-hidden="true" />
       {done ? "已复制" : "复制 HTML"}
     </button>
   );

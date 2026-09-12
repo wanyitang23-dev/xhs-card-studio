@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef } from "react";
+import { ArrowLeft, RefreshCw } from "lucide-react";
 import { ScaledDocument } from "./scaled-document";
 import { useTask, useXhs } from "@/lib/xhs/store";
 import { useFlow } from "@/lib/xhs/use-flow";
@@ -56,8 +57,8 @@ export function StepRender() {
   }, [templates, templateId]);
 
   return (
-    <div className="flex h-full min-h-0 flex-col">
-      <header className="flex items-center gap-3 px-6 py-3">
+    <div className="render-step flex h-full min-h-0 flex-col">
+      <header className="render-toolbar flex items-center gap-3 px-6 py-3">
         <div className="min-w-0">
           <h2 className="text-[15px] font-semibold text-[var(--ink)]">
             成品 · {pages.length} 页
@@ -77,25 +78,27 @@ export function StepRender() {
           <button
             type="button"
             onClick={() => setStep("outline")}
-            className="rounded-xl px-4 py-2 text-[13px]"
+            className="glass-control rounded-xl px-4 py-2 text-[13px]"
             style={{ background: "var(--surface)", border: "1px solid var(--line-soft)" }}
           >
-            ← 回去改分页
+            <ArrowLeft aria-hidden="true" />
+            回去改分页
           </button>
           <button
             type="button"
             onClick={() => (running ? cancel() : void runRender())}
-            className="rounded-xl px-4 py-2 text-[13px] font-medium"
+            className="glass-control rounded-xl px-4 py-2 text-[13px] font-medium"
             style={{ background: "var(--surface)", border: "1px solid var(--line-soft)" }}
           >
+            {!running && <RefreshCw aria-hidden="true" />}
             {running ? "取消" : "重新生成"}
           </button>
           <ExportMenu iframeRef={iframeRef} html={html} assets={assets} />
         </div>
       </header>
 
-      <div className="flex min-h-0 flex-1">
-        <div className="min-h-0 min-w-0 flex-1 px-6 pb-6">
+      <div className="render-body flex min-h-0 flex-1">
+        <div className="render-stage min-h-0 min-w-0 flex-1 px-6 pb-6">
           {html ? (
             <ScaledDocument
               iframeRef={iframeRef}
@@ -103,12 +106,12 @@ export function StepRender() {
               authoredWidth={authoredWidth}
               scale={zoom}
               title="成品预览"
-              className="h-full w-full rounded-2xl"
+              className="render-document h-full w-full rounded-2xl"
               style={{ background: "#fff", border: "1px solid var(--line-soft)" }}
             />
           ) : (
             <div
-              className="grid h-full place-items-center rounded-2xl text-[13px] text-[var(--ink-faint)]"
+              className="render-empty grid h-full place-items-center rounded-2xl text-[13px] text-[var(--ink-faint)]"
               style={{ background: "var(--surface)", border: "1px solid var(--line-soft)" }}
             >
               {running ? "agent 正在写…" : status === "error" ? error : "还没有内容"}
@@ -127,7 +130,7 @@ const ZOOMS = [0.35, 0.5, 0.75, 1] as const;
 function ZoomControl({ value, onChange }: { value: number; onChange: (z: number) => void }) {
   return (
     <div
-      className="flex items-center overflow-hidden rounded-xl"
+      className="zoom-control flex items-center overflow-hidden rounded-xl"
       style={{ border: "1px solid var(--line-soft)", background: "var(--surface)" }}
       role="group"
       aria-label="预览缩放"
@@ -140,7 +143,7 @@ function ZoomControl({ value, onChange }: { value: number; onChange: (z: number)
             type="button"
             onClick={() => onChange(z)}
             aria-pressed={on}
-            className="px-2.5 py-2 text-[12px] transition-colors"
+            className={`segmented-option px-2.5 py-2 text-[12px] transition-colors${on ? " is-active" : ""}`}
             style={{
               background: on ? "var(--coral)" : "transparent",
               color: on ? "#fff" : "var(--ink-mute)",
