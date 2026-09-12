@@ -14,7 +14,7 @@
   --paper: rgba(246, 249, 255, 0.82);
   --bone: #f5efe5;
   --surface: rgba(255, 255, 255, 0.94);
-  --glass: rgba(249, 251, 255, 0.62);
+  --glass: rgba(249, 251, 255, 0.52);
   --panel-glass: rgba(249, 251, 255, 0.64);
   --card-milk: rgba(255, 255, 255, 0.9);
   --ink: #172033;
@@ -41,6 +41,10 @@
   --red: #a64d5e;
 
   --glass-border: rgba(255, 255, 255, 0.76);
+  --aurora-blue: rgba(186, 220, 255, 0.44);
+  --aurora-mint: rgba(194, 240, 222, 0.38);
+  --aurora-lilac: rgba(218, 205, 255, 0.4);
+  --aurora-blush: rgba(255, 211, 229, 0.34);
   --shadow-soft: 0 18px 46px rgba(75, 91, 122, 0.11);
   --shadow-card: 0 10px 26px rgba(75, 91, 122, 0.075);
   --focus: #6579c7;
@@ -94,7 +98,26 @@ body {
 }
 
 body::before {
-  display: none;
+  content: "";
+  position: fixed;
+  inset: -14%;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 20% 18%, rgba(160, 211, 255, 0.2) 0, transparent 29%),
+    radial-gradient(circle at 77% 14%, rgba(207, 188, 255, 0.16) 0, transparent 27%);
+  opacity: 0.68;
+  transform: translate3d(0, 0, 0) scale(1.01);
+  animation: aurora-drift 28s ease-in-out infinite alternate;
+}
+
+@keyframes aurora-drift {
+  from {
+    transform: translate3d(-0.7%, -0.35%, 0) scale(1.005);
+  }
+  to {
+    transform: translate3d(0.8%, 0.45%, 0) scale(1.015);
+  }
 }
 
 /* serif italic for accent — open-design hero pattern */
@@ -269,6 +292,7 @@ body::before {
 /* ── Milky Glass workbench ────────────────────────────────────── */
 .aurora-shell {
   position: relative;
+  z-index: 1;
   isolation: isolate;
   min-height: 0;
   overflow: hidden;
@@ -305,9 +329,44 @@ body::before {
   border-color: rgba(255, 255, 255, 0.78) !important;
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.92),
+    inset 1px 0 0 rgba(194, 222, 255, 0.18),
+    inset -1px 0 0 rgba(224, 211, 255, 0.14),
     0 8px 24px rgba(76, 92, 124, 0.045);
   backdrop-filter: blur(26px) saturate(1.08);
   -webkit-backdrop-filter: blur(26px) saturate(1.08);
+}
+
+.app-header {
+  background:
+    radial-gradient(circle at 10% -85%, var(--aurora-blue), transparent 43%),
+    radial-gradient(circle at 88% -110%, var(--aurora-lilac), transparent 39%),
+    var(--panel-glass) !important;
+}
+
+.app-stepbar {
+  background:
+    radial-gradient(circle at 34% -120%, rgba(207, 224, 255, 0.34), transparent 43%),
+    radial-gradient(circle at 75% -115%, rgba(225, 212, 255, 0.3), transparent 39%),
+    var(--panel-glass) !important;
+}
+
+.task-rail {
+  background:
+    radial-gradient(circle at -35% 16%, var(--aurora-mint), transparent 46%),
+    var(--panel-glass) !important;
+}
+
+.template-preview-panel,
+.preview-collapsed {
+  background:
+    radial-gradient(circle at 118% 12%, var(--aurora-lilac), transparent 43%),
+    var(--panel-glass) !important;
+}
+
+.caption-inspector {
+  background:
+    radial-gradient(circle at 92% 92%, rgba(215, 242, 231, 0.28), transparent 39%),
+    var(--panel-glass) !important;
 }
 
 .app-header { flex: 0 0 auto; }
@@ -391,7 +450,8 @@ body::before {
   border: 1px solid rgba(25, 35, 55, 0.92) !important;
   border-radius: var(--radius-control) !important;
   color: #f9fbff !important;
-  background: var(--primary) !important;
+  background:
+    radial-gradient(circle at 18% -85%, #60739b 0, var(--primary) 56%) !important;
   box-shadow:
     0 10px 22px rgba(38, 51, 77, 0.19),
     inset 0 1px 0 rgba(255, 255, 255, 0.14);
@@ -406,7 +466,8 @@ body::before {
 .btn-primary:hover:not(:disabled),
 .btn-ink:hover:not(:disabled),
 .export-trigger:hover:not(:disabled) {
-  background: var(--primary-hover) !important;
+  background:
+    radial-gradient(circle at 18% -75%, #56698f 0, var(--primary-hover) 58%) !important;
   box-shadow:
     0 14px 28px rgba(38, 51, 77, 0.23),
     inset 0 1px 0 rgba(255, 255, 255, 0.14);
@@ -463,7 +524,10 @@ body::before {
 
 .workflow-step.is-active {
   border-color: rgba(255, 255, 255, 0.9) !important;
-  background: rgba(255, 255, 255, 0.76) !important;
+  background:
+    radial-gradient(circle at 12% 0, rgba(209, 224, 255, 0.58), transparent 52%),
+    radial-gradient(circle at 90% 110%, rgba(229, 218, 255, 0.38), transparent 48%),
+    rgba(255, 255, 255, 0.76) !important;
   box-shadow:
     0 7px 20px rgba(75, 91, 121, 0.075),
     inset 0 1px 0 #fff;
@@ -486,6 +550,12 @@ body::before {
   border-color: rgba(105, 121, 184, 0.23);
   color: var(--coral) !important;
   background: rgba(226, 230, 248, 0.88) !important;
+}
+
+.workflow-step.is-done:not(.is-active) {
+  background:
+    radial-gradient(circle at 10% 0, rgba(221, 215, 250, 0.24), transparent 54%),
+    rgba(255, 255, 255, 0.26) !important;
 }
 
 .workflow-step-number svg {
@@ -512,9 +582,9 @@ body::before {
 .app-canvas {
   position: relative;
   background:
-    radial-gradient(circle at 24% 12%, rgba(231, 241, 255, 0.44), transparent 34%),
-    radial-gradient(circle at 86% 80%, rgba(235, 248, 243, 0.4), transparent 38%),
-    rgba(247, 249, 253, 0.38);
+    radial-gradient(circle at 16% 4%, rgba(204, 229, 255, 0.3), transparent 36%),
+    radial-gradient(circle at 80% 94%, rgba(210, 243, 229, 0.24), transparent 40%),
+    rgba(247, 249, 253, 0.4);
 }
 
 /* Task rail */
@@ -543,7 +613,10 @@ body::before {
 
 .task-row.is-active {
   border-color: rgba(255, 255, 255, 0.86) !important;
-  background: rgba(255, 255, 255, 0.76) !important;
+  background:
+    radial-gradient(circle at 0 0, rgba(203, 230, 255, 0.52), transparent 56%),
+    radial-gradient(circle at 100% 100%, rgba(211, 241, 228, 0.34), transparent 50%),
+    rgba(255, 255, 255, 0.76) !important;
   box-shadow:
     0 7px 18px rgba(75, 91, 122, 0.065),
     inset 0 1px 0 #fff;
@@ -627,6 +700,30 @@ body::before {
   box-shadow:
     var(--shadow-card),
     inset 0 1px 0 rgba(255, 255, 255, 0.98);
+}
+
+.source-step > .content-card:nth-of-type(1)::before {
+  background:
+    radial-gradient(circle at 2% 0, rgba(198, 226, 255, 0.5), transparent 36%),
+    var(--card-milk);
+}
+
+.source-step > .content-card:nth-of-type(2)::before {
+  background:
+    radial-gradient(circle at 98% 2%, rgba(226, 215, 255, 0.36), transparent 34%),
+    var(--card-milk);
+}
+
+.source-step > .content-card:nth-of-type(3)::before {
+  background:
+    radial-gradient(circle at 2% 0, rgba(198, 226, 255, 0.42), transparent 36%),
+    var(--card-milk);
+}
+
+.source-step > .content-card:nth-of-type(4)::before {
+  background:
+    radial-gradient(circle at 98% 2%, rgba(226, 215, 255, 0.32), transparent 34%),
+    var(--card-milk);
 }
 
 .content-card h2,
@@ -766,6 +863,12 @@ body::before {
     inset 0 1px 0 rgba(255, 255, 255, 0.98);
 }
 
+.page-editor-card {
+  background:
+    radial-gradient(circle at 100% 0, rgba(204, 225, 250, 0.22), transparent 34%),
+    var(--card-milk) !important;
+}
+
 .asset-thumb {
   border-color: rgba(255, 255, 255, 0.86) !important;
   box-shadow: 0 5px 14px rgba(64, 82, 115, 0.1);
@@ -835,6 +938,24 @@ body::before {
     box-shadow 190ms ease;
 }
 
+.cover-tile:nth-child(1)::before {
+  background:
+    radial-gradient(circle at 0 0, rgba(197, 225, 255, 0.38), transparent 35%),
+    rgba(255, 255, 255, 0.88);
+}
+
+.cover-tile:nth-child(2)::before {
+  background:
+    radial-gradient(circle at 50% 0, rgba(226, 212, 255, 0.34), transparent 36%),
+    rgba(255, 255, 255, 0.88);
+}
+
+.cover-tile:nth-child(3)::before {
+  background:
+    radial-gradient(circle at 100% 0, rgba(197, 225, 255, 0.32), transparent 35%),
+    rgba(255, 255, 255, 0.88);
+}
+
 .cover-tile:hover::before {
   border-color: rgba(126, 145, 180, 0.28);
   background: rgba(255, 255, 255, 0.94);
@@ -857,7 +978,9 @@ body::before {
 .cover-preview {
   border-color: rgba(255, 255, 255, 0.86) !important;
   background: rgba(252, 253, 255, 0.94) !important;
-  box-shadow: inset 0 0 0 1px rgba(114, 132, 164, 0.08);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.98),
+    inset 0 0 0 1px rgba(114, 132, 164, 0.08) !important;
 }
 
 .selection-check,
@@ -898,8 +1021,9 @@ body::before {
 
 .render-stage {
   background:
-    radial-gradient(circle at 16% 10%, rgba(227, 239, 255, 0.38), transparent 32%),
-    radial-gradient(circle at 90% 88%, rgba(229, 246, 239, 0.35), transparent 38%);
+    radial-gradient(circle at 16% 10%, rgba(216, 233, 255, 0.24), transparent 35%),
+    radial-gradient(circle at 90% 88%, rgba(218, 242, 232, 0.2), transparent 40%),
+    rgba(248, 250, 253, 0.5);
 }
 
 .render-document,
@@ -976,6 +1100,18 @@ body::before {
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.94);
 }
 
+.caption-field:nth-of-type(odd)::before {
+  background:
+    radial-gradient(circle at 0 0, rgba(202, 229, 255, 0.3), transparent 42%),
+    rgba(255, 255, 255, 0.62);
+}
+
+.caption-field:nth-of-type(even)::before {
+  background:
+    radial-gradient(circle at 100% 0, rgba(224, 214, 255, 0.25), transparent 40%),
+    rgba(255, 255, 255, 0.62);
+}
+
 .caption-inspector button[class*="w-full"] {
   display: inline-flex;
   align-items: center;
@@ -992,6 +1128,9 @@ body::before {
 /* Template gallery and permanent preview */
 .template-tile {
   overflow: hidden;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.98),
+    inset 0 0 0 1px rgba(114, 132, 164, 0.07) !important;
 }
 
 .overlay-chip {
@@ -1039,9 +1178,8 @@ body::before {
 .template-preview-stage,
 .preview-stage {
   background:
-    radial-gradient(circle at 24% 10%, rgba(226, 238, 255, 0.56), transparent 34%),
-    radial-gradient(circle at 80% 88%, rgba(235, 226, 249, 0.42), transparent 35%),
-    rgba(240, 244, 251, 0.62);
+    radial-gradient(circle at 18% 8%, rgba(208, 230, 255, 0.24), transparent 38%),
+    rgba(240, 244, 251, 0.78);
 }
 
 .preview-collapsed {
@@ -1067,7 +1205,10 @@ body::before {
 .modal-shell {
   border: 1px solid rgba(255, 255, 255, 0.84) !important;
   border-radius: 32px !important;
-  background: rgba(249, 251, 255, 0.8) !important;
+  background:
+    radial-gradient(circle at 5% 0, rgba(203, 229, 255, 0.42), transparent 33%),
+    radial-gradient(circle at 96% 100%, rgba(226, 214, 255, 0.34), transparent 34%),
+    rgba(249, 251, 255, 0.8) !important;
   box-shadow:
     0 28px 70px rgba(54, 68, 96, 0.18),
     inset 0 1px 0 rgba(255, 255, 255, 0.98),
@@ -1080,7 +1221,22 @@ body::before {
 .modal-footer,
 .modal-attribution {
   border-color: rgba(255, 255, 255, 0.72) !important;
-  background: rgba(255, 255, 255, 0.34) !important;
+}
+
+.modal-header {
+  background:
+    radial-gradient(circle at 8% 0, rgba(207, 230, 255, 0.34), transparent 40%),
+    rgba(255, 255, 255, 0.34) !important;
+}
+
+.modal-footer {
+  background:
+    radial-gradient(circle at 90% 110%, rgba(207, 240, 226, 0.3), transparent 42%),
+    rgba(255, 255, 255, 0.38) !important;
+}
+
+.modal-attribution {
+  background: rgba(255, 255, 255, 0.3) !important;
 }
 
 .modal-body {
@@ -1090,6 +1246,7 @@ body::before {
 .modal-sidebar {
   border-color: rgba(255, 255, 255, 0.78) !important;
   background: rgba(240, 245, 253, 0.68) !important;
+  box-shadow: inset -1px 0 0 rgba(255, 255, 255, 0.84);
 }
 
 .modal-nav-item {
@@ -1120,6 +1277,24 @@ body::before {
   text-decoration: none;
 }
 
+.agent-card {
+  background:
+    radial-gradient(circle at 0 0, rgba(224, 214, 255, 0.25), transparent 44%),
+    rgba(255, 255, 255, 0.88) !important;
+}
+
+.settings-choice {
+  background:
+    radial-gradient(circle at 100% 0, rgba(204, 228, 255, 0.24), transparent 46%),
+    rgba(255, 255, 255, 0.88) !important;
+}
+
+.package-card {
+  background:
+    radial-gradient(circle at 100% 100%, rgba(203, 239, 224, 0.24), transparent 42%),
+    rgba(255, 255, 255, 0.9) !important;
+}
+
 .vendor-avatar {
   border: 1px solid rgba(255, 255, 255, 0.88);
   color: var(--coral) !important;
@@ -1130,7 +1305,9 @@ body::before {
 }
 
 .subtle-card {
-  background: rgba(252, 253, 255, 0.82) !important;
+  background:
+    radial-gradient(circle at 0 0, rgba(207, 230, 255, 0.2), transparent 44%),
+    rgba(252, 253, 255, 0.84) !important;
 }
 
 .subtle-card.is-muted {
@@ -1148,6 +1325,7 @@ body::before {
   height: 28px;
   color: #7786aa;
   stroke-width: 1.5;
+  filter: drop-shadow(0 8px 12px rgba(94, 113, 159, 0.22));
 }
 
 .menu-popover {
@@ -1221,9 +1399,26 @@ body::before {
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
   }
+
+  body::before,
+  :where(button, [role="button"]),
+  .select-card,
+  .cover-tile::before {
+    transform: none !important;
+  }
 }
 
 @media (prefers-reduced-transparency: reduce) {
+  body::before {
+    display: none;
+  }
+
+  .modal-backdrop {
+    background: rgba(54, 64, 84, 0.52) !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+
   .aurora-shell,
   .app-header,
   .app-stepbar,
@@ -1238,6 +1433,37 @@ body::before {
     background: #f8faff !important;
     backdrop-filter: none !important;
     -webkit-backdrop-filter: none !important;
+  }
+
+  .content-card,
+  .select-card,
+  .subtle-card,
+  .package-card,
+  .page-editor-card,
+  .glass-control,
+  .icon-control,
+  .soft-action,
+  .milky-input,
+  .milky-input-group,
+  .modal-header,
+  .modal-footer,
+  .modal-attribution {
+    background: #fbfcff !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+
+  .overlay-chip,
+  .overlay-action {
+    background: var(--primary) !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+
+  .source-step > .content-card::before,
+  .cover-tile::before,
+  .caption-field::before {
+    background: #fbfcff !important;
   }
 }
 
