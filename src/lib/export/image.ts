@@ -5,6 +5,8 @@ import { copyImage } from "./clipboard";
 
 export type ImageOpts = {
   scale?: number;
+  width?: number;
+  height?: number;
   type?: "image/png" | "image/jpeg" | "image/webp";
   backgroundColor?: string;
   /**
@@ -181,15 +183,13 @@ export async function iframeToBlob(
   await NEXT_FRAME();
 
   try {
-    const layoutWidth =
-      doc.documentElement.clientWidth ||
-      iframe.clientWidth ||
-      doc.body.scrollWidth;
+    const layoutWidth = opts.width ??
+      (doc.documentElement.clientWidth || iframe.clientWidth || doc.body.scrollWidth);
     const layoutHeight = fullScrollHeight(doc);
 
     const scale = opts.scale ?? 2;
     const safeMax = opts.maxHeight ?? Math.floor(16000 / scale);
-    const captureHeight = Math.min(layoutHeight, safeMax);
+    const captureHeight = Math.min(opts.height ?? layoutHeight, safeMax);
 
     const backgroundColor = resolveBackground(doc, win, opts.backgroundColor);
 
@@ -223,15 +223,19 @@ export function downloadBlob(blob: Blob, filename: string) {
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
-export async function copyIframeToClipboard(iframe: HTMLIFrameElement): Promise<void> {
-  const blob = await iframeToBlob(iframe);
+export async function copyIframeToClipboard(
+  iframe: HTMLIFrameElement,
+  viewport?: { width: number; height: number },
+): Promise<void> {
+  const blob = await iframeToBlob(iframe, viewport);
   await copyImage(blob);
 }
 
 export async function downloadIframeAsImage(
   iframe: HTMLIFrameElement,
   basename = "xhs-card",
+  viewport?: { width: number; height: number },
 ): Promise<void> {
-  const blob = await iframeToBlob(iframe);
+  const blob = await iframeToBlob(iframe, viewport);
   downloadBlob(blob, `${basename}-${Date.now()}.png`);
 }

@@ -48,12 +48,14 @@ type ExportMenuProps = {
    * have the real bytes put back in or it exports with placeholders.
    */
   assets?: Record<string, string>;
+  /** Crop image exports to the template's authored canvas. */
+  viewport?: { width: number; height: number };
 };
 
 type Toast = { message: string; tone: "success" | "error" };
 type ExportAction = { id: string; label: string; icon: ReactNode; fn: () => Promise<void> };
 
-export function ExportMenu({ iframeRef, html: htmlProp, assets }: ExportMenuProps) {
+export function ExportMenu({ iframeRef, html: htmlProp, assets, viewport }: ExportMenuProps) {
   const storeHtml = useStore((s) => selectActiveTask(s)?.html ?? "");
   const html = htmlProp ?? storeHtml;
   const [open, setOpen] = useState(false);
@@ -119,7 +121,7 @@ export function ExportMenu({ iframeRef, html: htmlProp, assets }: ExportMenuProp
         { id: "wechat", label: t("export.action.wechat"), icon: <MessageCircle aria-hidden="true" />, fn: wrap(t("export.toast.wechat"), async () => { await copyToWechat(cleanHtml()); }) },
         { id: "zhihu",  label: t("export.action.zhihu"),  icon: <BookOpenText aria-hidden="true" />, fn: wrap(t("export.toast.zhihu"), async () => { await copyToZhihu(cleanHtml()); }) },
         { id: "twitter-img", label: t("export.action.twitterImg"), icon: <Bird aria-hidden="true" />, fn: wrap(t("export.toast.image"), async () => {
-          if (!iframeRef.current) throw new Error(t("export.error.previewNotReady")); await copyIframeToClipboard(iframeRef.current);
+          if (!iframeRef.current) throw new Error(t("export.error.previewNotReady")); await copyIframeToClipboard(iframeRef.current, viewport);
         }) },
       ],
     },
@@ -137,7 +139,7 @@ export function ExportMenu({ iframeRef, html: htmlProp, assets }: ExportMenuProp
       actions: [
         { id: "download-html", label: t("export.action.downloadHtml"), icon: <Download aria-hidden="true" />, fn: wrap(t("export.toast.htmlSaved"), async () => { downloadHtml(cleanHtml()); }) },
         { id: "download-png",  label: t("export.action.downloadPng"),  icon: <FileImage aria-hidden="true" />, fn: wrap(t("export.toast.imgSaved"), async () => {
-          if (!iframeRef.current) throw new Error(t("export.error.previewNotReady")); await downloadIframeAsImage(iframeRef.current);
+          if (!iframeRef.current) throw new Error(t("export.error.previewNotReady")); await downloadIframeAsImage(iframeRef.current, "xhs-card", viewport);
         }) },
       ],
     },

@@ -18,8 +18,6 @@ export function StepRender() {
   const pages = useTask((t) => t.pages);
   const templateId = useTask((t) => t.templateId);
   const setStep = useXhs((s) => s.setStep);
-  const zoom = useXhs((s) => s.previewZoom);
-  const setZoom = useXhs((s) => s.setPreviewZoom);
   const caption = useTask((t) => t.caption);
   const captionStatus = useTask((t) => t.captionStatus);
   const templates = useTemplates();
@@ -51,9 +49,9 @@ export function StepRender() {
   // Lay the page out at the width the cards were authored for. The pane is
   // narrower than that, so the iframe is scaled down for display only —
   // `clientWidth` stays 1080, which is what the PNG export reads.
-  const authoredWidth = useMemo(() => {
+  const authoredViewport = useMemo(() => {
     const hint = templates?.find((t) => t.id === templateId)?.aspectHint;
-    return parseViewport(hint).width;
+    return parseViewport(hint);
   }, [templates, templateId]);
 
   // Keep navigation inside the authored HTML. This adds mouse/trackpad
@@ -121,7 +119,6 @@ export function StepRender() {
           </p>
         </div>
         <div className="ml-auto flex items-center gap-2">
-          <ZoomControl value={zoom} onChange={setZoom} />
           <button
             type="button"
             onClick={() => setStep("outline")}
@@ -140,7 +137,12 @@ export function StepRender() {
             {!running && <RefreshCw aria-hidden="true" />}
             {running ? "取消" : "重新生成"}
           </button>
-          <ExportMenu iframeRef={iframeRef} html={html} assets={assets} />
+          <ExportMenu
+            iframeRef={iframeRef}
+            html={html}
+            assets={assets}
+            viewport={authoredViewport}
+          />
         </div>
       </header>
 
@@ -151,8 +153,9 @@ export function StepRender() {
               iframeRef={iframeRef}
               onLoad={enableDeckGestures}
               srcDoc={display}
-              authoredWidth={authoredWidth}
-              scale={zoom}
+              authoredWidth={authoredViewport.width}
+              authoredHeight={authoredViewport.height}
+              scale={0.35}
               title="成品预览"
               className="render-document h-full w-full"
             />
@@ -167,39 +170,6 @@ export function StepRender() {
         </div>
         <CaptionPane />
       </div>
-    </div>
-  );
-}
-
-/** Preset zoom levels. 50% shows a whole 1080x1440 card in a typical pane. */
-const ZOOMS = [0.35, 0.5, 0.75, 1] as const;
-
-function ZoomControl({ value, onChange }: { value: number; onChange: (z: number) => void }) {
-  return (
-    <div
-      className="zoom-control flex items-center overflow-hidden rounded-xl"
-      style={{ border: "1px solid var(--line-soft)", background: "var(--surface)" }}
-      role="group"
-      aria-label="预览缩放"
-    >
-      {ZOOMS.map((z) => {
-        const on = Math.abs(value - z) < 0.01;
-        return (
-          <button
-            key={z}
-            type="button"
-            onClick={() => onChange(z)}
-            aria-pressed={on}
-            className={`segmented-option px-2.5 py-2 text-[12px] transition-colors${on ? " is-active" : ""}`}
-            style={{
-              background: on ? "var(--coral)" : "transparent",
-              color: on ? "#fff" : "var(--ink-mute)",
-            }}
-          >
-            {Math.round(z * 100)}%
-          </button>
-        );
-      })}
     </div>
   );
 }

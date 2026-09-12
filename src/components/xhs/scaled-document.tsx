@@ -17,6 +17,7 @@ import { useElementSize } from "@/lib/xhs/use-element-size";
  */
 export function ScaledDocument({
   authoredWidth,
+  authoredHeight,
   scale: scaleProp,
   src,
   srcDoc,
@@ -28,6 +29,8 @@ export function ScaledDocument({
 }: {
   /** The width the page lays out at — 1080 for a Xiaohongshu card. */
   authoredWidth: number;
+  /** Fix the iframe viewport to the authored card height when provided. */
+  authoredHeight?: number;
   /**
    * Explicit display scale. Omit to fit the container's width.
    * The iframe still lays out at `authoredWidth` either way, so zooming never
@@ -47,34 +50,47 @@ export function ScaledDocument({
   // Never scale up: a page narrower than the pane should sit at 1:1.
   const fitScale = size ? Math.min(1, size.width / authoredWidth) : 0;
   const scale = scaleProp ?? fitScale;
+  const fixedCanvas = Boolean(authoredHeight && authoredHeight > 0);
+
+  const frame = scale > 0 && size ? (
+    <iframe
+      ref={iframeRef}
+      onLoad={onLoad}
+      title={title}
+      {...(src ? { src } : {})}
+      {...(srcDoc ? { srcDoc } : {})}
+      sandbox="allow-scripts allow-same-origin"
+      className="origin-top-left border-0"
+      style={{
+        width: authoredWidth,
+        height: fixedCanvas ? authoredHeight : size.height / scale,
+        display: "block",
+        position: fixedCanvas ? "absolute" : undefined,
+        left: fixedCanvas ? 0 : undefined,
+        top: fixedCanvas ? 0 : undefined,
+        transform: `translateX(${Math.max(0, (size.width - authoredWidth * scale) / 2)}px) scale(${scale})`,
+      }}
+    />
+  ) : null;
 
   return (
-    <div ref={ref} className={`overflow-hidden ${className ?? ""}`} style={style}>
-      {scale > 0 && size && (
-        <iframe
-          ref={iframeRef}
-          onLoad={onLoad}
-          title={title}
-          {...(src ? { src } : {})}
-          {...(srcDoc ? { srcDoc } : {})}
-          sandbox="allow-scripts allow-same-origin"
-          className="origin-top-left border-0"
+    <div
+      ref={ref}
+      className={`${fixedCanvas ? "overflow-auto" : "overflow-hidden"} ${className ?? ""}`}
+      style={style}
+    >
+      {fixedCanvas && size && authoredHeight ? (
+        <div
+          className="relative"
           style={{
-            width: authoredWidth,
-            display: "block",
-            // Undo the scale so the iframe still fills the container vertically
-            // and scrolls its own content rather than being clipped short.
-            height: size.height / scale,
-            // Centre with the transform, never with a margin. The iframe's
-            // layout box stays `authoredWidth` wide however far it is scaled
-            // down, so a margin would add to that width and push the whole page
-            // sideways — at 35% it added ~310px and gave the app a horizontal
-            // scrollbar. Transforms don't participate in layout at all.
-            // Functions compose right-to-left: scale first, then shift by an
-            // unscaled amount.
-            transform: `translateX(${Math.max(0, (size.width - authoredWidth * scale) / 2)}px) scale(${scale})`,
+            width: Math.max(size.width, authoredWidth * scale),
+            height: authoredHeight * scale,
           }}
-        />
+        >
+          {frame}
+        </div>
+      ) : (
+        frame
       )}
     </div>
   );
