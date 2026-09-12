@@ -2,49 +2,50 @@
 
 ## Evidence
 
-- Source visual truth: current user-message attachment (NFT dashboard reference; 1446 × 1064 px; the client did not expose a filesystem path).
-- Rendered implementation: `design-qa-evidence/implementation-cua.jpg`.
+- Source visual truth: the two current user-message attachments: task-sidebar crop (472 × 362 px) and workflow-step crop (2806 × 290 px original, displayed at 2048 × 212 px). The client did not expose filesystem paths.
+- Rendered implementation: `design-qa-evidence/implementation-interactive-cua.jpg` and `design-qa-evidence/implementation-interactive-flow-cua.jpg`.
 - Local URL: `http://127.0.0.1:3107/`.
-- Viewport and density: implementation captured at 1390 × 768 px by the Chrome CUA surface; app content is approximately 1390 × 683 CSS px. The source density is unknown and treated as 1×.
-- State: source is a populated dashboard; implementation is the existing Xiaohongshu workbench in a populated cover-selection state. Content and layout were intentionally not normalized because the brief requires preserving the product structure and data; comparison is limited to the requested visual language.
-- Comparison input: the user attachment and the browser-rendered implementation were both open in the same multimodal review context.
+- Viewport and density: both implementation captures are 1390 × 768 px from the Chrome CUA surface at browser density 1×; app content is approximately 1390 × 683 CSS px below browser chrome.
+- State A: source step active, six visible task rows, future workflow steps disabled. State B: second task selected, source complete, outline active, cover reachable, render disabled.
+- Comparison input: both user attachments and both browser-rendered captures were opened in the same multimodal review context.
 
 ## Findings
 
-- No actionable P0, P1, or P2 visual-language differences remain.
-- Expected difference: the reference has NFT navigation, charts, and a chat rail, while the implementation keeps the existing four-step content workflow. This is required by the brief, not design drift.
-- P3: the browser evidence contains Chrome UI, a development badge, and a translation-extension bubble. These are browser-only overlays and are not part of the page.
-- Existing data issue: one stored cover-generation state displays an external `403 Request not allowed` inside generated preview iframes. The app shell, asset route, build, and style layer remain healthy; this error predates and is outside the CSS-only change.
+- No actionable P0, P1, or P2 differences remain for the requested interaction-emphasis update.
+- The task rows now read as clickable cards before hover, while the selected task remains distinguishable by a solid accent border, left rail, stronger dot, and shallow focus ring.
+- Workflow states are differentiated by shape and status as well as color: check mark for complete, solid numbered disc and border for current, tinted card for reachable, and desaturated treatment for disabled.
+- P3: Chrome UI, a development badge, and a translation-extension bubble appear in the evidence. These browser overlays are not part of the page.
 
 ## Required Fidelity Surfaces
 
-- Fonts and typography: modern system sans stack (Inter / SF Pro / PingFang SC), dark ink title color, readable blue-gray body text, and no gradient text. Supporting text uses `#607085`, which is about 5.06:1 on white.
-- Spacing and layout rhythm: internal structure and spacing are unchanged. A 34 px rounded outer shell, responsive peripheral gutter, 24 px panel radius, 20 px card radius, and 14 px controls reproduce the reference hierarchy without altering information architecture.
-- Colors and tokens: large-scale blue, cyan, lilac, and blush color is concentrated in the background asset. Shell, panels, and cards use a 0.40 / 0.58 / 0.86 cold-white opacity ladder. Accent `#526ea9` is about 5.05:1 on white; focus `#667fc2` exceeds 3:1 for non-text focus indication.
-- Image quality and assets: the decorative background is a project-local 1672 × 941 PNG generated for this direction. No CSS shape, emoji, or ad-hoc SVG substitutes the source's pearlescent artwork. Existing template imagery remains unchanged.
-- Copy and content: page copy, task data, workflow labels, template content, and functionality are unchanged.
+- Fonts and typography: the Inter / SF Pro / PingFang SC stack, sizes, weights, wrapping, and truncation are unchanged. Dark title text and `#607085` supporting text remain readable; the latter is about 5.06:1 on white.
+- Spacing and layout rhythm: no component dimensions, padding, grid tracks, information architecture, or page structure changed. Existing 34 px shell, 24 px panel, 20 px card, and 14 px control radii remain intact.
+- Colors and visual tokens: four restrained interactive accents were added: blue `#4c68a5` (5.48:1 on white), lilac `#72588f` (5.99:1), mint `#3e746c` (5.36:1), and blush `#8a5067` (6.13:1). Pastel washes always carry dark text; disabled controls return to neutral blue-gray. Selected, hover, focus, and disabled are visibly distinct.
+- Image quality and asset fidelity: the existing 1672 × 941 pearlescent background and all template imagery are unchanged. No placeholder, emoji, CSS drawing, or ad-hoc SVG was introduced.
+- Copy and content: all page copy, task data, workflow labels, generated previews, and functions are unchanged.
 
 ## Full-view and Focused Comparison
 
-- Full view: both source and implementation show a high-key icy-blue stage, continuous low-contrast pastel ribbons at the perimeter, a luminous white rounded frame, near-white interior panels, and very shallow cool shadows.
-- Focused surfaces: outer frame, workflow navigation, active task, controls, form cards, and preview stage were reviewed at the captured resolution. Separate crops were unnecessary because those surfaces remain legible in both full-resolution inputs.
-- Material balance: color is now carried by the continuous background; content surfaces remain calm and mostly white. The previous scattered mint, cream, pink, and purple section fills are removed.
+- Full view: both implementation captures preserve the high-key pearl background and near-white glass workspace while concentrating the new color on controls rather than reading surfaces.
+- Focused task comparison: the user crop showed task controls and inactive rows blending into the rail. The implementation adds persistent blue/lilac/mint/blush washes, colored hairlines, stronger status dots, and a clearly anchored selected row without changing row geometry.
+- Focused workflow comparison: the user crop showed only the current step as clearly interactive. State B demonstrates a blue completed step, lilac current step, mint reachable step, and neutral disabled step, with consistent hover/focus affordances.
+- Additional controls: top actions, choice pills, selectable cards, cover tiles, segmented/zoom controls, modal navigation, quiet links, collapsed preview, and menu items use the same interaction grammar.
 
 ## Comparison History
 
-1. First pass found three blocking fidelity issues: scattered per-section color, insufficient visibility of the continuous backdrop, and low-contrast tertiary text.
-2. Fixes: unified first-level panels and cards to cold white; replaced layered CSS backdrops with the local pearlescent image; added the luminous outer frame and responsive gutter; unified active states to one blue accent; darkened tertiary text; removed the breakpoint gutter jump; raised muted-card opacity; added explicit light toast text.
-3. Post-fix evidence: `design-qa-evidence/implementation-cua.jpg`. No actionable P0/P1/P2 differences remain within the visual-only scope.
+1. Initial focused review found two P2 issues: inactive task rows lacked a persistent affordance, and reachable workflow steps were too close to disabled steps. Several secondary controls also remained visually neutral until hover.
+2. Fixes: introduced four accessible interaction tokens; added faint default washes and colored borders; strengthened current, selected, done, hover, and focus states; neutralized disabled states; restored an external zoom focus ring; prevented disabled cover tiles from lifting on hover.
+3. Post-fix evidence: both new CUA captures. Task selection was exercised in Chrome to move from State A to State B and verify the complete/current/reachable/disabled workflow matrix. No actionable P0/P1/P2 differences remain.
 
 ## Primary Checks
 
-- Browser load and asset routes return HTTP 200.
-- Source and cover workflow states, task selection, template preview, and independent scrolling regions rendered in Chrome.
-- The 1024 px desktop breakpoint was visually checked without body-level double scrolling or hidden persistent controls.
-- No Next.js runtime error overlay appeared. Direct console streaming is not exposed by the CUA browser surface; production build, TypeScript, and 359 automated tests pass.
+- Browser page and background asset routes return HTTP 200.
+- Task selection and workflow-state changes rendered correctly in Chrome; active task, complete/current/reachable/disabled steps, template preview, and scrolling content remained intact.
+- No Next.js runtime error overlay appeared. Direct console streaming is not exposed by this CUA surface; the production build, TypeScript check, and all 359 automated tests pass.
+- CSS parsing and production compilation pass. Existing non-blocking Turbopack NFT trace and Vite configuration warnings are unchanged.
 
 ## Follow-up Polish
 
-- Optional P3: tune peripheral ribbon intensity after user feedback on a calibrated display.
+- Optional P3: adjust the persistent pastel wash strength one increment after viewing on the user's calibrated display.
 
 final result: passed
