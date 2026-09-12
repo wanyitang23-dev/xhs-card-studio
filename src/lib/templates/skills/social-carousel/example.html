@@ -17,8 +17,14 @@
     --ink:    #0a0e14;   /* card base, near-black, cool */
     --ink-2:  #0f1520;
     --line:   rgba(148,180,214,0.14);
-    --text:   #e8eef6;
-    --mute:   rgba(232,238,246,0.52);
+    /* Three tiers, all solid. An earlier version gave only --text and a 0.52
+       alpha --mute, so body copy had no token of its own: a generated deck
+       invented a third value (0.8 alpha) and ended up with two brightnesses of
+       body text on one card, which reads as the dimmer one being broken.
+       Contrast over the card base #0a0e14: 16.6 / 14.4 / 7.3. */
+    --text:   #e8eef6;   /* 标题、强调 */
+    --body:   #d6dfea;   /* 正文 —— 成段的中文一律用这个 */
+    --mute:   #94a0b2;   /* 只给 22px 以下的等宽小字: 页码、标签、水印 */
     --cyan:   #22d3ee;
     --blue:   #4d7cff;
     --violet: #a78bfa;
@@ -82,7 +88,9 @@
     background:linear-gradient(100deg, var(--cyan), var(--blue) 60%, var(--violet));
     -webkit-background-clip:text; background-clip:text; color:transparent;
   }
-  .sub { margin-top:40px; font-size:30px; font-weight:400; line-height:1.6; color:var(--mute); max-width:22ch; }
+  /* Body copy, so --body and weight 500: at weight 400 a CJK glyph on a
+     near-black ground renders too thin to hold its strokes. */
+  .sub { margin-top:40px; font-size:30px; font-weight:500; line-height:1.6; color:var(--body); max-width:22ch; }
 
   /* Progress rail — the "1 of 3" state, readable without counting cards. */
   .rail { position:relative; margin-top:auto; height:2px; background:rgba(148,180,214,0.12); border-radius:2px; }

@@ -54,6 +54,37 @@ describe("科技黑配色", () => {
   it("卡片底是冷黑", () => {
     expect(example).toContain("#0a0e14");
   });
+
+  /**
+   * The first tech version shipped only --text and a 0.52-alpha --mute, so body
+   * copy had no token. A generated deck invented a third value (0.8 alpha) and
+   * put two brightnesses of body text on one card — measured at 16.6 and 10.8
+   * against the same background. Both pass WCAG; side by side the dimmer one
+   * reads as broken. The fix is a named body tier, so give it one.
+   */
+  it("文字有独立的正文档位, 不是只有'白'和'灰'", () => {
+    for (const hex of ["#e8eef6", "#d6dfea", "#94a0b2"]) {
+      expect(example.toLowerCase()).toContain(hex);
+      expect(skill.toLowerCase()).toContain(hex);
+    }
+  });
+
+  it("文字颜色是实色, 不用 rgba 透明度 — 透明度会被叠加", () => {
+    const css = example.slice(example.indexOf("<style"), example.indexOf("</style>"));
+    // `border-color:` contains "color:", so anchor on the property boundary.
+    const textAlpha = css.match(/(?:^|[;{\s])color:\s*rgba\([^)]*0\.\d+\s*\)/g) ?? [];
+    expect(textAlpha).toEqual([]);
+  });
+
+  it("SKILL 禁止拿 --mute 写正文", () => {
+    expect(skill).toContain("不许拿它写正文");
+    expect(skill).toContain("只能有一档亮度");
+  });
+
+  it("中文正文 500 字重 — 400 在近黑底上笔画发虚", () => {
+    expect(skill).toContain("font-weight:500");
+    expect(example).toMatch(/\.sub\s*\{[^}]*font-weight:\s*500/);
+  });
 });
 
 describe("不重蹈 card-xiaohongshu 的覆辙", () => {
