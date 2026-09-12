@@ -1,25 +1,37 @@
 ---
 name: social-carousel
-zh_name: "社交媒体三联"
-en_name: "Social Carousel"
-emoji: "🎠"
-description: "三张竖版卡片轮播, 标题串联, 品牌 mark + 编号"
+zh_name: "科技感三联"
+en_name: "Tech Carousel"
+emoji: "🛰"
+description: "纯黑底三联竖卡, 青→蓝→紫渐进, 细网格 + 进度轨, 标题跨张串联"
 category: card
 scenario: marketing
 aspect_hint: "1080×1440 ×3"
 featured: 7
-tags: ["instagram", "linkedin", "thread", "carousel", "三联"]
+tags: ["科技", "深色", "tech", "carousel", "三联"]
 ---
 
-【模板: 三联社交轮播 / Social Carousel】
-【意图】3 张 `1080×1440` (3:4) 竖版卡片, headline 跨张串联。
+【模板: 科技感三联 / Tech Carousel】
+【意图】3 张 `1080×1440` (3:4) 纯黑底竖卡, headline 跨张串联成一句话。
 【尺寸 — 硬性要求】
-- 每张卡固定 `1080×1440`, 纵向排列, 卡间距 24px。写死尺寸, 不要用 `100vw` / `100vh`。
-- 竖版留白比方版多: headline 放在视觉中线偏上, 下方留出呼吸空间。
+- 每张卡固定 `width:1080px; height:1440px`, 纵向堆叠, 卡间距 24px。
+  写死像素值, 不要用 `100vw` / `100vh` / `aspect-ratio` 代替。
+- 竖版留白比方版多: headline 落在整卡高度的 25%-35% 处 (视觉中线偏上), 下方留出大片呼吸空间。
+【配色 — 冷调科技黑, 不要暖色】
+- 页面底 `#05070a`, 卡片底 `#0a0e14` (近黑, 偏冷, 不是棕黑也不是墨绿)。
+- 正文白 `#e8eef6`, 次级文字 `rgba(232,238,246,0.52)`, 描边 `rgba(148,180,214,0.14)`。
+- 强调色**只用这三个, 按卡片顺序推进**: 青 `#22d3ee` → 蓝 `#4d7cff` → 紫 `#a78bfa`。
+- **不要用橙色、金色、暖棕**, 也不要给卡片铺照片式的风景渐变 —— 那是另一种风格。
+- 每张卡只放**一个**大光晕 (900px 圆, `filter:blur(120px)`, 透明度 0.3), 位置每张不同。
 【布局】
-- Card 1: display headline (开头) + 品牌 mark + 1/3
-- Card 2: display headline (中段) + 视觉重点 + 2/3
-- Card 3: display headline (结尾) + CTA + loop icon + 3/3
+- Card 1: 品牌 mark + `01 / 03` + kicker + headline (开头) + 一句副文
+- Card 2: 同一套 chrome + `02 / 03` + headline (中段)
+- Card 3: 同上 + `03 / 03` + headline (结尾) + CTA / 收藏标记
 【设计细节】
-- 颜色统一一套调色板, 卡片之间渐进切换
-- 三个 headline 拼起来是完整一句话
+- **细网格**: 72px 间距的 1px 网格, 透明度 0.055, 用 `mask-image` 径向淡出, 只当质感, 不要明显到像表格。
+- **进度轨**: 卡片底部一条 2px 通栏细线, 已完成段用青→蓝渐变填充 33% / 66% / 100%。
+- **标题**: 无衬线特粗 (`font-weight:900`), 字号 ~128px, `letter-spacing:-0.035em`, 行高 1.06。
+  每张标题里挑一个词用青→蓝→紫渐变描字 (`background-clip:text`), 其余保持纯白。
+- **小字一律等宽字体** (JetBrains Mono / IBM Plex Mono), 大写, `letter-spacing` 0.16-0.22em ——
+  科技感主要来自这个对比: 巨大的中文黑体 + 极小的等宽英文。
+- 三张 headline 拼起来必须是完整通顺的一句话。
