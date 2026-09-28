@@ -1,9 +1,8 @@
 /**
  * Shared SSE plumbing for the xhs endpoints.
  *
- * `/api/convert` grew its own copy of this loop; the four-step flow needs the
- * same wire format in three more places, so it lives here once. Behaviour is
- * identical: every InvokeEvent is forwarded as `event: <type>` with the event
+ * Every agent-backed route streams the same wire format, so it lives here
+ * once: every InvokeEvent is forwarded as `event: <type>` with the event
  * object as the JSON payload.
  */
 

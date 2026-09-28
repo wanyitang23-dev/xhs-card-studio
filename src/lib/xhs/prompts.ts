@@ -1,8 +1,7 @@
 /**
  * Prompt builders for the four-step flow.
  *
- * Shape mirrors `templates/shared.ts`: a hard-rules block the model must obey,
- * then the skill's own style body, then the user's material. What changes per
+ * Shape: a hard-rules block the model must obey, then the skill's own style body, then the user's material. What changes per
  * step is the *product* being asked for — a JSON outline, one cover, or the
  * finished multi-card page.
  */
@@ -19,8 +18,8 @@ import {
 } from "./types";
 
 /**
- * The design directives for a fixed-size card, trimmed from the inherited
- * `SHARED_DESIGN_DIRECTIVES`.
+ * The design directives for a fixed-size card, trimmed from the upstream
+ * `SHARED_DESIGN_DIRECTIVES` (html-anything's single-shot prompt).
  *
  * The inherited block was written for "turn a document into a deck", where the
  * model decides how many slides to produce. Both card prompts are the opposite
@@ -34,8 +33,6 @@ import {
  * no file tools, stream the document as the reply body, open with
  * `<!DOCTYPE html>`, close with `</html>`, no markdown fences. Those are a
  * contract with `extractHtml`, not style advice.
- *
- * `shared.ts` itself is left alone — `/api/convert` still imports it.
  */
 const XHS_CARD_DIRECTIVES = `
 你是世界级的视觉设计师 + 资深前端工程师。请输出一份**自包含的单文件 HTML**，要求：

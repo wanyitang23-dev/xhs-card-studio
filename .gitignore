@@ -42,7 +42,3 @@ next-env.d.ts
 /design-language.md
 /design-qa.md
 /design-qa-evidence/
-
-# keep local regression sources out of runtime-only commits
-**/__tests__/*.test.ts
-**/__tests__/*.test.tsx

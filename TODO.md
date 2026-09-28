@@ -169,9 +169,6 @@ Tailwind v3 Play」。
 
 ## 4. 清理
 
-- `/api/convert`、`/api/draft` 两个接口**前端一次都没调用**，是从上游
-  `html-anything` 继承的死代码。删之前确认 `src/lib/templates/shared.ts`
-  （`assemblePrompt` / `SHARED_DESIGN_DIRECTIVES`）还有没有别的引用。
 - 本地有个 `backup-zh-messages` 分支，是提交信息改英文之前的中文版历史备份。
   英文版已经稳定推送多轮，确认不需要了就可以删。
 

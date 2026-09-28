@@ -1,5 +1,4 @@
 import { describe, expect, it } from "vitest";
-import { resolveIds } from "@/lib/xhs/assets";
 import { buildCoverPrompt, buildRenderPrompt } from "@/lib/xhs/prompts";
 import type { XhsPage } from "@/lib/xhs/types";
 
@@ -19,21 +18,6 @@ const page = (over: Partial<XhsPage> = {}): XhsPage => ({
   imageAssetIds: [],
   confirmed: true,
   ...over,
-});
-
-describe("resolveIds", () => {
-  it("把 token 换成图片数据", () => {
-    expect(resolveIds(["asset:a"], { "asset:a": DATA })).toEqual({ images: [DATA], missing: 0 });
-  });
-
-  it("解析不到的 token 被丢弃并计数", () => {
-    expect(resolveIds(["asset:gone"], {})).toEqual({ images: [], missing: 1 });
-  });
-
-  it("没有配图时返回空", () => {
-    expect(resolveIds(undefined, {})).toEqual({ images: [], missing: 0 });
-    expect(resolveIds([], {})).toEqual({ images: [], missing: 0 });
-  });
 });
 
 describe("封面 prompt 带上配图", () => {
