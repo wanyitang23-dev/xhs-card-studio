@@ -7,20 +7,23 @@ import { useTask, useXhs } from "@/lib/xhs/store";
 import { useFlow } from "@/lib/xhs/use-flow";
 import { previewHtml } from "@/lib/extract-html";
 import { ExportMenu } from "@/components/export-menu";
-import { parseViewport } from "@/lib/xhs/aspect";
-import { useTemplates } from "@/lib/templates";
+import { DEFAULT_VIEWPORT } from "@/lib/xhs/aspect";
 import { CaptionPane } from "./caption-pane";
+
+// At the desktop max-width, Step ③'s three-column grid displays the card
+// itself at roughly 353×471 CSS pixels. Give Step ④ the same display height;
+// ScaledDocument still lays the artifact out at 1080×1440 and will shrink it
+// further when a narrow viewport cannot fit that width.
+const COVER_PREVIEW_DISPLAY_HEIGHT = 471;
 
 export function StepRender() {
   const html = useTask((t) => t.finalHtml);
   const status = useTask((t) => t.renderStatus);
   const error = useTask((t) => t.renderError);
   const pages = useTask((t) => t.pages);
-  const templateId = useTask((t) => t.templateId);
   const setStep = useXhs((s) => s.setStep);
   const caption = useTask((t) => t.caption);
   const captionStatus = useTask((t) => t.captionStatus);
-  const templates = useTemplates();
   const { runRender, runCaption, cancel } = useFlow();
   const iframeRef = useRef<HTMLIFrameElement | null>(null);
   const started = useRef(false);
@@ -46,13 +49,12 @@ export function StepRender() {
   const running = status === "running";
   const assets = useTask((t) => t.assets);
   const display = useMemo(() => previewHtml(html, assets), [html, assets]);
-  // Lay the page out at the width the cards were authored for. The pane is
-  // narrower than that, so the iframe is scaled down for display only —
-  // `clientWidth` stays 1080, which is what the PNG export reads.
-  const authoredViewport = useMemo(() => {
-    const hint = templates?.find((t) => t.id === templateId)?.aspectHint;
-    return parseViewport(hint);
-  }, [templates, templateId]);
+  // Cover and render prompts both require the final artifact to be exactly
+  // 1080×1440, even when an imported template example was authored at another
+  // resolution (deck-xhs-post is 810×1080). A template hint describes its
+  // sample preview, not the generated artifact. Using the hint here laid a
+  // real 1080px card out in an 810px iframe and clipped its right 270px.
+  const authoredViewport = DEFAULT_VIEWPORT;
 
   // Keep navigation inside the authored HTML. This adds mouse/trackpad
   // gestures without drawing controls over the card or changing its layout.
@@ -155,9 +157,9 @@ export function StepRender() {
               srcDoc={display}
               authoredWidth={authoredViewport.width}
               authoredHeight={authoredViewport.height}
-              scale={0.35}
               title="成品预览"
-              className="render-document h-full w-full"
+              className="render-document w-full"
+              style={{ height: COVER_PREVIEW_DISPLAY_HEIGHT }}
             />
           ) : (
             <div

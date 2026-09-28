@@ -1,6 +1,7 @@
 "use client";
 
 import { useElementSize } from "@/lib/xhs/use-element-size";
+import { hidePreviewScrollbars } from "@/lib/xhs/preview-scrollbars";
 
 /**
  * Render an agent-authored page at the pixel width it was designed for, then
@@ -46,16 +47,35 @@ export function ScaledDocument({
   style?: React.CSSProperties;
 }) {
   const { ref, size } = useElementSize<HTMLDivElement>();
-  // Fit by width — the page is a tall stack of cards the user scrolls through.
-  // Never scale up: a page narrower than the pane should sit at 1:1.
-  const fitScale = size ? Math.min(1, size.width / authoredWidth) : 0;
+  // A fixed card canvas uses the same contain calculation as the cover tiles:
+  // grow until either the available width or height is filled. Documents with
+  // no authored height remain width-fitted scrollable pages.
+  const fitScale = size
+    ? Math.min(
+        1,
+        size.width / authoredWidth,
+        authoredHeight ? size.height / authoredHeight : Number.POSITIVE_INFINITY,
+      )
+    : 0;
   const scale = scaleProp ?? fitScale;
   const fixedCanvas = Boolean(authoredHeight && authoredHeight > 0);
+  // Auto-fit canvases must not create outer scrollbars. A scrollbar reduces
+  // the measured content box, which changes the fit scale, which removes the
+  // scrollbar again — an endless ResizeObserver feedback loop. Explicitly
+  // scaled canvases may still overflow because their scale is size-independent.
+  const allowCanvasOverflow = fixedCanvas && scaleProp !== undefined;
+
+  const handleLoad: React.ReactEventHandler<HTMLIFrameElement> = (event) => {
+    if (fixedCanvas && event.currentTarget.contentDocument) {
+      hidePreviewScrollbars(event.currentTarget.contentDocument);
+    }
+    onLoad?.(event);
+  };
 
   const frame = scale > 0 && size ? (
     <iframe
       ref={iframeRef}
-      onLoad={onLoad}
+      onLoad={handleLoad}
       title={title}
       {...(src ? { src } : {})}
       {...(srcDoc ? { srcDoc } : {})}
@@ -76,7 +96,7 @@ export function ScaledDocument({
   return (
     <div
       ref={ref}
-      className={`${fixedCanvas ? "overflow-auto" : "overflow-hidden"} ${className ?? ""}`}
+      className={`${allowCanvasOverflow ? "overflow-auto" : "overflow-hidden"} ${className ?? ""}`}
       style={style}
     >
       {fixedCanvas && size && authoredHeight ? (
