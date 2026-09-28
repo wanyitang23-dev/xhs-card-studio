@@ -5,8 +5,8 @@
  *   `next dev` and `next start` bind to `0.0.0.0` by default. Even with the
  *   server bound to loopback only, a malicious page in the user's browser can
  *   DNS-rebind an attacker-controlled name (`attacker.example` → `127.0.0.1`)
- *   and POST to `/api/convert`, `/api/deploy`, `/api/deploy/config`, etc.
- *   `/api/convert` spawns the user's local coding-agent CLI with maximally
+ *   and POST to `/api/render`, `/api/cover`, `/api/templates/upload`, etc.
+ *   The generation routes spawn the user's local coding-agent CLI with maximally
  *   permissive flags (`--permission-mode bypassPermissions`, `--yolo`,
  *   `--allow-all-tools`, `--dangerously-skip-permissions`, …), so a successful
  *   POST is unauthenticated RCE on the user's machine via the agent.

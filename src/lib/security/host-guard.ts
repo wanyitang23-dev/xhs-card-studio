@@ -1,19 +1,14 @@
 /**
- * Per-route Host-header guard for marketplace install/uninstall.
+ * Per-route Host-header guard for the template routes that write to disk or
+ * spawn an agent (`/api/templates/upload`, `derive-image`, `generate-example`,
+ * `refine-example`).
  *
- * Why this lives next to the marketplace routes rather than at the middleware
- * layer: a sibling PR (security/api-host-validation) introduces a global
- * `/api/*` middleware that covers every API route. Until that lands, the
- * marketplace POST is a particularly attractive DNS-rebinding target — it
- * downloads and writes arbitrary user-supplied GitHub repos to disk and
- * registers them as installable skills. So we ship a local check here that:
- *   - mirrors the same default (loopback-only) and env knobs
- *     (`XHS_ANYTHING_ALLOWED_HOSTS`, `XHS_ANYTHING_ALLOW_ANY_HOST`),
- *   - is independent of the middleware so it works whichever PR lands first,
- *   - becomes a redundant no-op once the global middleware also runs.
- *
- * Once the global host-validation middleware merges, this module can be
- * deleted and the routes can rely on the middleware alone.
+ * It mirrors the global `/api/*` middleware (`src/middleware.ts`, same
+ * loopback-only default and `XHS_ANYTHING_ALLOWED_HOSTS` /
+ * `XHS_ANYTHING_ALLOW_ANY_HOST` knobs), so today it is a second line of
+ * defence: it keeps these routes safe even if the middleware's matcher is
+ * ever narrowed. It originally guarded the marketplace installer, which has
+ * since been removed.
  */
 
 const LOOPBACK_HOSTS = new Set(["127.0.0.1", "localhost", "::1", "0.0.0.0"]);

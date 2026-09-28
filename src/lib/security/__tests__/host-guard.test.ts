@@ -24,7 +24,7 @@ describe("isHostAllowed", () => {
     // into the URL instead. The guard reads `req.headers.get('host')` first
     // and falls back to `new URL(req.url).host`, which matches reality —
     // browsers populate Host from the URL they dial.
-    const url = host === null ? "file:///no-url-host" : `http://${host}/api/marketplace/install`;
+    const url = host === null ? "file:///no-url-host" : `http://${host}/api/templates/upload`;
     return new Request(url, { method: "POST" });
   }
 

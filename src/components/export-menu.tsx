@@ -3,8 +3,6 @@
 import { useMemo, useState, useRef, useEffect, type ReactNode } from "react";
 import {
   AlignLeft,
-  Bird,
-  BookOpenText,
   CheckCircle2,
   ChevronDown,
   Code2,
@@ -12,20 +10,14 @@ import {
   FileImage,
   FileText,
   Images,
-  MessageCircle,
   Presentation,
   Share2,
   XCircle,
 } from "lucide-react";
 import { useStore, selectActiveTask } from "@/lib/store";
 import { useT } from "@/lib/i18n";
-import { copyToWechat } from "@/lib/export/wechat";
-import { copyToZhihu } from "@/lib/export/zhihu";
 import { copyHtml, copyText } from "@/lib/export/clipboard";
-import {
-  copyIframeToClipboard,
-  downloadIframeAsImage,
-} from "@/lib/export/image";
+import { downloadIframeAsImage } from "@/lib/export/image";
 import { downloadHtml } from "@/lib/export/download";
 import { extractHtml } from "@/lib/extract-html";
 import { inlineAssets } from "@/lib/xhs/inline-assets";
@@ -115,16 +107,6 @@ export function ExportMenu({ iframeRef, html: htmlProp, assets, viewport }: Expo
     title: string;
     actions: ExportAction[];
   }> = [
-    {
-      title: t("export.section.platform"),
-      actions: [
-        { id: "wechat", label: t("export.action.wechat"), icon: <MessageCircle aria-hidden="true" />, fn: wrap(t("export.toast.wechat"), async () => { await copyToWechat(cleanHtml()); }) },
-        { id: "zhihu",  label: t("export.action.zhihu"),  icon: <BookOpenText aria-hidden="true" />, fn: wrap(t("export.toast.zhihu"), async () => { await copyToZhihu(cleanHtml()); }) },
-        { id: "twitter-img", label: t("export.action.twitterImg"), icon: <Bird aria-hidden="true" />, fn: wrap(t("export.toast.image"), async () => {
-          if (!iframeRef.current) throw new Error(t("export.error.previewNotReady")); await copyIframeToClipboard(iframeRef.current, viewport);
-        }) },
-      ],
-    },
     {
       title: t("export.section.raw"),
       actions: [

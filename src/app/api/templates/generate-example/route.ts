@@ -10,7 +10,7 @@ import {
 } from "@/lib/templates/reference-image";
 import { buildImageTemplateExamplePrompt } from "@/lib/xhs/prompts";
 import { abortOn, SSE_HEADERS, toSseStream } from "@/lib/xhs/sse";
-import { hostRejectedResponse, isHostAllowed } from "../../marketplace/_lib/host-guard";
+import { hostRejectedResponse, isHostAllowed } from "@/lib/security/host-guard";
 import { loadImageToXhsTemplateSkill } from "@/lib/templates/image-to-xhs-template";
 
 export const runtime = "nodejs";

@@ -7,7 +7,7 @@ import { buildImageTemplateRefinePrompt } from "@/lib/xhs/prompts";
 import { abortOn, SSE_HEADERS, toSseStream } from "@/lib/xhs/sse";
 import { decodeReferenceImageDataUrl, ReferenceImageError } from "@/lib/templates/reference-image";
 import { loadImageToXhsTemplateSkill } from "@/lib/templates/image-to-xhs-template";
-import { hostRejectedResponse, isHostAllowed } from "../../marketplace/_lib/host-guard";
+import { hostRejectedResponse, isHostAllowed } from "@/lib/security/host-guard";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";

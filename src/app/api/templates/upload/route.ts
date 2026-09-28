@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { installLocalTemplate, LocalInstallError, uninstallLocalTemplate } from "@/lib/skills/local-install";
 import { invalidateSkillsCache } from "@/lib/templates/loader";
-import { hostRejectedResponse, isHostAllowed } from "../../marketplace/_lib/host-guard";
+import { hostRejectedResponse, isHostAllowed } from "@/lib/security/host-guard";
 import { decodeReferenceImageDataUrl, ReferenceImageError } from "@/lib/templates/reference-image";
 import { localTemplateSlugFromSkillId } from "@/lib/templates/local-id";
 
