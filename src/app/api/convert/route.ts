@@ -107,6 +107,7 @@ export async function POST(req: NextRequest) {
 
   const stream = invokeAgent({
     agent,
+    textOnly: true,
     prompt,
     model,
     cwd,

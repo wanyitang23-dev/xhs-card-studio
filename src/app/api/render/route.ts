@@ -63,7 +63,7 @@ export async function POST(req: NextRequest) {
     imageMeta,
   });
   const abortCtl = abortOn(req.signal);
-  const source = invokeAgent({ agent, prompt, model, binOverride, signal: abortCtl.signal });
+  const source = invokeAgent({ agent, textOnly: true, prompt, model, binOverride, signal: abortCtl.signal });
 
   return new Response(toSseStream(source, { abort: abortCtl }), { headers: SSE_HEADERS });
 }

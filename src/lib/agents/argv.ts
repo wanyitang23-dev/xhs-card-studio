@@ -9,6 +9,14 @@ export type AgentArgvOpts = {
    * for resolving this via `resolveOpenclawAgentId` before calling buildArgv.
    */
   openclawAgentId?: string;
+  /**
+   * The call only needs text in, text out. Claude Code otherwise ships its
+   * whole tool set, every configured MCP server and the skill list with each
+   * `-p` run — measured at ~33k input tokens before the prompt starts, against
+   * ~4k with them off. Every step spawns a fresh process, so that overhead is
+   * paid on each outline, each of the three covers, the render and the caption.
+   */
+  textOnly?: boolean;
 };
 
 export class UnsupportedAgentProtocolError extends Error {
@@ -21,7 +29,7 @@ export class UnsupportedAgentProtocolError extends Error {
 }
 
 export function buildArgv(agent: string, _opts: AgentArgvOpts = {}): string[] {
-  const { model } = _opts;
+  const { model, textOnly } = _opts;
   switch (agent) {
     case "claude":
       return [
@@ -32,6 +40,7 @@ export function buildArgv(agent: string, _opts: AgentArgvOpts = {}): string[] {
         "--include-partial-messages",
         "--permission-mode",
         "bypassPermissions",
+        ...(textOnly ? ["--tools", "", "--strict-mcp-config", "--disable-slash-commands"] : []),
         ...(model ? ["--model", model] : []),
       ];
     case "openclaw":

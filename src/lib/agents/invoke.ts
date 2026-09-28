@@ -15,6 +15,8 @@ export type InvokeOpts = {
    * whose CLI lives outside the heuristic toolchain dirs.
    */
   binOverride?: string;
+  /** See `AgentArgvOpts.textOnly`. Leave off for calls that must read files (images). */
+  textOnly?: boolean;
 };
 
 type BinResolution =
@@ -132,6 +134,7 @@ export function invokeAgent(opts: InvokeOpts): ReadableStream<InvokeEvent> {
         const argvOpts: Parameters<typeof buildArgv>[1] = {
           model: opts.model,
           prompt: opts.prompt,
+          textOnly: opts.textOnly,
         };
         if (opts.agent === "openclaw") {
           argvOpts.openclawAgentId = await resolveOpenclawAgentId(bin!);

@@ -61,6 +61,7 @@ export async function POST(req: NextRequest) {
   const abortCtl = abortOn(req.signal);
   const source = invokeAgent({
     agent,
+    textOnly: true,
     prompt: buildCaptionPrompt({ pages }),
     model,
     binOverride,

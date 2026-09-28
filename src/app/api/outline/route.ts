@@ -88,7 +88,7 @@ export async function POST(req: NextRequest) {
   const mode: OutlineMode = rawMode === "verbatim" ? "verbatim" : "condense";
   const prompt = buildOutlinePrompt({ content, format, pageCount, mode, skillBody: skill.body });
   const abortCtl = abortOn(req.signal);
-  const source = invokeAgent({ agent, prompt, model, binOverride, signal: abortCtl.signal });
+  const source = invokeAgent({ agent, textOnly: true, prompt, model, binOverride, signal: abortCtl.signal });
 
   // Accumulate text deltas so the finished JSON can be parsed once the agent
   // exits. The raw deltas still stream through for the progress log — the user

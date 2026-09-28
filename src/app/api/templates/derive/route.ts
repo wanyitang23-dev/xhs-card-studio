@@ -40,6 +40,7 @@ export async function POST(req: NextRequest) {
   const abortCtl = abortOn(req.signal);
   const source = invokeAgent({
     agent,
+    textOnly: true,
     prompt: buildDerivePrompt({ html: truncated }),
     model,
     binOverride,

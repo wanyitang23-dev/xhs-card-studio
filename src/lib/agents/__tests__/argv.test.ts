@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { parseLine, makeParser } from "../argv";
+import { buildArgv, parseLine, makeParser } from "../argv";
 
 describe("parseLine opencode", () => {
   it("extracts text from nested part payload", () => {
@@ -219,3 +219,15 @@ describe("parseLine bob", () => {
   });
 });
 
+
+describe("buildArgv claude textOnly", () => {
+  it("drops tools, MCP servers and slash commands for text-only calls", () => {
+    const argv = buildArgv("claude", { textOnly: true });
+    expect(argv).toEqual(expect.arrayContaining(["--strict-mcp-config", "--disable-slash-commands"]));
+    expect(argv[argv.indexOf("--tools") + 1]).toBe("");
+  });
+
+  it("keeps the full tool set by default", () => {
+    expect(buildArgv("claude")).not.toContain("--tools");
+  });
+});
