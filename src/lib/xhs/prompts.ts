@@ -7,6 +7,7 @@
  * finished multi-card page.
  */
 
+import { canSpliceCover, COVER_SLOT_ATTR } from "./cover-splice";
 import { exampleReferenceBlock } from "./example-ref";
 import type { OutlineMode, PageCountSetting, XhsPage } from "./types";
 import {
@@ -529,8 +530,16 @@ export function buildRenderPrompt(args: {
   /** Real pixel sizes for attached images, so the ratio is stated, not guessed. */
   imageMeta?: ImageMeta;
 }): string {
+  // The locked cover is spliced in by code afterwards (see `cover-splice.ts`),
+  // so the agent only leaves a slot for it instead of writing it out again.
+  const splice = canSpliceCover(args.pages, args.coverHtml);
+  const total = args.pages.length;
+
   const pageBlocks = args.pages
     .map((p, i) => {
+      if (i === 0 && splice) {
+        return `第 1 页 [${p.kind}] — 封面已定稿, 由工具拼入。这一页只输出空的占位元素, 见上面的说明。`;
+      }
       // Tokens, never bytes: a data URL here would have to be copied back out
       // of the model verbatim, and a few hundred thousand characters of base64
       // truncates the answer long before the document closes.
@@ -553,7 +562,22 @@ export function buildRenderPrompt(args: {
   // unsaid, "reproduce this card exactly" and "embed this image" contradict
   // each other and the image is what gets dropped.
   const coverHasImages = (args.pages[0]?.imageAssetIds?.length ?? 0) > 0;
-  const coverBlock = args.coverHtml
+  const coverBlock = splice
+    ? `\n【封面已定稿 — 工具会把它原样拼进成品, 你不要再写第 1 页】
+- 第 1 页的位置只输出一个**空的占位元素**: 外层标签和 class 与其它卡片完全相同, 再加上
+  \`${COVER_SLOT_ATTR}\` 属性, 里面什么都不写。例: 其它卡片是 \`<div class="card">\`, 占位就写
+  \`<div class="card" ${COVER_SLOT_ATTR}></div>\`; 是 \`<section class="slide">\` 就写
+  \`<section class="slide" ${COVER_SLOT_ATTR}></section>\`。
+- 占位元素放在所有卡片的最前面, 和它们是同级兄弟。
+- **不要输出下面这张封面的任何 HTML 或 CSS。** 它只是让你看清设计系统的参考, 输出它等于白写一遍。
+- 页码照常按总共 ${total} 页计: 你写的第一张卡是第 2 页。
+- 样式写在 class 上, 不要写 \`h1{}\` \`p{}\` \`div{}\` 这类裸标签选择器 ——
+  封面会被拼进同一个文档, 裸标签样式会串到封面上。
+**这张卡的构图只属于第 1 页。** 从它身上带到后面几页的只有色值、字体、字号层级和组件写法;
+版式回到模板给内容页定的那一套 —— 不要让第 2 页起也顶着一个同样的大色块。
+${args.coverHtml}
+`
+    : args.coverHtml
     ? `\n【封面已定稿 — 第 1 页必须完全沿用下面这张卡的设计 (配色 / 字体 / 版式), 只把它原样搬进最终页面】${
         coverHasImages
           ? `
@@ -599,7 +623,7 @@ ${
       : ""
   }
 ${coverBlock}
-【已确认的分页 — 共 ${args.pages.length} 页】
+【已确认的分页 — 共 ${total} 页${splice ? `, 你输出 1 个封面占位 + ${total - 1} 张卡` : ""}】
 ${pageBlocks}
 `;
 }

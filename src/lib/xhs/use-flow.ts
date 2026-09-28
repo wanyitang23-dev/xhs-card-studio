@@ -6,6 +6,7 @@ import { streamSse } from "./sse-client";
 import { activeTask, makePage, useXhs, type XhsTask } from "./store";
 import type { Caption, PageKind } from "./types";
 import { coverLabel, mergeCoverRun } from "./cover-directions";
+import { canSpliceCover, spliceCover } from "./cover-splice";
 
 /**
  * Drives the agent-backed steps.
@@ -250,16 +251,17 @@ export function useFlow() {
     patch({ finalHtml: "", renderStatus: "running", renderError: undefined });
     try {
       const cover = task.covers.find((c) => c.id === task.selectedCoverId);
+      // Same as the cover step: ids only, bytes stay in the browser.
+      const pages = task.pages.map((p) => ({
+        ...p,
+        imageAssetIds: (p.imageAssetIds ?? []).filter((id) => !!task.assets[id]),
+      }));
       await streamSse(
         "/api/render",
         {
           ...agentArgs(),
           templateId: task.templateId,
-          // Same as the cover step: ids only, bytes stay in the browser.
-          pages: task.pages.map((p) => ({
-            ...p,
-            imageAssetIds: (p.imageAssetIds ?? []).filter((id) => !!task.assets[id]),
-          })),
+          pages,
           handle: task.handle,
           imageMeta: task.assetMeta,
           ...(cover?.html ? { coverHtml: cover.html } : {}),
@@ -271,7 +273,17 @@ export function useFlow() {
         },
         ctl.signal,
       );
-      if (read()?.renderStatus !== "error") patch({ renderStatus: "done" });
+      const done = read();
+      if (done?.renderStatus !== "error") {
+        // The route made the same call to pick its prompt, so when this is
+        // true the agent left a slot for page 1 rather than redrawing it.
+        patch({
+          renderStatus: "done",
+          ...(done && cover?.html && canSpliceCover(pages, cover.html)
+            ? { finalHtml: spliceCover(done.finalHtml, cover.html) }
+            : {}),
+        });
+      }
     } catch (err) {
       if ((err as Error)?.name === "AbortError") {
         if (isCurrent(task.id, "render", ctl)) patch({ renderStatus: "idle" });
